@@ -1,0 +1,17 @@
+import(graphics)
+import(stats)
+import(grDevices)
+
+importFrom(utils, count.fields, read.delim, read.csv)
+importFrom(coin, ansari_test, fligner_test, kruskal_test, wilcox_test)
+importFrom(energy, mvnorm.etest)
+importFrom(mvoutlier, aq.plot)
+importFrom(robustbase, covMcd)
+
+export(analyzeGroup, combineData, compareGroups,
+       drawBox, drawBox2, drawCircle, drawEllipse,
+       fromMOA,
+       getBoundingBox, getDistToCtr, getMaxPairDist,
+       getMinBBox, getMinCircle, getMOA,
+       groupLocation, groupShape, groupSpread,
+       readDataMisc, readDataOT1, readDataOT2)
