@@ -13,5 +13,10 @@ A list with the following components
 }
 \examples{
 xy <- matrix(round(rnorm(20, 100, 15), 1), ncol=2)
-getMaxPairDist(xy)
+(maxPD <- getMaxPairDist(xy))
+
+plot(xy, asp=1, pch=16)
+segments(x0=xy[maxPD$idx[1], 1], y0=xy[maxPD$idx[1], 2],
+         x1=xy[maxPD$idx[2], 1], y1=xy[maxPD$idx[2], 2],
+         col="green3", lwd=2)
 }

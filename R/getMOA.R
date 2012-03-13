@@ -10,7 +10,7 @@ function(conversion="m2cm") {
 
        ## did we catch all conversion types?
        if(!all(idxM2CM | idxM2MM | idxYD2IN | idxFT2IN)) {
-           warning("conversion type not found, conversion factor set to 1")
+           warning("conversion type not found - conversion factor set to 1")
        }
 
        res <- numeric(length(conversion)) + 1
@@ -29,10 +29,10 @@ function(conversion="m2cm") {
 
 getMOA <-
 function(x, dst, conversion="m2cm") {
-    if(!is.numeric(x))   { stop("x must be numeric") }
+    if(!is.numeric(x))   { stop(  "x must be numeric") }
     if(!is.numeric(dst)) { stop("dst must be numeric") }
-    if(any(x < 0))       { stop("x must be positive throughout") }
-    if(any(dst <= 0))    { stop("distance must be positive throughout") }
+    if(any(x < 0))       { stop(  "x must be positive throughout") }
+    if(any(dst <= 0))    { stop("dst must be positive throughout") }
 
     ## get the conversion factor
     convFac <- getConvFac(conversion)
@@ -52,10 +52,10 @@ function(x, dst, conversion="m2cm") {
 
 fromMOA <-
 function(x, dst, conversion="m2cm") {
-    if(!is.numeric(x))   { stop("x must be numeric") }
+    if(!is.numeric(x))   { stop(  "x must be numeric") }
     if(!is.numeric(dst)) { stop("dst must be numeric") }
-    if(any(x < 0))       { stop("x must be positive throughout") }
-    if(any(dst <= 0))    { stop("distance must be positive throughout") }
+    if(any(x < 0))       { stop(  "x must be positive throughout") }
+    if(any(dst <= 0))    { stop("dst must be positive throughout") }
 
     ## get the conversion factor
     convFac <- getConvFac(conversion)

@@ -24,7 +24,7 @@ Example of a combined data frame from several files exported by OnTarget PC/TDS,
   }
 }
 \details{
-Several groups of pistol shooting 9x19mm at 27yd The measurement unit for coordinates is inch, for distance yards. \cr \cr
+Several groups of pistol shooting 9x19mm at 27yd The measurement unit for coordinates is inch, for distance yards. \cr
 This data frame is the result from applying \code{\link[shotGroups]{combineData}} to a list of data frames as read in by \code{\link[shotGroups]{readDataOT1}}, \code{\link[shotGroups]{readDataOT2}}, or by \code{\link[shotGroups]{readDataMisc}}.
 }
 \references{

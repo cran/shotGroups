@@ -7,7 +7,7 @@ Example list containing several data frames with bullet hole data as produced by
 }
 \usage{data(DFlistCm)}
 \details{
-Several groups of pistol shooting 9x19mm at 25m. The measurement unit for coordinates is cm, for distance meters. \cr \cr
+Several groups of pistol shooting 9x19mm at 25m. The measurement unit for coordinates is cm, for distance meters. \cr
 This list can be used as an argument for \code{\link[shotGroups]{combineData}}.
 }
 \references{
