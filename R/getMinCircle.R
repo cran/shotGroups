@@ -20,7 +20,7 @@ function(xy) {
     ## check if the points are collinear: qr(xy)$rank == 1, or:
     ## determinant of difference matrix = 0, no need to use det()
     dMat <- rbind(c(xDeltaA, yDeltaA), c(xDeltaB, yDeltaB))
-    if(isTRUE(all.equal(dMat[1,1]*dMat[2,2] - dMat[1,2]*dMat[2,1], 0))) {
+    if(isTRUE(all.equal(dMat[1,1]*dMat[2,2] - dMat[1,2]*dMat[2,1], 0, check.attributes=FALSE))) {
         ## define the circle as the one that's centered between them
         rangeX <- range(c(aa[1], bb[1], cc[1]))
         rangeY <- range(c(aa[2], bb[2], cc[2]))
@@ -45,6 +45,29 @@ function(xy) {
 ##              (ay*(cx-bx) + by*(ax-cx) + cy*(bx-ax)))
 ## rad <- dist(rbind(xy, ctr))[3]
 
+## vertex that produces the circles with the maximum radius
+## used in getMinCircle()
+getMaxRad <- function(xy, S) {
+    if(!is.matrix(xy))  { stop("xy must be a matrix") }
+    if(!is.numeric(xy)) { stop("xy must be numeric") }
+    if(ncol(xy) != 2)   { stop("xy must have two columns") }
+    if(!is.numeric(S))  { stop("S must be numeric") }
+    if((length(S) < 2) | (nrow(xy) < 2)) { stop("there must be at least two points") }
+    if(length(S) > nrow(xy)) { stop("there can only be as many indices in S as points in xy") }
+
+    n    <- length(S)                    # number of points
+    Sidx <- seq(along=numeric(n))        # index for points
+    rads <- numeric(n)                   # radii for all circles
+    post <- (Sidx %% n) + 1              # next point in S
+    prev <- Sidx[order(post)]            # previous point in S
+    for(i in Sidx) {
+        pts     <- rbind(xy[S[prev[i]], ], xy[S[i], ], xy[S[post[i]], ])
+        rads[i] <- getCircleFrom3(pts)$rad  # circle radius
+    }
+
+    return(which.max(rads))
+}
+
 ## angle at B in triangle ABC
 getAngleTri <- function(xy, deg=TRUE) {
     if(!is.matrix(xy))  { stop("xy must be a matrix") }
@@ -57,7 +80,9 @@ getAngleTri <- function(xy, deg=TRUE) {
     dBC <- d[3]
 
     ## dAB*dAC should not be 0
-    if(isTRUE(all.equal(dAB*dAC, 0))) { stop("some edges have zero length") }
+    if(isTRUE(all.equal(dAB*dAC, 0, check.attributes=FALSE))) {
+        stop("some edges have zero length")
+    }
 
     Wabc <- (dAB^2 + dBC^2 - dAC^2)
     arc  <- acos(Wabc / (2*dAB*dBC))      # angle in radians
@@ -79,31 +104,34 @@ isBiggerThan90 <- function(xy) {
     return((dAB^2 + dBC^2 - dAC^2) < 0)
 }
 
-## minimal enclosing circle using Skyum algorithm based on the convex hull
+## minimal enclosing circle
 getMinCircle <-
 function(xy) {
     if(!is.matrix(xy))  { stop("xy must be a matrix") }
     if(!is.numeric(xy)) { stop("xy must be numeric") }
+    if(nrow(xy) < 2)    { stop("there must be at least two points") }
     if(ncol(xy) != 2)   { stop("xy must have two columns") }
 
-    H <- chull(xy)                       # convex hull
-    while(length(H) >= 2) {
-        n    <- length(H)                # number of hull vertices
-        Hidx <- seq(along=numeric(n))    # index for vertices
-        post <- (Hidx %% n) + 1          # next vertex in S
-        prev <- Hidx[order(post)]        # previous vertex in S
-        mIdx <- getMaxRad(xy, H)         # idx for maximum radius
+    ## Skyum algorithm based on the convex hull
+    H <- chull(xy)                       # hull indices (vertices ordered clockwise)
+    S <- H                               # copy that will be changed
+    while(length(S) >= 2) {
+        n    <- length(S)                # number of remaining hull vertices
+        Sidx <- seq(along=numeric(n))    # index for vertices
+        post <- (Sidx %% n) + 1          # next vertex in S
+        prev <- Sidx[order(post)]        # previous vertex in S
+        mIdx <- getMaxRad(xy, S)         # idx for maximum radius
 
         ## triangle where mIdx is vertex B in ABC
-        Hmax <- rbind(xy[H[prev[mIdx]], ], xy[H[mIdx], ], xy[H[post[mIdx]], ])
+        Smax <- rbind(xy[S[prev[mIdx]], ], xy[S[mIdx], ], xy[S[post[mIdx]], ])
 
-        ## if there's only two vertices, we're done
-        if(length(H) == 2) { break }
+        ## if there's only two hull vertices, we're done
+        if(n <= 2) { break }
 
         ## check if angle(ABC) is > 90
         ## if so, eliminate B - if not, we're done
-        if(isBiggerThan90(Hmax)) { H <- H[-mIdx] } else { break }
+        if(isBiggerThan90(Smax)) { S <- S[-mIdx] } else { break }
     }
 
-    return(getCircleFrom3(Hmax))
+    return(getCircleFrom3(Smax))
 }

@@ -2,6 +2,10 @@ getMaxPairDist <-
 function(xy) {
     if(!is.matrix(xy))  { stop("xy must be a matrix") }
     if(!is.numeric(xy)) { stop("xy must be numeric") }
+    if(nrow(xy) < 2) {
+        warning("max pairwise distance needs >= 2 points")
+        return(list(d=0, idx=1))
+    }
 
     dMat <- dist(xy, method="euclidean")   # distance matrix
     n    <- nrow(xy)                       # number of observations

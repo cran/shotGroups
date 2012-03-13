@@ -1,8 +1,14 @@
 groupSpread <-
-function(xy, plots=TRUE, conversion="m2cm", dstTarget=25) {
+function(xy, plots=TRUE, level=0.5, dstTarget=25, conversion="m2cm") {
     if(!is.matrix(xy))  { stop("xy must be a matrix") }
     if(!is.numeric(xy)) { stop("xy must be numeric") }
     if(ncol(xy) != 2)   { stop("xy must have two columns") }
+
+    haveRob <- TRUE                      # can we do robust estimation?
+    if(nrow(xy) < 4) {
+        warning("we need >= 4 points for robust estimations")
+        haveRob <- FALSE
+    }
 
     #####-----------------------------------------------------------------------
     ## prepare data
@@ -16,35 +22,61 @@ function(xy, plots=TRUE, conversion="m2cm", dstTarget=25) {
                       MOA=getMOA(c(sd(X), sd(Y)), dstTarget, conversion))
     colnames(res$sdXY) <- c("X", "Y")
 
+    ## and their 95%-confidence intervals
+    N     <- nrow(xy)
+    alpha <- 0.05
+    xLow  <- sqrt((N-1)*var(X) / qchisq(1-(alpha/2), N-1))
+    xHi   <- sqrt((N-1)*var(X) / qchisq(   alpha/2,  N-1))
+    yLow  <- sqrt((N-1)*var(Y) / qchisq(1-(alpha/2), N-1))
+    yHi   <- sqrt((N-1)*var(Y) / qchisq(   alpha/2,  N-1))
+    res$CIsdXY <- rbind(sdX=c("("=xLow, ")"=xHi), sdY=c("("=yLow, ")"=yHi))
+
     ## robust standard deviations of x- and y-coords
-    # library(robustbase)                  # for covMcd()
-    rob         <- covMcd(xy, cor=TRUE)
-    res$sdXYrob <- rbind(unit=sqrt(diag(rob$cov)),   # robust sd
-                         MOA=getMOA(sqrt(diag(rob$cov)), dstTarget, conversion))
-    colnames(res$sdXYrob) <- c("X", "Y")
+    if(haveRob) {
+        # library(robustbase)              # for covMcd()
+        rob         <- covMcd(xy, cor=FALSE)
+        res$sdXYrob <- rbind(unit=sqrt(diag(rob$cov)),   # robust sd
+                              MOA=getMOA(sqrt(diag(rob$cov)), dstTarget, conversion))
+        colnames(res$sdXYrob) <- c("X", "Y")
+    }
 
-    ## covariance- and correlation-matrices, and their robust estimates
-    res$covXY    <- cov(xy)              # covariance matrix
-    res$covXYrob <- rob$cov              # robust estimate covariance matrix
-    res$corXY    <- cor(xy)              # correlation-matrix
-    res$corXYrob <- rob$cor              # robust estimate correlation-matrix
+    ## (robust) center and covariance-matrix
+    ctr <- colMeans(xy)                  # group center
+    if(haveRob) { ctrRob <- rob$center }
+    res$covXY <- cov(xy)                 # covariance matrix
+    if(haveRob) { res$covXYrob <- rob$cov }
 
-    ## more spread measures
-    dstCtr  <- getDistToCtr(xy)          # distances to group center
-    maxPD   <- getMaxPairDist(xy)        # maximum group spread
-    # bb      <- getBoundingBox(xy)        # bounding box
-    bb      <- getMinBBox(xy)            # minimum bounding box
-    minCirc <- getMinCircle(xy)          # minimum enclosing circle
-    res$meanDistToCtr <- c(unit=mean(dstCtr),  # mean distance to center
+    ## mean distance to group center
+    dstCtr <- getDistToCtr(xy)
+    res$meanDistToCtr <- c(unit=mean(dstCtr),
                            MOA=getMOA(mean(dstCtr), dstTarget, conversion))
-    res$maxPairDist   <- c(unit=maxPD$d,       # maximum pairwise distance
-                           MOA=getMOA(maxPD$d, dstTarget, conversion))
-    res$groupWidth    <- c(unit=bb$width,      # group width
-                           MOA=getMOA(bb$width, dstTarget, conversion))
-    res$groupHeight   <- c(unit=bb$height,     # group height
-                           MOA=getMOA(bb$height, dstTarget, conversion))
-    res$minCircleRad  <- c(unit=minCirc$rad,   # radius min enclosing circle
-                           MOA=getMOA(minCirc$rad, dstTarget, conversion))
+
+    ## maximum pairwise distance
+    maxPD <- getMaxPairDist(xy)
+    res$maxPairDist <- c(unit=maxPD$d, MOA=getMOA(maxPD$d, dstTarget, conversion))
+
+    ## width and height of minimum bounding box
+    # bb            <- getBoundingBox(xy)   # bounding box
+    bb            <- getMinBBox(xy)      # minimum bounding box
+    groupWidth    <- c(bb$width,  getMOA(bb$width,  dstTarget, conversion))
+    groupHeight   <- c(bb$height, getMOA(bb$height, dstTarget, conversion))
+    res$groupRect <- cbind(width=groupWidth, height=groupHeight)
+    rownames(res$groupRect) <- c("unit", "MOA")
+
+    ## radius of minimum enclosing circle
+    minCirc <- getMinCircle(xy)          # minimum enclosing circle
+    res$minCircleRad <- c(unit=minCirc$rad,
+                          MOA=getMOA(minCirc$rad, dstTarget, conversion))
+
+    ## confidence ellipse measures
+    confEll <- getConfEll(xy, level, dstTarget, conversion)
+    res$confEll <- confEll$size
+    if(haveRob) { res$confEllRob <- confEll$sizeRob }
+    res$confEllShape <- confEll$shape
+    if(haveRob) { res$confEllShapeRob <- confEll$shapeRob }
+
+    ## circular error probable
+    res$CEPrand <- getCEP(xy, dstTarget, conversion)$RAND
 
     if(plots) {
         #####-------------------------------------------------------------------
@@ -54,7 +86,7 @@ function(xy, plots=TRUE, conversion="m2cm", dstTarget=25) {
              main="Histogram distances to center w/ kernel density estimate")
         rug(jitter(dstCtr))              # show single values
         lines(density(dstCtr), lwd=2, col="red")  # add kernel density estimate
-        legend(x="topleft", legend="kernel density estimate", col="red",
+        legend(x="topright", legend="kernel density estimate", col="red",
                lty=1, lwd=2, bg="white")
         
         #####-------------------------------------------------------------------
@@ -63,34 +95,26 @@ function(xy, plots=TRUE, conversion="m2cm", dstTarget=25) {
         xLims <- range(c(bb$pts[ , 1], minCirc$ctr[1] + c(-minCirc$rad, minCirc$rad)))
         yLims <- range(c(bb$pts[ , 2], minCirc$ctr[2] + c(-minCirc$rad, minCirc$rad)))
 
-        ## calculate radius for confidence ellipse
-        alpha <- 0.05                    # alpha-level
-        N     <- nrow(xy)                # number of observations
-        dfn   <- ncol(xy)                # numerator df
-        dfd   <- N-1                     # denominator df
-        rad   <- sqrt(dfn*qf(1-alpha, dfn, dfd))  # radius
         dev.new()                        # open new diagram
         plot(Y ~ X, asp=1, xlim=xLims, ylim=yLims, pch=20, main="Group (x,y)-coordinates")
         abline(v=0, h=0, col="lightgray")  # add point of aim
 
         ## add group center and robust estimate for group center
-        ctr      <- colMeans(xy)         # group center
-        covXY    <- cov(xy)              # covariance matrix (x,y)-coords
-        ctrRob   <- rob$center           # robust estimate: group center
-        covXYrob <- rob$cov              # robust estimate: group covariance matrix
-
-        points(ctr[1],    ctr[2],    col="red",  pch=4, lwd=2, cex=1.5)
-        points(ctrRob[1], ctrRob[2], col="blue", pch=4, lwd=2, cex=1.5)
+        points(ctr[1], ctr[2], col="red",  pch=4, lwd=2, cex=1.5)
+        if(haveRob) { points(ctrRob[1], ctrRob[2], col="blue", pch=4, lwd=2, cex=1.5) }
         
         ## add confidence ellipses (parametric, robust),
         ## and a circle with mean distance to center
-        drawEllipse(ctr,    covXY,    radius=rad, pch=4, fg="red",  lwd=2)
-        drawEllipse(ctrRob, covXYrob, radius=rad, pch=4, fg="blue", lwd=2)
+        drawEllipse(ctr, res$covXY, radius=confEll$magFac, pch=4, fg="red",  lwd=2)
+        if(haveRob) {
+            drawEllipse(ctrRob, res$covXYrob, radius=confEll$magFac, pch=4, fg="blue", lwd=2)
+        }
         drawCircle(ctr[1], ctr[2], radius=mean(dstCtr), fg="black", lwd=2)
 
         ## add legend
         legend(x="bottomleft", legend=c("center", "center (robust)",
-               "95% confidence ellipse", "95% confidence ellipse (robust)",
+               paste(100*level, "% confidence ellipse", sep=""),
+               paste(100*level, "% confidence ellipse (robust)", sep=""),
                "mean distance to center"),
                col=c("red", "blue", "red", "blue", "black"), pch=c(4, 4, NA, NA, NA),
                lty=c(NA, NA, 1, 1, 1), lwd=2, bg="white")

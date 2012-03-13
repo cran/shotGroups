@@ -23,7 +23,7 @@
 \code{\link[graphics]{polygon}}
 }
 \examples{
-## characteristic ellipse for a set of points
+## error ellipse for a set of points
 xy     <- matrix(round(rnorm(100, 0, 8), 2), ncol=2)
 ctr    <- colMeans(xy)
 covMat <- cov(xy)

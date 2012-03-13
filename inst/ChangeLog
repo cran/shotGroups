@@ -1,7 +1,30 @@
-$Date: 2012-03-07 11:37:29 +0000 (Wed, 07 Mar 2012) $
+$Date: 2012-03-13 11:37:29 +0000 (Tue, 13 Mar 2012) $
 
 SHOTGROUPS RELEASE VERSIONS at http://cran.r-project.org/
 
+Version 0.2 (March 13, 2012)
+
+    * compareGroups(): better naming of columns in returned matrices to identify original group
+    * compareGroups(): return correlation matrices of (x,y)-coordinates (instead of covariance matrices)
+    * groupShape(): return correlation matrix of (x,y)-coordinates
+    * groupShape(): better y-axis limits for histograms
+    * groupShape(): chi^2 Q-Q-plot of (robust Mahalanobis distances)^2: reference line now has intercept 0 and slope 1, sample quantiles are on the y-axis
+    * groupSpread(): don't return correlation matrix of (x,y)-coordinates (only covariance matrix)
+    * groupSpread(): option to select the confidence level for the confidence ellipse
+    * groupSpread(): return size, aspect ratio and flattening of the confidence ellipse
+    * groupSpread(): return modified RAND R-234 estimate for the circular error probable (CEP)
+    * groupSpread(): return parametric 95%-confidence intervals for the standard deviations of x- and y-coordinates
+    * getConfEll(): new function to return measures of a confidence ellipse
+    * getCEP(): new function to return estimates for the circular error probable (CEP)
+    * DFsavage: new dataset with groups from a rifle at 100 to 300m, thanks to Charles & Paul McMillan
+    * DFtalon: new dataset with groups from an air gun at 10m, thanks to Charles & Paul McMillan
+    * getMinBBox(): more efficient implementation (rotating calipers)
+    * getMinCircle(): fix bug for cases where minimum enclosing circle is defined by two points
+    * drawEllipse(): fix bug where ellipse was sometimes slightly misoriented
+    * compareGroups(): fix bug where only data from first 8 groups was plotted
+    * make functions work when there are only 2 points
+    * leave out robust estimations with less than 4 points
+
 Version 0.1 (March 07, 2012)
 
-	* initial release
+    * initial release

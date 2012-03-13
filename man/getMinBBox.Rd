@@ -13,9 +13,6 @@ A list with the following information about the minimum-area bounding box:
 \item{height }{height of the box.}
 \item{angle }{orientation of the box' longer edge pointing up as returned by \code{\link{atan2}}, but in degree.}
 }
-\section{Warning }{
-This function uses an algorithm with quadratic time complexity, based on the edges of the convex hull. The 'rotating calipers' algorithm would be more efficient.
-}
 \seealso{
 \code{\link[shotGroups]{drawBox2}},
 \code{\link[shotGroups]{getBoundingBox}},

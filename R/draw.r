@@ -39,13 +39,14 @@ function(ctr, shape, radius=1, nv=100, fg=par("fg"), bg=NA, colCtr=NA,
     if(!is.matrix(shape))  { stop("shape must be a matrix") }
     if(!is.numeric(shape)) { stop("shape must be numeric") }
     if((nrow(shape) != 2) | (ncol(shape) != 2)) { stop("shape must be a (2 x 2)-matrix") }
-    if(!isTRUE(all.equal(max(abs(shape - t(shape))), 0))) {
+    if(!isTRUE(all.equal(max(abs(shape - t(shape))), 0, check.attributes=FALSE))) {
         stop("shape must be symmetric")
     }
 
-    RR     <- chol(shape, pivot=TRUE)      # Cholesky-decomposition
+    CD     <- chol(shape, pivot=TRUE)      # Cholesky-decomposition
+    CDord  <- order(attr(CD, "pivot"))
     angles <- seq(0, 2*pi, length.out=nv)  # angles in radians
-    ell    <- radius * cbind(cos(angles), sin(angles)) %*% RR      # ellipse
+    ell    <- radius * cbind(cos(angles), sin(angles)) %*% CD[ , CDord]  # ellipse
     ellCtr <- sweep(ell, 2, ctr, "+")      # move ellipse to center
 
     ## draw center and ellipse

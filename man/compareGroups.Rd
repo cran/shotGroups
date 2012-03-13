@@ -18,7 +18,7 @@
 OnTarget PC/TDS' \code{Group} variable identifies groups just within one file, whereas factor \code{Series} is taken to number groups also across different original files. If you only have one original file, you can just copy variable \code{Groups} to \code{Series} in your data frame. \cr \cr
 In addition to the numerical results listed below, this function produces the following diagrams:
 \itemize{
-\item a scatterplot showing all groups, as well as their respective center and characteristic ellipse
+\item a scatterplot showing all groups, as well as their respective center and 50\%-confidence ellipse
 \item a scatterplot showing all groups, as well as their respective minimum bounding box, minimum enclosing circle, and maximum group spread
 \item a scatterplot showing all groups, as well as their respective minimum enclosing circle and circle with average distance to center
 }
@@ -26,15 +26,16 @@ In addition to the numerical results listed below, this function produces the fo
 \value{
 A list with the results from numerical comparisons and statistical tests.
 \item{ctr }{group centers relative to the respective point of aim.}
-\item{distPOA }{distances from group centers to point of aim in original measurement units and MOA.}
+\item{distPOA }{distances from group centers to point of aim (in original measurement units and MOA).}
 \item{MANOVA }{MANOVA result from testing equality of group centers (test statistic is Wilk's lambda).}
+\item{corXY }{group correlation matrices for the (x,y)-coordinates.}
 \item{sdXY }{group standard deviations for the x- and y-coordinates.}
-\item{covXY }{group covariance matrices for the (x,y)-coordinates.}
-\item{meanDistToCtr }{average distances from points to their group centers in original measurement units and MOA.}
-\item{maxPairDist }{maximum pairwise distance between points for each group in original measurement units and MOA.}
-\item{groupWidth }{width of minimum bounding box for each group in original measurement units and MOA.}
-\item{groupHeight }{height of minimum bounding box for each group in original measurement units and MOA.}
-\item{minCircleRad }{radius for the minimum enclosing circle for each group in original measurement units and MOA.}
+\item{meanDistToCtr }{average distances from points to their group centers (in original measurement units and MOA).}
+\item{maxPairDist }{maximum pairwise distance between points for each group (center-to-center, a.k.a. maximum spread, in original measurement units and MOA).}
+\item{groupWidth }{width of minimum bounding box for each group (in original measurement units and MOA).}
+\item{groupHeight }{height of minimum bounding box for each group (in original measurement units and MOA).}
+\item{minCircleRad }{radius for the minimum enclosing circle for each group (in original measurement units and MOA).}
+\item{CEPrand }{modified RAND R-234 estimate for the 50\% circular error probable (CEP) in each group (in original measurement units and MOA).}
 \item{AnsariX }{Ansari-Bradley-Test result from testing equality of group variances for x-coordinates. When two groups are compared.}
 \item{AnsariY }{Ansari-Bradley-Test result from testing equality of group variances for y-coordinates. When two groups are compared.}
 \item{Wilcoxon }{Wilcoxon-Rank-Sum-Test result from testing equality of average point distances to their respective group center. When two groups are compared.}
@@ -49,6 +50,7 @@ A list with the results from numerical comparisons and statistical tests.
 \code{\link[shotGroups]{getMaxPairDist}},
 \code{\link[shotGroups]{getMinBBox}},
 \code{\link[shotGroups]{getMinCircle}},
+\code{\link[shotGroups]{getCEP}},
 \code{\link[shotGroups]{getMOA}},
 \code{\link[shotGroups]{drawEllipse}},
 \code{\link[stats]{anova.mlm}},
@@ -66,5 +68,6 @@ cmp   <- compareGroups(DFsub, conversion='yd2in')
 names(cmp)
 cmp$ctr
 cmp$meanDistToCtr
+cmp$CEPrand
 cmp$Wilcoxon
 }

@@ -4,20 +4,22 @@ function(DF, plots=TRUE, xyTopLeft=TRUE, ABalt=c("two.sided", "less", "greater")
     if(!is.data.frame(DF)) { stop("DF must be a data frame") }
 
     #####-----------------------------------------------------------------------
-    ## make sure DF has the required variable names and at least two series
+    ## make sure DF has the required variable names and at least two groups
     varNames <- names(DF)                # what variables are present
     needs    <- c("Series", "Distance", "Aim.X", "Aim.Y", "Point.X", "Point.Y")  # required
     has      <- needs %in% varNames      # what we have of the required ones
     if(!all(has)) {
-        stop(cat("the data frame is missing variable(s)", needs[!has], "\n"))
+        stop(cat("the data frame is missing variable(s)\n", needs[!has], "\n"))
     }
-
-    if(nlevels(DF$Series) < 2) { stop("comparison requires at least 2 series") }
 
     #####-----------------------------------------------------------------------
     ## prepare data
     res       <- vector("list", 0)       # empty list to later collect the results
     DF$Series <- droplevels(DF$Series)   # remove all non-used factor levels
+
+    ## check if we have enough groups and points per group
+    if(nlevels(DF$Series) < 2)    { stop("we need >= 2 groups for a comparison") }
+    if(any(table(DF$Series) < 2)) { stop("we need >= 2 points in each group") }
 
     ## prepare data: coords relative to point of aim
     ## y-coords exported from OnTarget: (0,0) is top-left
@@ -31,47 +33,51 @@ function(DF, plots=TRUE, xyTopLeft=TRUE, ABalt=c("two.sided", "less", "greater")
     dstTarget <- tapply(DF$Distance, DF$Series, mean)  # distances to target
 
     ## for each group extract the new (x,y)-coords as a matrix
-    xy <- lapply(split(DF, DF$Series), function(x) {
-                 data.matrix(subset(x, select=c("X", "Y"))) } )
-    nS <- length(xy)                     # total number of series
-    names(xy) <- paste("Series", seq(along=numeric(nS)), sep="")
+    xyL <- lapply(split(DF, DF$Series), function(x) {
+                  data.matrix(subset(x, select=c("X", "Y"))) } )
+    nS <- length(xyL)                    # total number of series
+    names(xyL) <- paste("Series", levels(DF$Series), sep="")
 
     #####-----------------------------------------------------------------------
     ## location measures
-    res$ctr     <- sapply(xy, colMeans)  # group centers
+    res$ctr     <- sapply(xyL, colMeans)  # group centers
     distPOA     <- sqrt(colSums(res$ctr^2))  # distances to point of aim
     distPOAmoa  <- getMOA(distPOA, dstTarget, conversion)
     res$distPOA <- rbind(unit=distPOA, MOA=distPOAmoa)
 
     ## multivariate location test for equal group centers
-    res$MANOVA  <- anova(lm(cbind(X, Y) ~ Series, data=DF), test="Wilks")
+    res$MANOVA <- anova(lm(cbind(X, Y) ~ Series, data=DF), test="Wilks")
+
+    #####-----------------------------------------------------------------------
+    ## shape measures
+    ## correlation matrices for x- and y-coords
+    res$corXY <- lapply(xyL, cor)
 
     #####-----------------------------------------------------------------------
     ## spread measures
-    ## covariance matrices and standard deviations for x- and y-coords
-    res$covXY <- lapply(xy, cov)         # covariance matrices (x,y)-coords
-    res$sdXY  <- sapply(res$covXY, function(x) sqrt(diag(x)))  # std devs
+    ## standard deviations for x- and y-coords
+    covXY    <- lapply(xyL, cov)         # covariance matrices (x,y)-coords
+    res$sdXY <- sapply(covXY, function(x) sqrt(diag(x)))  # std devs
 
-    #####-----------------------------------------------------------------------
-    ## more spread measures
     ## mean distances to group center
-    dstList   <- lapply(xy, getDistToCtr)  # distances to group center
+    dstList   <- lapply(xyL, getDistToCtr) # distances to group center
     dstCtr    <- do.call(c, dstList)       # as vector
     dstCtrMOA <- getMOA(dstCtr, DF$Distance, conversion)     # as MOA
     meanDistToCtr     <- tapply(dstCtr,    DF$Series, mean)  # mean distance
     meanDistToCtrMOA  <- tapply(dstCtrMOA, DF$Series, mean)  # as MOA
     res$meanDistToCtr <- rbind(unit=meanDistToCtr, MOA=meanDistToCtrMOA)
+    colnames(res$meanDistToCtr) <- names(xyL)
 
     ## maximum pairwise distance = maximum group spread
-    maxPD        <- lapply(xy, getMaxPairDist)  # max pairwise distance
+    maxPD        <- lapply(xyL, getMaxPairDist)  # max pairwise distance
     maxSpread    <- sapply(maxPD, function(x) { x$d } )
     maxPDidx     <- sapply(maxPD, function(x) { x$idx } )
     maxSpreadMOA <- getMOA(maxSpread, dstTarget, conversion)  # as MOA
     res$maxPairDist <- rbind(unit=maxSpread, MOA=maxSpreadMOA)
 
     ## bounding box width and height
-    ## bbs             <- lapply(xy, getBoundingBox)    # bounding boxes
-    bbs             <- lapply(xy, getMinBBox)  # minimum bounding boxes
+    ## bbs             <- lapply(xyL, getBoundingBox)   # bounding boxes
+    bbs             <- lapply(xyL, getMinBBox)
     groupWidth      <- sapply(bbs, function(x) { x$width } )
     groupHeight     <- sapply(bbs, function(x) { x$height } )
     groupWidthMOA   <- getMOA(groupWidth,  dstTarget, conversion)
@@ -80,10 +86,20 @@ function(DF, plots=TRUE, xyTopLeft=TRUE, ABalt=c("two.sided", "less", "greater")
     res$groupHeight <- rbind(unit=groupHeight, MOA=groupHeightMOA)
 
     ## radius of minimum enclosing circle
-    minCircs         <- lapply(xy, getMinCircle)  # minimum enclosing circles
+    minCircs         <- lapply(xyL, getMinCircle)
     minCircleRad     <- sapply(minCircs, function(x) { x$rad } )     # radius
     minCircleRadMOA  <- getMOA(minCircleRad, dstTarget, conversion)  # as MOA
     res$minCircleRad <- rbind(unit=minCircleRad, MOA=minCircleRadMOA)
+
+    ## 50% circular error probable
+    CEPlist <- vector("list", nS)
+    for(i in seq(along=numeric(nS))) {
+        CEPlist[[i]] <- getCEP(xyL[[i]], dstTarget[i], conversion)
+    }
+    CEPrandL <- lapply(CEPlist, function(x) { x$RAND[ , "50%", drop=FALSE] } )
+    CEPmat   <- do.call(cbind, CEPrandL)      # as matrix
+    colnames(CEPmat) <- names(xyL)
+    res$CEPrand <- CEPmat
 
     #####-----------------------------------------------------------------------
     ## tests for equal spread
@@ -110,26 +126,26 @@ function(DF, plots=TRUE, xyTopLeft=TRUE, ABalt=c("two.sided", "less", "greater")
         #####-----------------------------------------------------------------------
         ## diagram: 2D-scatter plot for the (x,y)-distribution
         syms <- c(4, 16, 2, 1, 6, 8, 3, 5, 7, 9:13, 15, 17:25)  # data symbols
-        cols <- palette()[1:nS]          # colors
+        cols <- rainbow(nS)              # colors
         
         if(nS > length(syms)) { stop(paste("at most", length(syms), "series possible")) }
         
         dev.new()                        # open new diagram
         plot(DF$X, DF$Y, asp=1, lwd=2, xlab="X", ylab="Y",
              pch=syms[unclass(DF$Series)], col=cols[unclass(DF$Series)],
-             main="Groups with characteristic ellipses")
+             main="Groups with error ellipses")
         abline(v=0, h=0, col="lightgray")  # add point of aim
         
         ## add confidence ellipses and group centers
         for(i in seq(along=numeric(nS))) {
-            drawEllipse(res$ctr[ , i], res$covXY[[i]], radius=1, fg=cols[i],
+            drawEllipse(res$ctr[ , i], covXY[[i]], radius=1, fg=cols[i],
                         lwd=2, pch=syms[i], cex=3)
             points(res$ctr[1, i], res$ctr[2, i], pch=syms[i], col=cols[i], cex=3, lwd=2)
         }
         
         ## add legend
-        legend(x="bottomleft", legend=paste("Series", 1:nS, sep=" "),
-               lty=NA, pch=syms[1:nS], col=cols[1:nS], lwd=2, pt.cex=1.5, bg="white")
+        legend(x="bottomleft", legend=names(xyL), lty=NA, pch=syms[1:nS],
+               col=cols[1:nS], lwd=2, pt.cex=1.5, bg="white")
         
         #####-----------------------------------------------------------------------
         ## diagram: 2D-scatter plot for the (x,y)-distribution
@@ -151,14 +167,14 @@ function(DF, plots=TRUE, xyTopLeft=TRUE, ABalt=c("two.sided", "less", "greater")
             bb <- bbs[[i]]
             ## drawBox(bb$pts[1], bb$pts[2], bb$pts[3], bb$pts[4], fg=cols[i])
             drawBox2(bb$pts, fg=cols[i])
-            segments(x0=xy[[i]][maxPDidx[1, i], 1], y0=xy[[i]][maxPDidx[1, i], 2],
-                     x1=xy[[i]][maxPDidx[2, i], 1], y1=xy[[i]][maxPDidx[2, i], 2],
+            segments(x0=xyL[[i]][maxPDidx[1, i], 1], y0=xyL[[i]][maxPDidx[1, i], 2],
+                     x1=xyL[[i]][maxPDidx[2, i], 1], y1=xyL[[i]][maxPDidx[2, i], 2],
                      col=cols[i])
         }
         
         ## add legend
-        legend(x="bottomleft", legend=paste("Series", 1:nS, sep=" "),
-               lty=NA, pch=syms[1:nS], col=cols[1:nS], lwd=2, pt.cex=1.5, bg="white")
+        legend(x="bottomleft", legend=names(xyL), lty=NA, pch=syms[1:nS],
+               col=cols[1:nS], lwd=2, pt.cex=1.5, bg="white")
         
         #####-----------------------------------------------------------------------
         ## diagram: 2D-scatter plot for the (x,y)-distribution
@@ -177,8 +193,8 @@ function(DF, plots=TRUE, xyTopLeft=TRUE, ABalt=c("two.sided", "less", "greater")
         }
         
         ## add legend
-        legend(x="bottomleft", legend=paste("Series", 1:nS, sep=" "),
-               lty=NA, pch=syms[1:nS], col=cols[1:nS], lwd=2, pt.cex=1.5, bg="white")
+        legend(x="bottomleft", legend=names(xyL), lty=NA, pch=syms[1:nS],
+               col=cols[1:nS], lwd=2, pt.cex=1.5, bg="white")
     }                                    # if(plots)
 
     #####-----------------------------------------------------------------------

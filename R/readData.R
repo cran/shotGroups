@@ -39,7 +39,7 @@ function(fPath=getwd(), fNames, fPat, combine=FALSE) {
 
     has <- wants %in% varNames
     if(!all(has)) {
-        warning(cat("at least one file is missing variable(s)", wants[!has],
+        warning(cat("at least one file is missing variable(s)\n", wants[!has],
                     "\nthat may be required later by analysis functions\n"))
     }
 
@@ -56,10 +56,9 @@ function(fPath=getwd(), fNames, fPat, combine=FALSE) {
     ## Center X, Center Y, Point X, Point Y (10 fields + trailing tab = 11)
     nFields <- unlist(lapply(files, function(x) count.fields(x, sep="\t")))
     if(!all(nFields == 11)) {
-        stop(
-"it appears at least one file does not contain exactly
-the required set of 10 variables - see help(readDataOT1)
-maybe you should use readDataMisc instead")
+        stop(c("it appears at least one file does not contain exactly\n",
+               "the required set of 10 variables - see help(readDataOT1)\n",
+               "maybe you should use readDataMisc instead"))
     }
 
     ## read in files into a list of data frames
@@ -81,7 +80,7 @@ maybe you should use readDataMisc instead")
 
     has <- wants %in% varNames
     if(!all(has)) {
-        warning(cat("at least one file is missing variable(s)", wants[!has],
+        warning(cat("at least one file is missing variable(s)\n", wants[!has],
                     "\nthat may be required later by analysis functions\n"))
     }
 
@@ -98,10 +97,9 @@ function(fPath=getwd(), fNames, fPat, combine=FALSE) {
     ## Center X, Center Y, Point X, Point Y (10 fields)
     nFields <- unlist(lapply(files, function(x) count.fields(x, sep=",")))
     if(!all(nFields == 10)) {
-        stop(
-"it appears at least one file does not contain exactly
-the required set of 10 variables - see help(readDataOT2)
-maybe you should use readDataMisc instead")
+        stop(c("it appears at least one file does not contain exactly\n",
+               "the required set of 10 variables - see help(readDataOT2)\n",
+               "maybe you should use readDataMisc instead"))
     }
 
     ## read in files into a list of data frames
@@ -123,8 +121,8 @@ maybe you should use readDataMisc instead")
 
     has <- wants %in% varNames
     if(!all(has)) {
-        warning(cat("at least one file is missing variable(s)", wants[!has],
-                    "\nthat may be required later by analysis functions\n"))
+        warning(cat("at least one file is missing variable(s)\n", wants[!has],
+                    "\nthat may be required later by analysis functions"))
     }
 
     if(combine) { return(combineData(DFs)) } else { return(DFs) }

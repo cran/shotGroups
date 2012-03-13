@@ -16,11 +16,11 @@ function(DFs) {
     has1  <- needs %in% varNames             # required ones we have
     has2  <- wants %in% varNames             # useful ones we have
     if(!all(has1)) {
-        stop(cat("at least one data frame is missing variable(s)", needs[!has1], "\n"))
+        stop(cat("at least one data frame is missing variable(s)\n", needs[!has1], "\n"))
     }
 
     if(!all(has2)) {
-        warning(cat("at least one data frame is missing variable(s)", wants[!has2],
+        warning(cat("at least one data frame is missing variable(s)\n", wants[!has2],
                     "\nthat may be required later by analysis functions\n"))
     }
 

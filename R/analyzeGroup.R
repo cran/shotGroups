@@ -8,7 +8,7 @@ function(DF, xyTopLeft=TRUE, conversion="m2cm", bandW=0.5) {
     needs    <- c("Distance", "Aim.X", "Aim.Y", "Point.X", "Point.Y")   # what we need
     has      <- needs %in% varNames      # what we have of the required ones
     if(!all(has)) {
-        stop(cat("the data frame is missing variable(s) ", needs[!has], "\n"))
+        stop(cat("the data frame is missing variable(s)\n", needs[!has], "\n"))
     }
 
     #####-----------------------------------------------------------------------
@@ -26,8 +26,9 @@ function(DF, xyTopLeft=TRUE, conversion="m2cm", bandW=0.5) {
     ## assess shape, location and spread
     dstTrgt  <- mean(DF$Distance)       # distance to target
     shape    <- groupShape(   xy, plots=TRUE, bandW=bandW)
-    location <- groupLocation(xy, plots=FALSE, conversion=conversion, dstTarget=dstTrgt)
-    spread   <- groupSpread(  xy, plots=TRUE, dstTarget=dstTrgt)
+    location <- groupLocation(xy, plots=FALSE, dstTarget=dstTrgt, conversion=conversion)
+    spread   <- groupSpread(  xy, plots=TRUE, level=0.5, dstTarget=dstTrgt,
+                            conversion=conversion)
 
     #####-----------------------------------------------------------------------
     ## return all the collected numerical results and tests
