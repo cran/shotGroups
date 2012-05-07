@@ -21,16 +21,16 @@ McMillan, C. and McMillan, P. 2008. Characterizing rifle performance using circu
 \note{The Rayleigh approximation emerged under historical circumstances for ease of computation. The regular confidence ellipse as returned by \code{\link[shotGroups]{getConfEll}} should be considered instead.}
 \seealso{\code{\link[shotGroups]{getConfEll}}}
 \examples{
-xy <- matrix(round(rnorm(100, 0, 5), 2), ncol=2)
+xy   <- matrix(round(rnorm(100, 0, 5), 2), ncol=2)
 (cep <- getCEP(xy, dstTarget=25, conversion='m2cm'))
 
-# plot points and circle indicating 90\%-CEP
+# plot points, center and circles indicating 90\%-CEP estimates
 ctr <- colMeans(xy)             # center point
 plot(xy, pch=16, asp=1)
-drawCircle(ctr[1], ctr[2], cep$RAND["unit", "90\%"], fg='blue')
-drawCircle(ctr[1], ctr[2], cep$Rayleigh["unit", "90\%"], fg='green3')
+drawCircle(ctr[1], ctr[2], cep$RAND["unit", "50\%"], fg='blue')
+drawCircle(ctr[1], ctr[2], cep$RAND["unit", "90\%"], fg='green3')
 points(ctr[1], ctr[2], pch=4, col="red", cex=2)
-legend(x="bottomleft", legend=c("RAND 90", "Rayleigh 90", "center"),
-       col=c("blue", "green3", "red"), lwd=c(2, 2, NA),
-       lty=c(1, 1, NA), pch=c(NA, NA, 4))
+legend(x="bottomleft", legend=c("RAND 50", "RAND 90", "center"),
+       col=c("blue", "green3", "red"), lwd=c(2, 2, 2),
+       lty=c(1, 1, NA), pch=c(NA, NA, 4), bg="white")
 }

@@ -71,9 +71,10 @@ function(xy, plots=c("0", "1", "2"), dstTarget=25, conversion="m2cm",
     colnames(res$CIbootY) <- c("(", ")")
 
     if(plots > 0) {
+        devNew <- getDevice()            # platform-dependent window open
         #####-------------------------------------------------------------------
         ## diagram: 2D-scatter plot for the (x,y)-distribution
-        dev.new()                        # open new diagram
+        devNew()                         # open new diagram
         if(plots > 1) {                  # show target in background?
             plot(Y ~ X, asp=1, type="n", main="Group (x,y)-coordinates")
             drawTarget(target=target, unit=unit, cex=1.5)

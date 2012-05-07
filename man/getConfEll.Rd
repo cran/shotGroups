@@ -27,8 +27,8 @@ xy  <- matrix(round(rnorm(100, 0, 5), 2), ncol=2)
 (ce <- getConfEll(xy, level=0.5, dstTarget=25,
                   conversion='m2cm'))
 
-# plot points, parametric confidence ellipse,
-# and its axes
+# plot points, center, parametric confidence
+# ellipse, and its axes
 ctr    <- colMeans(xy)            # center point
 eigVec <- eigen(cov(xy))$vectors  # eigenvectors
 eigScl <- eigVec \%*\% diag(ce$size["unit", ])
@@ -39,6 +39,6 @@ yMat <- rbind(ctr[2] + eigScl[2, ], ctr[2] - eigScl[2, ])
 
 plot(xy, asp=1, pch=16)
 drawEllipse(ctr, cov(xy), radius=ce$magFac, fg="blue")
-matlines(xMat, yMat, col="blue")
+matlines(xMat, yMat, lty=1, col="blue")
 points(ctr[1], ctr[2], pch=4, col="red", cex=2)
 }

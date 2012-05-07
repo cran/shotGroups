@@ -79,9 +79,10 @@ function(xy, plots=TRUE, level=0.5, dstTarget=25, conversion="m2cm") {
     res$CEPrand <- getCEP(xy, dstTarget, conversion)$RAND
 
     if(plots) {
+        devNew <- getDevice()            # platform-dependent window open
         #####-------------------------------------------------------------------
         ## diagram: histogram for distances to group center
-        dev.new()                        # open new diagram
+        devNew()                         # open new diagram
         hist(dstCtr, breaks="FD", freq=FALSE,
              main="Histogram distances to center w/ kernel density estimate")
         rug(jitter(dstCtr))              # show single values
@@ -95,7 +96,7 @@ function(xy, plots=TRUE, level=0.5, dstTarget=25, conversion="m2cm") {
         xLims <- range(c(bb$pts[ , 1], minCirc$ctr[1] + c(-minCirc$rad, minCirc$rad)))
         yLims <- range(c(bb$pts[ , 2], minCirc$ctr[2] + c(-minCirc$rad, minCirc$rad)))
 
-        dev.new()                        # open new diagram
+        devNew()                         # open new diagram
         plot(Y ~ X, asp=1, xlim=xLims, ylim=yLims, pch=20, main="Group (x,y)-coordinates")
         abline(v=0, h=0, col="lightgray")  # add point of aim
 
@@ -121,7 +122,7 @@ function(xy, plots=TRUE, level=0.5, dstTarget=25, conversion="m2cm") {
         
         #####-------------------------------------------------------------------
         ## diagram: 2D-scatter plot for the (x,y)-distribution
-        dev.new()                        # open new diagram
+        devNew()                         # open new diagram
         plot(Y ~ X, asp=1, xlim=xLims, ylim=yLims, pch=20, main="Group (x,y)-coordinates")
         abline(v=0, h=0, col="lightgray")                             # add point of aim
         points(ctr[1], ctr[2], col="magenta", pch=4, lwd=2, cex=1.5)  # add group center

@@ -4,16 +4,16 @@
 \description{Reads in data from files exported by OnTarget PC v1.10. Several files can be read with one call.}
 \usage{readDataOT1(fPath = getwd(), fNames, fPat, combine = FALSE)}
 \arguments{
-  \item{fPath }{a character string containing the path to the folder with the OnTarget PC output files, e.g. \code{'c:/folder/otFiles'}.}
+  \item{fPath }{a character string containing the path to the folder with the OnTarget PC output files. E.g., \code{'c:/folder/otFiles'}.}
   \item{fNames }{a character vector containing the file names of the files that should be read in.}
-  \item{fPat }{a character string containing the regular-expression that describes all names of files that should be read in. E.g., \code{'^points[[:digit:]]{2}\\\\.txt$'} for filenames \code{'points**.txt'}, where \code{**} are 2 digits.}
+  \item{fPat }{a character string containing the regular-expression that describes all names of files that should be read in. E.g., \code{'^points[[:digit:]]{2}\\\\.txt$'} for filenames \code{'points**.txt'}, where \code{**} are 2 digits. See \code{\link{regex}}.}
   \item{combine }{a logical value indicating whether the data should be combined into one big data frame with \code{\link[shotGroups]{combineData}}.}
 }
 \details{
 If \code{fNames} is provided, \code{fPat} is ignored. \cr \cr
 If neither \code{fNames} nor \code{fPat} is provided, and we are in interactive mode under Windows, files can be chosen interactively. \cr \cr
 This function is basically a wrapper for \code{\link[utils]{read.delim}}. \cr \cr
-Output files need to be tab-delimited files from OnTarget PC v1.10: 'export point data'. Files need a trailing tab in each row, and need to contain exactly the following variable names in this order: \code{Project Title}, \code{Group}, \code{Ammunition}, \code{Distance}, \code{Aim X}, \code{Aim Y}, \code{Center X}, \code{Center Y}, \code{Point X}, \code{Point Y}. \cr \cr
+Output files need to be tab-delimited files from OnTarget PC v1.10: 'Tools -> Export Point Data'. Files need a trailing tab in each row, and need to contain exactly the following variable names in this order: \code{Project Title}, \code{Group}, \code{Ammunition}, \code{Distance}, \code{Aim X}, \code{Aim Y}, \code{Center X}, \code{Center Y}, \code{Point X}, \code{Point Y}. \cr \cr
 For reading in files exported from OnTarget PC 2.10 or OnTarget TDS v3.71, see \code{\link[shotGroups]{readDataOT2}}. \cr
 For reading in other tab-delimited text files, see \code{\link[shotGroups]{readDataMisc}}.
 }

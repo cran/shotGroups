@@ -12,6 +12,6 @@ export(analyzeGroup, combineData, compareGroups,
        drawBox, drawBox2, drawCircle, drawEllipse,
        fromMOA,
        getBoundingBox, getDistToCtr, getMaxPairDist,
-       getMinBBox, getMinCircle, getMOA, getConfEll, getCEP,
+       getMinBBox, getMinCircle, getMOA, getConfEll, getCEP, getXYmat,
        groupLocation, groupShape, groupSpread,
        readDataMisc, readDataOT1, readDataOT2)

@@ -88,7 +88,7 @@ A list with the results from the numerical analyses and statistical tests.
 data(DFinch)
 
 # select combined data from only first 4 series
-DF  <- subset(DFinch, Series \%in\% c(1:4))
+DF  <- subset(DFinch, Series \%in\% 1:4)
 res <- analyzeGroup(DF, conversion='yd2in')
 names(res)
 res$multNorm

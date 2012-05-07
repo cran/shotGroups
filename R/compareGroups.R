@@ -123,6 +123,7 @@ function(DF, plots=TRUE, xyTopLeft=TRUE, ABalt=c("two.sided", "less", "greater")
     }
 
     if(plots) {
+        devNew <- getDevice()            # platform-dependent window open
         #####-----------------------------------------------------------------------
         ## diagram: 2D-scatter plot for the (x,y)-distribution
         syms <- c(4, 16, 2, 1, 6, 8, 3, 5, 7, 9:13, 15, 17:25)  # data symbols
@@ -130,7 +131,7 @@ function(DF, plots=TRUE, xyTopLeft=TRUE, ABalt=c("two.sided", "less", "greater")
         
         if(nS > length(syms)) { stop(paste("at most", length(syms), "series possible")) }
         
-        dev.new()                        # open new diagram
+        devNew()                         # open new diagram
         plot(DF$X, DF$Y, asp=1, lwd=2, xlab="X", ylab="Y",
              pch=syms[unclass(DF$Series)], col=cols[unclass(DF$Series)],
              main="Groups with error ellipses")
@@ -155,7 +156,7 @@ function(DF, plots=TRUE, xyTopLeft=TRUE, ABalt=c("two.sided", "less", "greater")
         yLims <- range(c(DF$Y, bbs[[1]]$pts[ , 2],
                        minCircs[[1]]$ctr[2] + c(-minCircs[[1]]$rad, minCircs[[1]]$rad)))
 
-        dev.new()                        # open new diagram
+        devNew()                         # open new diagram
         plot(DF$X, DF$Y, asp=1, xlim=xLims, ylim=yLims, xlab="X", ylab="Y", lwd=2,
              pch=syms[unclass(DF$Series)], col=cols[unclass(DF$Series)],
              main="Groups w/ minimum bounding box & maximum spread")
@@ -178,7 +179,7 @@ function(DF, plots=TRUE, xyTopLeft=TRUE, ABalt=c("two.sided", "less", "greater")
         
         #####-----------------------------------------------------------------------
         ## diagram: 2D-scatter plot for the (x,y)-distribution
-        dev.new()                        # open new diagram
+        devNew()                         # open new diagram
         plot(DF$X, DF$Y, asp=1, xlim=xLims, ylim=yLims, xlab="X", ylab="Y", lwd=2,
              pch=syms[unclass(DF$Series)], col=cols[unclass(DF$Series)],
              main="Groups w/ minimum enclosing circle and mean dist to center")

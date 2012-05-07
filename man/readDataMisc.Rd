@@ -6,7 +6,7 @@
 \arguments{
   \item{fPath }{a character string containing the path to the folder with the data files, e.g. \code{'c:/folder/otFiles'}.}
   \item{fNames }{a character vector containing the file names of the files that should be read in.}
-  \item{fPat }{a character string containing the regular-expression that describes all names of files that should be read in. E.g., \code{'^points[[:digit:]]{2}\\\\.txt$'} for filenames \code{'points**.txt'}, where \code{**} are 2 digits.}
+  \item{fPat }{a character string containing the regular-expression that describes all names of files that should be read in. E.g., \code{'^points[[:digit:]]{2}\\\\.txt$'} for filenames \code{'points**.txt'}, where \code{**} are 2 digits. See \code{\link{regex}}.}
   \item{combine }{a logical value indicating whether the data should be combined into one big data frame with \code{\link[shotGroups]{combineData}}.}
 }
 \details{
