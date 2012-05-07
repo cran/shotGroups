@@ -20,6 +20,10 @@ function(xy, plots=TRUE, bandW=0.5) {
     ## (robust) correlation matrix of (x,y)-coords
     res$corXY <- cor(xy)                 # correlation-matrix
 
+    if(plots) {
+        devNew <- getDevice()            # platform-dependent window open
+    }
+
     if(haveRob) {
         # library(robustbase)              # for covMcd()
         rob          <- covMcd(xy, cor=TRUE)
@@ -27,7 +31,7 @@ function(xy, plots=TRUE, bandW=0.5) {
 
         #####-------------------------------------------------------------------
         ## outlier-analysis for joint distribution of (x,y)-coords
-        dev.new()                        # open new diagram
+        devNew()                         # open new diagram
         # library(mvoutlier)                     # for aq.plot()
         outXY        <- aq.plot(xy)            # outlier-analysis-plot
         res$Outliers <- which(outXY$outliers)  #  identified outliers
@@ -48,11 +52,11 @@ function(xy, plots=TRUE, bandW=0.5) {
     if(plots) {
         #####-------------------------------------------------------------------
         ## diagram: separate Q-Q-plots for eyeballing normality in x- and y-coords
-        dev.new()                        # open new diagram
+        devNew()                         # open new diagram
         qqnorm(X, pch=20, main="Q-Q-plot x-coordinates for eyeballing normality",
                xlab="Quantiles from normal distribution")
         qqline(X, col="red", lwd=2)      # reference line
-        dev.new()                        # open new diagram
+        devNew()                         # open new diagram
         qqnorm(Y, pch=20, main="Q-Q-plot y-coordinates for eyeballing normality",
                xlab="Quantiles from normal distribution")
         qqline(Y, col="red", lwd=2)      # reference line
@@ -65,10 +69,10 @@ function(xy, plots=TRUE, bandW=0.5) {
         dens    <- hist(X, breaks="FD", plot=FALSE)$density
         yLims   <- c(0, max(c(dens, maxNorm)))
 
-        dev.new()                        # open new diagram
+        devNew()                         # open new diagram
         hist(X, ylim=yLims, breaks="FD", freq=FALSE,
              main="Histogram x-coordinates w/ kernel density estimate")
-        rug(jitter(X))                    # show single values
+        rug(jitter(X))                   # show single values
         
         ## add fitted normal curve and kernel density estimate
         curve(dnorm(x, mean(X), sd(X)), lwd=2, col="blue", add=TRUE)
@@ -84,7 +88,7 @@ function(xy, plots=TRUE, bandW=0.5) {
         dens    <- hist(Y, breaks="FD", plot=FALSE)$density
         yLims   <- c(0, max(c(dens, maxNorm)))
 
-        dev.new()                        # open new diagram
+        devNew()                         # open new diagram
         hist(Y, ylim=yLims, breaks="FD", freq=FALSE,
              main="Histogram y-coordinates w/ kernel density estimate")
         rug(jitter(Y))                   # show single values
@@ -109,20 +113,16 @@ function(xy, plots=TRUE, bandW=0.5) {
             sMd   <- sort(mDist)
             qq    <- (0.5:length(mDist)) / length(mDist)
             qChi  <- qchisq(qq, df=ncol(xy))
-            dev.new()                        # open new diagram
+            devNew()                         # open new diagram
             plot(qChi, sMd, ylab="Quantiles (robust Mahalanobis distances)^2",
                  xlab="Quantiles chi^2 distribution", pch=20,
                  main="Chi^2 Q-Q-plot for eyeballing multivariate normality")
-
-            ## add a reference line throught first and third quantile
-            y <- quantile(mDist, c(0.25, 0.75))
-            x <- qchisq(c(0.25, 0.75), df=ncol(xy))
-            abline(a=0, b=1, col="red", lwd=2)
+            abline(a=0, b=1, col="red", lwd=2)  # add a reference line
         }
 
         #####-------------------------------------------------------------------
         ## diagram: 2D-kernel density estimate for joint (x,y)-distribution
-        dev.new()                        # open new diagram
+        devNew()                         # open new diagram
         smoothScatter(X, Y, asp=1, bandwidth=bandW,
                       main="2D-kernel density estimate and error ellipses")
         abline(h=0, v=0, lwd=2)          # add point of aim

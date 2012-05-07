@@ -11,12 +11,12 @@
   \item{radius }{a numerical vector giving the circle's radius.}
   \item{nv }{number of vertices in the approximating polygon.}
   \item{fg }{color of the circle's rim.}
-  \item{bg }{color of the circle's fill color. Set to \code{NA} for a fully transparent circle.}
+  \item{bg }{the circle's fill color. Set to \code{NA} for a fully transparent circle.}
   \item{colCtr }{color of the center point. Set to \code{NA} to omit.}
   \item{lty }{line type of the circle.}
   \item{lwd }{line width of the circle.}
   \item{pch }{symbol used for the center of the circle.}
-  \item{cex }{magnification factor for symbol used for the center of the circle.}
+  \item{cex }{magnification factor for the symbol used for the center of the circle.}
 }
 \details{
 This function is mainly a wrapper for \code{\link[graphics]{polygon}}. To draw more than a few circles efficiently, use \code{\link[graphics:symbols]{symbols}} instead.

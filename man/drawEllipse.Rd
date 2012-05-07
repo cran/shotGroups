@@ -11,12 +11,12 @@
   \item{radius }{a numerical value giving the ellipse's magnification factor.}
   \item{nv }{number of vertices in the approximating polygon.}
   \item{fg }{color of the ellipse's rim.}
-  \item{bg }{color of the ellipse's fill color. Set to \code{NA} for a fully transparent ellipse.}
+  \item{bg }{the ellipse's fill color. Set to \code{NA} for a fully transparent ellipse.}
   \item{colCtr }{color of the center point. Set to \code{NA} to omit.}
   \item{lty }{line type of the ellipse.}
   \item{lwd }{line width of the ellipse.}
   \item{pch }{symbol used for the center of the ellipse.}
-  \item{cex }{magnification factor for symbol used for the center of the ellipse.}
+  \item{cex }{magnification factor for the symbol used for the center of the ellipse.}
 }
 \details{This function is mainly a wrapper for \code{\link[graphics]{polygon}}.}
 \seealso{

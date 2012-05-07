@@ -5,7 +5,7 @@ function(xy) {
     if(ncol(xy) != 2)   { stop("xy must have two columns") }
     if(nrow(xy) < 2)    { stop("xy must have at least two rows") }
 
-    ## rotating pliers algorithm using the convex hull
+    ## rotating calipers algorithm using the convex hull
     H    <- chull(xy)                    # hull indices, vertices ordered clockwise
     n    <- length(H)                    # number of hull vertices
     hull <- xy[H, ]                      # hull vertices
@@ -21,44 +21,41 @@ function(xy) {
 
     ## project hull vertices on the subspaces spanned by the hull edges, and on
     ## the subspaces spanned by their orthogonal complements - in subspace coords
-    projHull <- huDir %*% t(hull)    # row = hull edge subspace, col = hull vert
-    projOrth <- ouDir %*% t(hull)    # row = orth subspace,      col = hull vert
+    projMat <- rbind(huDir, ouDir) %*% t(hull)
 
-    ## extreme projections that mark rectangle corners
-    extrIdxH <- t(apply(projHull, 1, function(x) { c(which.min(x), which.max(x)) } ))
-    extrIdxO <- t(apply(projOrth, 1, function(x) { c(which.min(x), which.max(x)) } ))
+    ## range of projections and corresponding width/height of bounding rectangle
+    rangeH  <- matrix(numeric(n*2), ncol=2)   # hull edge
+    rangeO  <- matrix(numeric(n*2), ncol=2)   # orth subspace
+    widths  <- numeric(n)
+    heights <- numeric(n)
+    for(i in seq(along=numeric(n))) {
+        rangeH[i, ] <- range(projMat[  i, ])
+        rangeO[i, ] <- range(projMat[n+i, ])  # orth subspace is in 2nd half
+        widths[i]   <- abs(diff(rangeH[i, ]))
+        heights[i]  <- abs(diff(rangeO[i, ]))
+    }
 
-    ## areas of bounding rectangles (in subspace coords)
-    widths  <- abs(diff(rbind(projHull[cbind(1:n, extrIdxH[ , 1])],
-                              projHull[cbind(1:n, extrIdxH[ , 2])])))
-    heights <- abs(diff(rbind(projOrth[cbind(1:n, extrIdxO[ , 1])],
-                              projOrth[cbind(1:n, extrIdxO[ , 2])])))
-
-    ## hull edge leading to the minimum-area bounding rectangle
-    eMin <- which.min(widths*heights)
-    w    <- widths[eMin]                 # width of minimum bounding rect
-    h    <- heights[eMin]                # height of minimum bounding rect
-
-    ## extreme projections in subspace coordinates
-    hProj <- rbind(   projHull[eMin, extrIdxH[eMin, ]], 0)
-    oProj <- rbind(0, projOrth[eMin, extrIdxO[eMin, ]])
+    ## extreme projections for min-area rect in subspace coordinates
+    eMin  <- which.min(widths*heights)   # hull edge leading to minimum-area
+    hProj <- rbind(   rangeH[eMin, ], 0)
+    oProj <- rbind(0, rangeO[eMin, ])
 
     ## move projections to rectangle corners
     hPts <- sweep(hProj, 1, oProj[ , 1], "+")
     oPts <- sweep(hProj, 1, oProj[ , 2], "+")
 
-    ## corners in standard coordintes
+    ## corners in standard coordinates, rows = x,y, columns = corners
+    ## in combined (4x2)-matrix: reverse point order to be usable in polygon()
     basis <- cbind(huDir[eMin, ], ouDir[eMin, ])  # basis formed by hull edge and orth
     hCorn <- basis %*% hPts
     oCorn <- basis %*% oPts
+    pts   <- t(cbind(hCorn, oCorn[ , c(2, 1)]))
 
     ## angle of longer edge pointing up
-    e   <- if(w > h)  { hCorn[, 2] - hCorn[, 1] } else { oCorn[, 2] - oCorn[, 1] }
-    eUp <- e * sign(e[2])                  # rotate upwards 180 deg if necessary
-    deg <- atan2(eUp[2], eUp[1])*180 / pi  # angle in degrees
+    dPts <- diff(pts)
+    e    <- dPts[which.max(rowSums(dPts^2)), ]  # one of the longer edges
+    eUp  <- e * sign(e[2])                  # rotate upwards 180 deg if necessary
+    deg  <- atan2(eUp[2], eUp[1])*180 / pi  # angle in degrees
 
-    ## return (4x2)-matrix: reverse point order -> make it usable in polygon()
-    pts <- t(cbind(hCorn, oCorn[ , c(2, 1)]))
-
-    return(list(pts=pts, width=w, height=h, angle=deg))
+    return(list(pts=pts, width=widths[eMin], height=heights[eMin], angle=deg))
 }

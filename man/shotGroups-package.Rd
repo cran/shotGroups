@@ -8,8 +8,8 @@
 \tabular{ll}{
 Package: \tab shotGroups\cr
 Type: \tab Package\cr
-Version: \tab 0.2\cr
-Date: \tab 2012-03-13\cr
+Version: \tab 0.2-1\cr
+Date: \tab 2012-05-07\cr
 Depends: \tab R (>= 2.11), boot, KernSmooth, modeltools (>= 0.2-9)\cr
 Imports: \tab coin, energy, graphics, grDevices, mvoutlier, robustbase, stats\cr
 License: \tab GPL (>= 2)\cr

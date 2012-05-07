@@ -63,7 +63,7 @@ A list with the results from numerical comparisons and statistical tests.
 data(DFinch)
 
 # select only first 2 series
-DFsub <- subset(DFinch, Series \%in\% c(2:3))
+DFsub <- subset(DFinch, Series \%in\% 2:3)
 cmp   <- compareGroups(DFsub, conversion='yd2in')
 names(cmp)
 cmp$ctr
