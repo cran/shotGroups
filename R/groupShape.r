@@ -17,36 +17,35 @@ function(xy, plots=TRUE, bandW=0.5) {
     Y   <- xy[ , 2]                      # y-coords
     res <- vector("list", 0)             # empty list to later collect the results
 
-    ## (robust) correlation matrix of (x,y)-coords
-    res$corXY <- cor(xy)                 # correlation-matrix
-
     if(plots) {
         devNew <- getDevice()            # platform-dependent window open
     }
 
+    ## correlation matrix of (x,y)-coords
+    res$corXY <- cor(xy)
+
     if(haveRob) {
-        # library(robustbase)              # for covMcd()
-        rob          <- covMcd(xy, cor=TRUE)
+        rob <- robustbase::covMcd(xy, cor=TRUE)
         res$corXYrob <- rob$cor          # robust estimate correlation-matrix
 
         #####-------------------------------------------------------------------
         ## outlier-analysis for joint distribution of (x,y)-coords
         devNew()                         # open new diagram
-        # library(mvoutlier)                     # for aq.plot()
-        outXY        <- aq.plot(xy)            # outlier-analysis-plot
+        op <- par(no.readonly=TRUE)      # save device parameters
+        outXY <- mvoutlier::aq.plot(xy)        # outlier-analysis-plot
         res$Outliers <- which(outXY$outliers)  #  identified outliers
+        par(op)                          # reset device parameters
     }
 
     #####-----------------------------------------------------------------------
     ## normality tests
     ## Shapiro-Wilk-Tests for normality of (x,y)-coords separately
     if(nrow(xy) >= 3) {
-        res$ShapiroX <- shapiro.test(X)      # normality x-coords
-        res$ShapiroY <- shapiro.test(Y)      # normality y-coords
+        res$ShapiroX <- shapiro.test(X)  # normality x-coords
+        res$ShapiroY <- shapiro.test(Y)  # normality y-coords
 
         ## Energy-Test for multivariate normality of joint (x,y)-distribution
-        # library(energy)                    # for mvnorm.etest()
-        res$multNorm <- mvnorm.etest(xy)
+        res$multNorm <- energy::mvnorm.etest(xy)
     } else { warning("need >= 3 points for normality tests") }
 
     if(plots) {

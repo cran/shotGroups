@@ -33,8 +33,7 @@ function(xy, plots=TRUE, level=0.5, dstTarget=25, conversion="m2cm") {
 
     ## robust standard deviations of x- and y-coords
     if(haveRob) {
-        # library(robustbase)              # for covMcd()
-        rob         <- covMcd(xy, cor=FALSE)
+        rob         <- robustbase::covMcd(xy, cor=FALSE)
         res$sdXYrob <- rbind(unit=sqrt(diag(rob$cov)),   # robust sd
                               MOA=getMOA(sqrt(diag(rob$cov)), dstTarget, conversion))
         colnames(res$sdXYrob) <- c("X", "Y")
@@ -49,7 +48,7 @@ function(xy, plots=TRUE, level=0.5, dstTarget=25, conversion="m2cm") {
     ## mean distance to group center
     dstCtr <- getDistToCtr(xy)
     res$meanDistToCtr <- c(unit=mean(dstCtr),
-                           MOA=getMOA(mean(dstCtr), dstTarget, conversion))
+                            MOA=getMOA(mean(dstCtr), dstTarget, conversion))
 
     ## maximum pairwise distance
     maxPD <- getMaxPairDist(xy)
@@ -66,10 +65,10 @@ function(xy, plots=TRUE, level=0.5, dstTarget=25, conversion="m2cm") {
     ## radius of minimum enclosing circle
     minCirc <- getMinCircle(xy)          # minimum enclosing circle
     res$minCircleRad <- c(unit=minCirc$rad,
-                          MOA=getMOA(minCirc$rad, dstTarget, conversion))
+                           MOA=getMOA(minCirc$rad, dstTarget, conversion))
 
     ## confidence ellipse measures
-    confEll <- getConfEll(xy, level, dstTarget, conversion)
+    confEll <- getConfEll(xy, level, dstTarget, conversion, doRob=haveRob)
     res$confEll <- confEll$size
     if(haveRob) { res$confEllRob <- confEll$sizeRob }
     res$confEllShape <- confEll$shape
@@ -96,7 +95,7 @@ function(xy, plots=TRUE, level=0.5, dstTarget=25, conversion="m2cm") {
         xLims <- range(c(bb$pts[ , 1], minCirc$ctr[1] + c(-minCirc$rad, minCirc$rad)))
         yLims <- range(c(bb$pts[ , 2], minCirc$ctr[2] + c(-minCirc$rad, minCirc$rad)))
 
-        devNew()                         # open new diagram
+        devNew()                           # open new diagram
         plot(Y ~ X, asp=1, xlim=xLims, ylim=yLims, pch=20, main="Group (x,y)-coordinates")
         abline(v=0, h=0, col="lightgray")  # add point of aim
 
@@ -106,7 +105,7 @@ function(xy, plots=TRUE, level=0.5, dstTarget=25, conversion="m2cm") {
         
         ## add confidence ellipses (parametric, robust),
         ## and a circle with mean distance to center
-        drawEllipse(ctr, res$covXY, radius=confEll$magFac, pch=4, fg="red",  lwd=2)
+        drawEllipse(ctr, res$covXY, radius=confEll$magFac, pch=4, fg="red", lwd=2)
         if(haveRob) {
             drawEllipse(ctrRob, res$covXYrob, radius=confEll$magFac, pch=4, fg="blue", lwd=2)
         }

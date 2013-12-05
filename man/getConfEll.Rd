@@ -2,12 +2,13 @@
 \alias{getConfEll}
 \title{Confidence ellipse}
 \description{Gives the 2D-confidence ellipse under the assumption of bivariate normality. Also includes the ellipse based on a robust estimate for the covariance matrix of the (x,y)-coordinates.}
-\usage{getConfEll(xy, level = 0.5, dstTarget = 25, conversion = 'm2cm')}
+\usage{getConfEll(xy, level = 0.5, dstTarget = 25, conversion = 'm2cm', doRob=TRUE)}
 \arguments{
   \item{xy }{a numerical (n x 2)-matrix with the (x,y)-coordinates of n points (1 row of coordinates per point).}
   \item{level }{a numerical value with the coverage for the confidence ellipse.}
   \item{dstTarget }{a numerical value with the distance to the target in MOA calculation. See \code{\link[shotGroups]{getMOA}}.}
   \item{conversion }{how to convert the measurement unit for distance to target to that of the (x,y)-coordinates in MOA calculation. See \code{\link[shotGroups]{getMOA}}.}
+  \item{doRob }{logical: should robust covariance matrix estimate also be used?}
 }
 \details{Robust estimate for the covariance matrix of (x,y)-coordinates is from \code{\link[robustbase]{covMcd}} using the MCD algorithm. See \code{\link[shotGroups]{getCEP}} for estimates of the circular error probable.}
 \value{
