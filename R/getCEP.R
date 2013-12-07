@@ -17,7 +17,7 @@ function(xy, dstTarget=25, conversion="m2cm") {
                   "way beyond what CEP might be good for\n"))
     }
 
-    flat  <- 1 - (ellRad[2] / ellRad[1])  # flattening of ellipse
+    flat  <- 1 - (ellRad[2] / ellRad[1]) # flattening of ellipse
     shape <- c(aspectRatio=aspRat, flattening=flat)
 
     ## CEP estimates for 50%, see McMillan & McMillan, 2008

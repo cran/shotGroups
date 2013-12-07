@@ -21,7 +21,7 @@ function(xy) {
     ## determinant of difference matrix = 0, no need to use det()
     dMat <- rbind(c(xDeltaA, yDeltaA), c(xDeltaB, yDeltaB))
     if(isTRUE(all.equal(dMat[1,1]*dMat[2,2] - dMat[1,2]*dMat[2,1], 0, check.attributes=FALSE))) {
-        ## define the circle as the one that's centered between them
+        ## define the circle as the one that's centered between the points
         rangeX <- range(c(aa[1], bb[1], cc[1]))
         rangeY <- range(c(aa[2], bb[2], cc[2]))
         ctr    <- c(rangeX[1] + 0.5*diff(rangeX), rangeY[1] + 0.5*diff(rangeY))
@@ -45,9 +45,10 @@ function(xy) {
 ##              (ay*(cx-bx) + by*(ax-cx) + cy*(bx-ax)))
 ## rad <- dist(rbind(xy, ctr))[3]
 
-## vertex that produces the circles with the maximum radius
+## vertex that produces the circle with the maximum radius
 ## used in getMinCircle()
-getMaxRad <- function(xy, S) {
+getMaxRad <-
+function(xy, S) {
     if(!is.matrix(xy))  { stop("xy must be a matrix") }
     if(!is.numeric(xy)) { stop("xy must be numeric") }
     if(ncol(xy) != 2)   { stop("xy must have two columns") }
@@ -68,8 +69,9 @@ getMaxRad <- function(xy, S) {
     return(which.max(rads))
 }
 
-## angle at B in triangle ABC
-getAngleTri <- function(xy, deg=TRUE) {
+## angle (in degrees) at B in triangle ABC
+getAngleTri <-
+function(xy, deg=TRUE) {
     if(!is.matrix(xy))  { stop("xy must be a matrix") }
     if(!is.numeric(xy)) { stop("xy must be numeric") }
     if((nrow(xy) != 3) | (ncol(xy) != 2)) { stop("xy must be (3x2)-matrix") }
@@ -92,7 +94,8 @@ getAngleTri <- function(xy, deg=TRUE) {
 }
 
 ## checks if the angle at B in triangle ABC is bigger than 90 degrees
-isBiggerThan90 <- function(xy) {
+isBiggerThan90 <-
+function(xy) {
     if(!is.matrix(xy))  { stop("xy must be a matrix") }
     if(!is.numeric(xy)) { stop("xy must be numeric") }
     if((nrow(xy) != 3) | (ncol(xy) != 2)) { stop("xy must be (3x2)-matrix") }
@@ -112,9 +115,28 @@ function(xy) {
     if(nrow(xy) < 2)    { stop("there must be at least two points") }
     if(ncol(xy) != 2)   { stop("xy must have two columns") }
 
-    ## Skyum algorithm based on the convex hull
-    H <- chull(xy)                       # hull indices (vertices ordered clockwise)
-    S <- H                               # copy that will be changed
+    H    <- chull(xy)      # convex hull indices (vertices ordered clockwise)
+    hPts <- xy[H, ]        # points that make up the convex hull
+
+    ## min circle may touch convex hull in only two points
+    ## if so, it is centered between the hull points with max distance
+    maxPD  <- getMaxPairDist(hPts)
+    idx    <- maxPD$idx    # index of points with max distance
+    rad    <- maxPD$d / 2  # half the distance -> radius
+    rangeX <- c(hPts[idx[1], 1], hPts[idx[2], 1])
+    rangeY <- c(hPts[idx[1], 2], hPts[idx[2], 2])
+    ctr    <- c(rangeX[1] + 0.5*diff(rangeX), rangeY[1] + 0.5*diff(rangeY))
+
+    ## check if circle centered between hPts[pt1Idx, ] and hPts[pt2Idx, ]
+    ## contains all points (all distances <= rad)
+    dst2ctr <- dist(rbind(ctr, hPts[-idx, ]))      # distances to center
+    if(all(as.matrix(dst2ctr)[-1, 1] <= rad)) {    # if all <= rad, we're done
+        tri <- rbind(hPts[idx, ], ctr)
+        return(getCircleFrom3(tri))
+    }
+
+    ## min circle touches hull in three points - Skyum algorithm
+    S <- H                               # copy of hull indices that will be changed
     while(length(S) >= 2) {
         n    <- length(S)                # number of remaining hull vertices
         Sidx <- seq(along=numeric(n))    # index for vertices

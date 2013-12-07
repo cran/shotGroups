@@ -1,5 +1,5 @@
 getConfEll <-
-function(xy, level=0.5, dstTarget=25, conversion="m2cm") {
+function(xy, level=0.5, dstTarget=25, conversion="m2cm", doRob=TRUE) {
     if(!is.matrix(xy))  { stop("xy must be a matrix") }
     if(!is.numeric(xy)) { stop("xy must be numeric") }
     if(ncol(xy) != 2)   { stop("xy must have two columns") }
@@ -8,12 +8,6 @@ function(xy, level=0.5, dstTarget=25, conversion="m2cm") {
 
     ## check for minimum number of points
     if(nrow(xy) < 2) { stop("we need >= 2 points for confidence ellipse") }
-
-    haveRob <- TRUE                      # can we do robust estimation?
-    if(nrow(xy) < 4) {
-        warning("we need >= 4 points for robust estimations")
-        haveRob <- FALSE
-    }
 
     ## group center and covariance matrix
     covXY  <- cov(xy)                    # covariance matrix (x,y)-coords
@@ -33,9 +27,10 @@ function(xy, level=0.5, dstTarget=25, conversion="m2cm") {
     flat     <- 1 - (ellRad[2] / ellRad[1])
     shape    <- c(aspectRatio=aspRatio, flattening=flat)
 
-    if(haveRob) {                        # same for robust estimation
-        # library(robustbase)                  # for covMcd()
-        rob       <- covMcd(xy)
+    if(doRob) {                          # same for robust estimation
+        if(nrow(xy) < 4) { stop("we need >= 4 points for robust estimations") }
+
+        rob       <- robustbase::covMcd(xy)
         covXYrob  <- rob$cov             # robust estimate: group covariance matrix
         ellRadRob <- sqrt(eigen(covXYrob)$values)  # radii error ellipse
         sizeRob   <- rbind(unit=mag*ellRadRob,     # radii robust confidence ellipse

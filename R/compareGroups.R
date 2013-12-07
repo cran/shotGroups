@@ -14,7 +14,7 @@ function(DF, plots=TRUE, xyTopLeft=TRUE, ABalt=c("two.sided", "less", "greater")
 
     #####-----------------------------------------------------------------------
     ## prepare data
-    res       <- vector("list", 0)       # empty list to later collect the results
+    res <- vector("list", 0)             # empty list to later collect the results
     DF$Series <- droplevels(DF$Series)   # remove all non-used factor levels
 
     ## check if we have enough groups and points per group
@@ -61,7 +61,7 @@ function(DF, plots=TRUE, xyTopLeft=TRUE, ABalt=c("two.sided", "less", "greater")
 
     ## mean distances to group center
     dstList   <- lapply(xyL, getDistToCtr) # distances to group center
-    dstCtr    <- do.call(c, dstList)       # as vector
+    dstCtr    <- do.call("c", dstList)     # as vector
     dstCtrMOA <- getMOA(dstCtr, DF$Distance, conversion)     # as MOA
     meanDistToCtr     <- tapply(dstCtr,    DF$Series, mean)  # mean distance
     meanDistToCtrMOA  <- tapply(dstCtrMOA, DF$Series, mean)  # as MOA
@@ -97,7 +97,7 @@ function(DF, plots=TRUE, xyTopLeft=TRUE, ABalt=c("two.sided", "less", "greater")
         CEPlist[[i]] <- getCEP(xyL[[i]], dstTarget[i], conversion)
     }
     CEPrandL <- lapply(CEPlist, function(x) { x$RAND[ , "50%", drop=FALSE] } )
-    CEPmat   <- do.call(cbind, CEPrandL)      # as matrix
+    CEPmat   <- do.call("cbind", CEPrandL)    # as matrix
     colnames(CEPmat) <- names(xyL)
     res$CEPrand <- CEPmat
 
@@ -107,19 +107,20 @@ function(DF, plots=TRUE, xyTopLeft=TRUE, ABalt=c("two.sided", "less", "greater")
     ##             Kruskal-Wallis for distance to center
     ## > 2 groups: Fligner-Killeen for x- and y-coords
     ##             Wilcoxon Rank Sum (= Mann-Whitney U) for distance to center
-    # library(coin)  # for kruskal_test(), wilcox_test(), ansari_test(), fligner_test
     if(nS == 2) {                        # compare two groups
-        res$AnsariX  <- ansari_test(     X ~ Series, alternative=ABalt, data=DF,
-                                    distribution="exact")
-        res$AnsariY  <- ansari_test(     Y ~ Series, alternative=ABalt, data=DF,
-                                    distribution="exact")
-        res$Wilcoxon <- wilcox_test(dstCtr ~ Series, alternative=Walt,  data=DF,
-                                    distribution="exact")
+        res$AnsariX  <- coin::ansari_test(     X ~ Series, alternative=ABalt,
+                                          data=DF, distribution="exact")
+        res$AnsariY  <- coin::ansari_test(     Y ~ Series, alternative=ABalt,
+                                          data=DF, distribution="exact")
+        res$Wilcoxon <- coin::wilcox_test(dstCtr ~ Series, alternative=Walt,
+                                          data=DF, distribution="exact")
     } else {                             # compare more than two groups
-        res$FlignerX <- fligner_test(X ~ Series, data=DF, distribution="approximate")  # x
-        res$FlignerY <- fligner_test(Y ~ Series, data=DF, distribution="approximate")  # y
-        res$Kruskal  <- kruskal_test(dstCtr ~ Series, data=DF,  # dist to center
-                                    distribution="approximate")
+        res$FlignerX <- coin::fligner_test(X ~ Series, data=DF,
+                                           distribution="approximate")  # x
+        res$FlignerY <- coin::fligner_test(Y ~ Series, data=DF,
+                                           distribution="approximate")  # y
+        res$Kruskal  <- coin::kruskal_test(dstCtr ~ Series,    # dist to center
+                                           data=DF, distribution="approximate")
     }
 
     if(plots) {
@@ -127,7 +128,7 @@ function(DF, plots=TRUE, xyTopLeft=TRUE, ABalt=c("two.sided", "less", "greater")
         #####-----------------------------------------------------------------------
         ## diagram: 2D-scatter plot for the (x,y)-distribution
         syms <- c(4, 16, 2, 1, 6, 8, 3, 5, 7, 9:13, 15, 17:25)  # data symbols
-        cols <- rainbow(nS)              # colors
+        cols <- getColors(nS)            # colors
         
         if(nS > length(syms)) { stop(paste("at most", length(syms), "series possible")) }
         

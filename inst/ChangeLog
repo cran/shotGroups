@@ -1,6 +1,17 @@
-$Date: 2012-05-07 11:34:29 +0000 (Mon, 07 May 2012) $
+$Date: 2013-12-05 15:58:29 +0000 (Thu, 05 Dec 2013) $
 
 SHOTGROUPS RELEASE VERSIONS at http://cran.r-project.org/
+
+Version 0.2-2 (December 05, 2013)
+
+    * getMinCircle(): fix bug where minimal circle is not identified
+                      correctly if it only touches the convex hull in
+                      two points (thanks to Karl Schilling for the report)
+    * remove modeltools, KernSmooth from Depends field
+      (boot is not moved to Imports because energy depends on boot)
+	* getDevice(): since RStudio keeps past diagrams, open diagrams in
+	  the same device instead of opening new windows
+	* compareGroups(): more sensible colors
 
 Version 0.2-1 (May 07, 2012)
 

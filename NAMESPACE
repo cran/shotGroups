@@ -3,10 +3,12 @@ import(stats)
 import(grDevices)
 
 importFrom(utils, count.fields, read.delim, read.csv)
+importFrom(boot, boot, boot.ci)
 importFrom(coin, ansari_test, fligner_test, kruskal_test, wilcox_test)
 importFrom(energy, mvnorm.etest)
 importFrom(mvoutlier, aq.plot)
 importFrom(robustbase, covMcd)
+importFrom(KernSmooth, bkde2D)
 
 export(analyzeGroup, combineData, compareGroups,
        drawBox, drawBox2, drawCircle, drawEllipse,

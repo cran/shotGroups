@@ -6,7 +6,7 @@ function(fPath=getwd(), fNames, fPat) {
         files <- paste(fPath, fNames, sep="/")
     } else if(!missing(fPat)) {          # we have a name pattern
         files <- list.files(path=fPath, pattern=fPat, full.names=TRUE)
-    ## are we are in interactive mode and under Windows?
+    ## are we are in interactive mode AND under Windows?
     } else if(interactive() & (.Platform$OS.type == "windows")) {
         ## choose files interactively
         myFilt <- rbind(Filters, txtCsvDat=c("Data files (*.txt, *.csv, *.dat)",
@@ -28,16 +28,12 @@ function(fPath=getwd(), fNames, fPat, combine=FALSE) {
     nDF <- length(DFs)                   # number of list components
     names(DFs) <- paste("file", seq(along=numeric(nDF)), sep="")  # name them
 
+    ## build shared set of variable names
+    varNames <- Reduce(intersect, lapply(DFs, names))
+
     ## make sure that the data frames all have the correct variables
-    wants    <- c("Group", "Distance", "Aim.X", "Aim.Y", "Point.X", "Point.Y")
-    varNames <- unlist(sapply(DFs, names))   # all variable names
-
-    ##  build shared set of variable names
-    for(i in seq(along=numeric(nDF))) {
-        varNames <- intersect(varNames, names(DFs[[i]]))
-    }
-
-    has <- wants %in% varNames
+    wants <- c("Group", "Distance", "Aim.X", "Aim.Y", "Point.X", "Point.Y")
+    has   <- wants %in% varNames
     if(!all(has)) {
         warning(cat("at least one file is missing variable(s)\n", wants[!has],
                     "\nthat may be required later by analysis functions\n"))
@@ -69,16 +65,12 @@ function(fPath=getwd(), fNames, fPat, combine=FALSE) {
     nDF <- length(DFs)                   # number of list components
     names(DFs) <- paste("file", seq(along=numeric(nDF)), sep="")  # name them
 
-    ## make sure that the data frames all have the correct variables
-    wants    <- c("Group", "Distance", "Aim.X", "Aim.Y", "Point.X", "Point.Y")
-    varNames <- unlist(sapply(DFs, names))   # all variable names
-
     ##  build shared set of variable names
-    for(i in seq(along=numeric(nDF))) {
-        varNames <- intersect(varNames, names(DFs[[i]]))
-    }
+    varNames <- Reduce(intersect, lapply(DFs, names))
 
-    has <- wants %in% varNames
+    ## make sure that the data frames all have the correct variables
+    wants <- c("Group", "Distance", "Aim.X", "Aim.Y", "Point.X", "Point.Y")
+    has   <- wants %in% varNames
     if(!all(has)) {
         warning(cat("at least one file is missing variable(s)\n", wants[!has],
                     "\nthat may be required later by analysis functions\n"))
@@ -110,16 +102,12 @@ function(fPath=getwd(), fNames, fPat, combine=FALSE) {
     nDF <- length(DFs)                   # number of list components
     names(DFs) <- paste("file", seq(along=numeric(nDF)), sep="")  # name them
 
-    ## make sure that the data frames all have the correct variables
-    wants    <- c("Group", "Distance", "Aim.X", "Aim.Y", "Point.X", "Point.Y")
-    varNames <- unlist(sapply(DFs, names))   # all variable names
-
     ##  build shared set of variable names
-    for(i in seq(along=numeric(nDF))) {
-        varNames <- intersect(varNames, names(DFs[[i]]))
-    }
+    varNames <- Reduce(intersect, lapply(DFs, names))
 
-    has <- wants %in% varNames
+    ## make sure that the data frames all have the correct variables
+    wants <- c("Group", "Distance", "Aim.X", "Aim.Y", "Point.X", "Point.Y")
+    has   <- wants %in% varNames
     if(!all(has)) {
         warning(cat("at least one file is missing variable(s)\n", wants[!has],
                     "\nthat may be required later by analysis functions"))

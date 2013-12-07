@@ -28,8 +28,7 @@ function(xy, plots=c("0", "1", "2"), dstTarget=25, conversion="m2cm",
     res$ctr <- colMeans(xy)              # center of joint (x,y)-distribution
 
     ## robust estimation of center
-    # library(robustbase)                  # for covMcd()
-    if(haveRob) { res$ctrRob <- covMcd(xy)$center }
+    if(haveRob) { res$ctrRob <- robustbase::covMcd(xy)$center }
 
     res$distPOA <- c(unit=       sqrt(sum(res$ctr^2)),  # distance to point of aim
                       MOA=getMOA(sqrt(sum(res$ctr^2)), dstTarget, conversion))
@@ -58,13 +57,12 @@ function(xy, plots=c("0", "1", "2"), dstTarget=25, conversion="m2cm",
     res$CItY <- rev(My - tCrit*sMy)      # t-CI y-coords
 
     ## nonparametric: bootstrap-CIs (percentile and BCa)
-    # library(boot)                        # for boot(), boot.ci()
-    nR      <- 1499                               # number of replications
-    getMean <- function(x, idx) { mean(x[idx]) }  # mean for one replication
-    bsX     <- boot(X, statistic=getMean, R=nR)   # bootstrap x-coord means
-    bsY     <- boot(Y, statistic=getMean, R=nR)   # bootstrap y-coord means
-    CIbootX <- boot.ci(bsX, conf=1-alpha, type=c("perc", "bca"))  # x-coords
-    CIbootY <- boot.ci(bsY, conf=1-alpha, type=c("perc", "bca"))  # y-coords
+    nR      <- 1499                                   # number of replications
+    getMean <- function(x, idx) { mean(x[idx]) }      # mean for one replication
+    bsX     <- boot::boot(X, statistic=getMean, R=nR) # bootstrap x-coord means
+    bsY     <- boot::boot(Y, statistic=getMean, R=nR) # bootstrap y-coord means
+    CIbootX <- boot::boot.ci(bsX, conf=1-alpha, type=c("perc", "bca"))  # x-coords
+    CIbootY <- boot::boot.ci(bsY, conf=1-alpha, type=c("perc", "bca"))  # y-coords
     res$CIbootX <- rbind(percentile=CIbootX$percent[4:5], BCa=CIbootX$bca[4:5])
     res$CIbootY <- rbind(percentile=CIbootY$percent[4:5], BCa=CIbootY$bca[4:5])
     colnames(res$CIbootX) <- c("(", ")")
