@@ -21,7 +21,8 @@ function() {
 #                 }
 #             }
         }
-    }
+    }                                    # if(class(dev) == "character")
 
+#    dev <- function(...) {}
     return(dev)
 }

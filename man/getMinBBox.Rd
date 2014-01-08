@@ -1,17 +1,26 @@
 \name{getMinBBox}
 \alias{getMinBBox}
+\alias{getMinBBox.data.frame}
+\alias{getMinBBox.default}
 \title{Minimum-area bounding box for a set of 2D-points}
 \description{Calculates the vertices of the minimum-area, possibly oriented bounding box given a set of 2D-coordinates.}
-\usage{getMinBBox(xy)}
+\usage{getMinBBox(xy)
+
+\method{getMinBBox}{data.frame}(xy)
+
+\method{getMinBBox}{default}(xy)}
 \arguments{
-  \item{xy }{a numerical (n x 2)-matrix with the (x,y)-coordinates of n >= 2 points (1 row of coordinates per point).}
+  \item{xy}{either a numerical (n x 2)-matrix with the (x,y)-coordinates of n >= 2 points (1 row of coordinates per point), or a data frame with either the variables \code{X}, \code{Y} or \code{Point.X}, \code{Point.Y}.}
 }
+\details{No coordinate transforms are done (unlike in \code{\link[shotGroups]{groupLocation}}, \code{\link[shotGroups]{groupShape}}, \code{\link[shotGroups]{groupSpread}}), i.e., origin is not assumed to be in top-left corner, and points are not taken relative to point of aim.}
 \value{
 A list with the following information about the minimum-area bounding box:
-\item{pts }{a (4 x 2)-matrix containing the coordinates of the (ordered) vertices.}
-\item{width }{width of the box.}
-\item{height }{height of the box.}
-\item{angle }{orientation of the box' longer edge pointing up as returned by \code{\link{atan2}}, but in degree.}
+\item{pts}{a (4 x 2)-matrix containing the coordinates of the (ordered) vertices.}
+\item{width}{width of the box.}
+\item{height}{height of the box.}
+\item{FoM}{figure of merit, i.e., the average side length of the box: (\code{width} + \code{height}) / 2}
+\item{diag}{length of box diagonal}
+\item{angle}{orientation of the box' longer edge pointing up as returned by \code{\link{atan2}}, but in degree.}
 }
 \seealso{
 \code{\link[shotGroups]{drawBox2}},
@@ -19,16 +28,21 @@ A list with the following information about the minimum-area bounding box:
 \code{\link[shotGroups]{getMinCircle}}
 }
 \examples{
-xy <- matrix(round(rnorm(16, 100, 15)), ncol=2)
-bb <- getMinBBox(xy)                     # minimum bounding box
-H  <- chull(xy)                          # convex hull
+# coordinates given by a suitable data frame
+bb <- getMinBBox(DFsavage)               # minimum bounding box
 
-# plot original points, convex hull, and minimum bounding box
-plot(xy, xlim=range(c(xy[ , 1], bb$pts[ , 1])),
-         ylim=range(c(xy[ , 2], bb$pts[ , 2])), asp=1, pch=16)
-polygon(xy[H, ], col=NA)                 # show convex hull
-drawBox2(bb$pts, fg='blue', colCtr='blue', pch=4, cex=2)
+# plot points and minimum bounding box
+plot(Point.Y ~ Point.X, data=DFsavage, asp=1,
+     xlim=range(bb$pts[ , 1]), ylim=range(bb$pts[ , 2]), pch=16)
+drawBox2(bb, fg='blue', colCtr='blue', pch=4, cex=2)
 
-bb$width * bb$height                     # box area
+bb$FoM                                   # figure of merit
 bb$angle                                 # box orientation
+
+# coordinates given by a matrix
+\dontrun{
+xy <- matrix(round(rnorm(16, 100, 15)), ncol=2)
+getMinBBox(xy)
 }
+}
+

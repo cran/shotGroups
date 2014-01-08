@@ -53,11 +53,11 @@ function(xy, S) {
     if(!is.numeric(xy)) { stop("xy must be numeric") }
     if(ncol(xy) != 2)   { stop("xy must have two columns") }
     if(!is.numeric(S))  { stop("S must be numeric") }
-    if((length(S) < 2) | (nrow(xy) < 2)) { stop("there must be at least two points") }
-    if(length(S) > nrow(xy)) { stop("there can only be as many indices in S as points in xy") }
+    if((length(S) < 2) | (nrow(xy) < 2)) { stop("There must be at least two points") }
+    if(length(S) > nrow(xy)) { stop("There can only be as many indices in S as points in xy") }
 
     n    <- length(S)                    # number of points
-    Sidx <- seq(along=numeric(n))        # index for points
+    Sidx <- seq(along=S)                 # index for points
     rads <- numeric(n)                   # radii for all circles
     post <- (Sidx %% n) + 1              # next point in S
     prev <- Sidx[order(post)]            # previous point in S
@@ -83,7 +83,7 @@ function(xy, deg=TRUE) {
 
     ## dAB*dAC should not be 0
     if(isTRUE(all.equal(dAB*dAC, 0, check.attributes=FALSE))) {
-        stop("some edges have zero length")
+        stop("Some edges have zero length")
     }
 
     Wabc <- (dAB^2 + dBC^2 - dAC^2)
@@ -110,9 +110,20 @@ function(xy) {
 ## minimal enclosing circle
 getMinCircle <-
 function(xy) {
+    UseMethod("getMinCircle")
+}
+
+getMinCircle.data.frame <-
+function(xy) {
+    xy <- getXYmat(xy, xyTopLeft=FALSE, relPOA=FALSE)
+    NextMethod("getMinCircle")
+}
+
+getMinCircle.default <-
+function(xy) {
     if(!is.matrix(xy))  { stop("xy must be a matrix") }
     if(!is.numeric(xy)) { stop("xy must be numeric") }
-    if(nrow(xy) < 2)    { stop("there must be at least two points") }
+    if(nrow(xy) < 2)    { stop("There must be at least two points") }
     if(ncol(xy) != 2)   { stop("xy must have two columns") }
 
     H    <- chull(xy)      # convex hull indices (vertices ordered clockwise)
@@ -139,7 +150,7 @@ function(xy) {
     S <- H                               # copy of hull indices that will be changed
     while(length(S) >= 2) {
         n    <- length(S)                # number of remaining hull vertices
-        Sidx <- seq(along=numeric(n))    # index for vertices
+        Sidx <- seq(along=S)             # index for vertices
         post <- (Sidx %% n) + 1          # next vertex in S
         prev <- Sidx[order(post)]        # previous vertex in S
         mIdx <- getMaxRad(xy, S)         # idx for maximum radius

@@ -1,0 +1,313 @@
+\documentclass[a4paper]{article}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\usepackage[latin1]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[pdfusetitle,bookmarks=true]{hyperref}
+\usepackage{a4wide}
+\setlength{\parskip}{0.7ex plus0.1ex minus0.1ex}
+\setlength{\parindent}{0em}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%\VignetteIndexEntry{Analyzing shooting data using shotGroups}
+%\VignetteDepends{shotGroups}
+%\VignetteKeywords{shotGroups}
+%\VignettePackage{shotGroups}
+
+\begin{document}
+
+%\SweaveOpts{engine=R}
+
+\title{Analyzing shape, accuracy, and precison of shooting results with the \texttt{shotGroups} package}
+\author{Daniel Wollschl\"{a}ger%
+  \thanks{Email: \url{dwoll@kuci.org}}}
+\date{\today}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+<<setup, echo=FALSE>>=
+options(replace.assign=TRUE, useFancyQuotes=FALSE, show.signif.stars=FALSE, digits=4, width=70)
+@
+
+\maketitle
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Introduction}
+\label{sec:introduction}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The \texttt{shotGroups} package provides functions to read in, plot, statistically describe, analyze, and compare shot group data with respect to group shape, precision, and accuracy. This includes graphical methods, descriptive statistics, and inference tests using standard, but also nonparametric and robust statistical methods. The data can be imported from files produced by OnTarget PC and OnTarget TDS,\footnote{\url{http://www.ontargetshooting.com/}} or from custom data files in text format with a similar structure.
+
+Use \verb+help(package="shotGroups")+ for a list of all functions and links to the detailed help pages with information on options, usage and output.
+
+Note that this vignette currently does not include the diagrams produced by each analysis function.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Performing an analysis}
+\label{sec:analysisSteps}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Analyzing shot groups usually takes the following steps:
+
+\begin{itemize}
+\item Read in data (section \ref{sec:readData})
+\item Perform either a comprehensive numerical as well as graphical analysis of a group's shape, location (accuracy), and spread (precision) with \texttt{analyzeGroup()} (section \ref{sec:analyzeGroup}) \ldots
+\item \ldots or analyze these aspects of a group separately with \texttt{groupShape()} (section \ref{sec:groupShape}), \texttt{groupSpread()} (section \ref{sec:groupSpread}), \texttt{groupLocation()} (section \ref{sec:groupLocation}) and a number of utility functions to calculate individual statistical parameters (section \ref{sec:utilityFunctions})
+\item Numerically and visually compare different groups in terms of their shape, location (accuracy), and spread (precision) with \texttt{compareGroups()} (section \ref{sec:compareGroups})
+\end{itemize}
+
+A good description of statistical techniques for shot group analysis can be found at
+
+\url{http://ballistipedia.com/}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Reading in data}
+\label{sec:readData}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+To import data into R, it should be saved as a text file with the following format:
+\begin{itemize}
+\item The file should have one row for each shot, and one column for each coordinate or any other variable.
+\item Columns should be separated by tabs or other whitespace. This type of text file can be exported from OnTarget PC/TDS, or from a spreadsheet application like Excel or Calc.
+\item The file needs a header in the first line giving the variable names, and should contain at least the $(x,y)$-coordinates of points of impact, either with variable names \texttt{Point.X}, \texttt{Point.Y} or just \texttt{X}, \texttt{Y}.
+\item For several analysis functions, the following additional variables are useful: \texttt{Group} (group number), \texttt{Distance} (distance to target), and \texttt{Aim.X}, \texttt{Aim.Y} (point of aim).
+\item Note that \textsf{R} is case sensitive, so the aforementioned variable names need to match exactly.
+\item If you have output files from OnTarget PC/TDS, you can read multiple files with \texttt{readDataOT1()} (for OnTarget PC v1.1*), or with \texttt{readDataOT2()} (for OnTarget PC v2.1* and OnTarget TDS v3.7*).
+\item If you have other whitespace or tab-delimited text files with the structure outlined above, you can read multiple files with \texttt{readDataMisc()}.
+\item If your data is saved in some other text file format, consult the help for \texttt{read.table()}.
+\end{itemize}
+
+<<s1, eval=FALSE>>=
+library(shotGroups, verbose=FALSE)       # load shotGroups package
+
+## read text files and save to data frame
+## not run, use data frame provided in package instead
+DFgroups <- readDataMisc(fPath="c:/path/to/files",
+                         fNames=c("series1.dat", "series2.dat"))
+@
+
+Note that by default, OnTarget places the origin of the coordinate system in the upper left corner, This can be taken into account by using the function \texttt{analyzeGroup()} (section \ref{sec:analyzeGroup}) which performs a comprehensive analysis of a group's shape, precision and accuracy. When analyzing these aspects separately with \texttt{groupShape()} (section \ref{sec:groupShape}), \texttt{groupSpread()} (section \ref{sec:groupSpread}), and \texttt{groupLocation()} (section \ref{sec:groupLocation}), the scatterplots will be vertically mirror-reversed.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Performing a comprehensive analysis}
+\label{sec:analyzeGroup}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\texttt{analyzeGroup()}: This function is a convencience wrapper for the functions presented in sections \ref{sec:groupShape}, \ref{sec:groupSpread}, and \ref{sec:groupLocation}. It analyzes a group's shape, precision, and accuracy in one go, and collects the results.
+
+<<s2a, eval=FALSE>>=
+library(shotGroups, verbose=FALSE)       # load shotGroups package
+analyzeGroup(DFtalon, conversion='m2mm')
+
+## output not shown, see following sections for results
+@
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Analyzing group shape}
+\label{sec:groupShape}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\texttt{groupShape()}: Assess (multivariate) normality, identify outliers and get a sense for the shape of the bivariate distribution.
+
+Reported statistical parameters and tests:
+
+\begin{itemize}
+\item Correlation matrix including a robust estimate
+\item Outlier identification using robust Mahalanobis distances and adjusted quantiles from the $\chi^{2}$-distribution
+\item Shapiro-Wilk normality tests for the distribution of $x$- and $y$-coordinates
+\item Energy test for bivariate normality of $(x,y)$-coordinates
+\end{itemize}
+
+Plots:
+
+\begin{itemize}
+\item Combined plot for multivariate outlier identification using robust Mahalanobis distances and adjusted quantiles from the $\chi^{2}$-distribution
+\item $\chi^{2}$ Q-Q-plot for eyeballing multivariate normality of $(x,y)$-coordinates
+\item Heatmap of a nonparametric 2D-kernel density estimate for the $(x,y)$-coordinates together with group center and error ellipse based on a robust estimate for the covariance matrix
+\item Q-Q-plots for eyeballing normality of $x$- and $y$-coordinates 
+\item Histogram for $x$- and $y$-coordinates including a fitted normal distribution as well as a nonparametric kernel density estimate
+\end{itemize}
+
+<<s2b, fig=FALSE, out.width='5in'>>=
+library(shotGroups, verbose=FALSE)       # load shotGroups package
+groupShape(DFtalon, bandW=0.25, outlier='mcd')
+@
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Analyzing group spread -- precision}
+\label{sec:groupSpread}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\texttt{groupSpread()}: Assess precision using empirical and parametric spread measures with confidence intervals. Where possible, also use robust estimates based on the MCD method for estimating of the covariance matrix.
+
+Reported statistical parameters and tests:
+
+\begin{itemize}
+\item Standard deviations of $x$- and $y$ coordinates including a robust estimate together with parametric and bootstrap confidence intervals (in original measurement units and MOA)
+\item Covariance matrix of $(x,y)$-coordinates including a robust estimate
+\item Empirical mean and median radius as well as estimated Rayleigh precision parameter $\sigma$, estimated Rayleigh radial standard deviation RSD, and estimated Rayleigh mean radius MR together with parametric and bootstrap confidence intervals for $\sigma$, RSD, and MR (in original measurement units and MOA)
+\item Maximum pairwise distance (center-to-center, a.k.a. maximum spread, in original measurement units and MOA)
+\item Width and height of bounding box with diagonal and figure of merit as well as of the (oriented) minimum bounding box (in original measurement units and MOA)
+\item Radius for the minimum enclosing circle (in original measurement units and MOA)
+\item Length of semi-major and semi-minor axis of the confidence ellipse including these measures for the confidence ellipse based on a robust estimate for the covariance matrix (in original measurement units and MOA)
+\item Aspect ratio and flattening of the (robust) confidence ellipse
+\item Estimates for the circular error probable CEP (Rayleigh, Grubbs-Patnaik, modified RAND-234, in original measurement units and MOA)
+\end{itemize}
+
+Plots:
+
+\begin{itemize}
+\item Scatterplot of the $(x,y)$-coordinates together with group center, circle with average distance to center, and confidence ellipse -- the latter also based on a robust estimate for the covariance matrix
+\item Scatterplot of the $(x,y)$-coordinates together with the bounding box, minimum bounding box, minimum enclosing circle, and maximum group spread
+\item Histogram for distances to group center including a Rayleigh fit and a nonparametric kernel density estimate
+\end{itemize}
+
+<<s3, fig=FALSE, out.width='5in'>>=
+library(shotGroups, verbose=FALSE)       # load shotGroups package
+groupSpread(DFtalon, CEPtype=c("Rayleigh", "Grubbs", "RAND"), level=0.95,
+            sigmaType='Rayleigh', dstTarget=10, conversion='m2mm')
+@
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Analyzing group location -- accuracy}
+\label{sec:groupLocation}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\texttt{groupLocation()}: Assess accuracy of a group using empirical and parametric measures.
+
+Reported statistical parameters and tests:
+
+\begin{itemize}
+\item $(x,y)$-offset of group center relative to point of aim with the same measure for a robust estimation of the group center
+\item Distance from group center to point of aim with the same measure for a robust estimation of the group center (in original measurement units and MOA)
+\item Hotelling's $T^{2}$-test result for equality of the true group center with point of aim
+\item Parametric and bootstrap confidence intervals for the true center's $x$- and $y$-coordinate
+\end{itemize}
+
+Plots:
+
+\begin{itemize}
+\item Scatterplot of the $(x,y)$-coordinates together with group center as well as a robust estimation of group center. If requested, bullet holes are drawn to scale on a target background (currently, only a very limited number of target types is implemented).
+\end{itemize}
+
+<<s4, fig=FALSE, out.width='5in'>>=
+library(shotGroups, verbose=FALSE)       # load shotGroups package
+groupLocation(DFtalon, dstTarget=10, conversion='m2cm',
+              level=0.95, plots=2, target='BDS25m', caliber=5.56)
+@
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Comparing groups}
+\label{sec:compareGroups}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\texttt{compareGroups()}: Compare two or more groups with regards to their precision and accuracy using empirical measures and statistical tests.
+
+\texttt{compareGroups()} requires an additional factor \texttt{Series} that identifies shot groups. OnTarget PC/TDS' \texttt{Group} variable identifies groups just within one file, \texttt{Series} should number groups also across different original files. When you read in data with \texttt{readDataOT1()}, \texttt{Series} is added automatically (same for \texttt{readDataOT2()} and \texttt{readDataMisc()}). Otherwise, you can just copy variable \texttt{Groups} to \texttt{Series} in a data frame called \texttt{shots} with \texttt{shots\$Series <- shots\$Group} \quad.
+
+Reported statistical parameters and tests:
+
+\begin{itemize}
+\item Group centers relative to the respective point of aim
+\item Distances from group centers to their respective point of aim (in original measurement units and MOA)
+\item MANOVA result from testing equality of group centers relative to their respective point of aim
+\item Group correlation matrices for the $(x,y)$-coordinates
+\item Group standard deviations for the $x$- and $y$-coordinates including parametric 95\%-confidence intervals (in original measurement units and MOA)
+\item Average distances from points to their respective group center (in original measurement units and MOA)
+\item Maximum pairwise distance between points for each group (center-to-center, a.k.a. maximum spread, in original measurement units and MOA)
+\item Figure of merit FoM and diagonal of the minimum bounding box for each group (in original measurement units and MOA)
+\item Radius of the minimum enclosing circle for each group (in original measurement units and MOA)
+\item Rayleigh estimate for the 50\% circular error probable (CEP) in each group (in original measurement units and MOA)
+\item Ansari-Bradley-test results from testing equality of group variances for $x$- and $y$-coordinates -- when two groups are compared. With more than two groups, the Fligner-Killeen-test is used
+\item Wilcoxon-Rank-Sum-test result from testing equality of average point distances to their respective group center -- when two groups are compared. With more than two groups, the Kruskal-Wallis-test is used
+\end{itemize}
+
+Plots:
+
+\begin{itemize}
+\item Scatterplot showing all groups as well as their respective center and 50\%-confidence ellipse
+\item Scatterplot showing all groups as well as their respective minimum bounding box, minimum enclosing circle, and maximum group spread
+\item Scatterplot showing all groups as well as their respective minimum enclosing circle and circle with average distance to center
+\end{itemize}
+
+<<s5, fig=FALSE, out.width='5in'>>=
+library(shotGroups, verbose=FALSE)       # load shotGroups package
+DFsub <- subset(DFtalon, Series %in% 1:3)
+compareGroups(DFsub, conversion='m2mm')
+@
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Utility functions}
+\label{sec:utilityFunctions}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The \texttt{shotGroups} package also provides a number of utility functions that can be used separately. These functions accept either a data frame or a matrix with $(x,y)$-coordinates. For more information on additional options, see the respective help page.
+
+\begin{itemize}
+\item \texttt{getBoundingBox()}, \texttt{getMinBBox()}: Calculates the vertices of the bounding box / of the minimum-area (possibly oriented) bounding box
+\item \texttt{getMinCircle()}: Calculates center and radius of the minimum enclosing circle
+\item \texttt{getCEP()}: Calculates the Rayleigh, Grubbs-Patnaik, and modified RAND R-234 estimate for the circular error probable
+\item \texttt{getConfEll()}: Calculates the 2D-confidence ellipse under the assumption of bivariate normality. Also includes the ellipse based on a robust estimate for the covariance matrix of the $(x,y)$-coordinates
+\item \texttt{getDistToCtr()}: Calculates the distances of a set of points to their center
+\item \texttt{getMaxPairDist()}: Calculates the maximum of pairwise distances between points
+\item \texttt{getRayParam()}: Estimates the radial precision parameter $\sigma$ of the Rayleigh distribution together with the Rayleigh radial standard deviation RSD and the Rayleigh mean MR, including parametric confidence intervals
+\item \texttt{getMOA()}, \texttt{fromMOA()}: Converts object size to MOA or vice versa.
+\end{itemize}
+
+<<s6, out.width='5in'>>=
+library(shotGroups, verbose=FALSE)       # load shotGroups package
+getBoundingBox(DFtalon)                  # axis-aligned bounding box
+getMinBBox(DFtalon)                      # minimum-area bounding box
+getMinCircle(DFtalon)                    # minimum covering circle
+getCEP(DFtalon, type=c("Rayleigh", "Grubbs"))    # circular error probable
+getConfEll(DFtalon)                      # confidence ellipse
+getMaxPairDist(DFtalon)                  # maximum pairwise distance
+getRayParam(DFtalon)                     # Rayleigh parameter estimates
+getMOA(c(1, 2, 10),   dst=100, conversion='m2cm')  # convert to MOA
+fromMOA(c(0.5, 1, 2), dst=100, conversion='m2cm')  # convert from MOA
+@
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Included data sets}
+\label{sec:datasets}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The \texttt{shotGroups} package includes a number of empirical data sets with shooting results:
+
+\begin{itemize}
+\item \texttt{DF300BLK}: One group of shooting a Noveske AR-15 rifle in 300BLK at 100yd (20 observations)\footnote{\label{ftn:DF300BLK}Thanks: David Bookstaber \url{http://ballistipedia.com/}}
+\item \texttt{DFcciHV}: Two groups of shooting a PWS T3 rifle in .22LR at 100yd (40 observations, see footnote \ref{ftn:DF300BLK})
+\item \texttt{DFcm}: Several groups of shooting a 9x19mm pistol at 25m (487 observations)
+\item \texttt{DFtalon}: Several groups of shooting a Talon SS air rifle at 10m (180 observations)\footnote{\label{ftn:DFtalon}Thanks: Charles \& Paul McMillan \url{http://statshooting.com/}}
+\item \texttt{DFsavage}: Several groups of shooting a Savage 12 FT/R rifle in .308 Win at distances from 100 to 300m (180 observations, see footnote \ref{ftn:DFtalon})
+\item \texttt{DFscar17}: One group of shooting an FN SCAR 17 rifle in .308 Win at 100yd (10 observations, see footnote \ref{ftn:DF300BLK})
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{TODO}
+\label{sec:todo}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+\item Make diagrams show up in this vignette
+\item Provide the option to render data in units SMOA (exactly 1'' at 100 yards) or mils, instead of MOA
+\item Provide the option to specify bullet diameter, and then render the points in all group plots using that size, with alpha-blending so that overlaps can be distinguished (as in \texttt{groupLocation(\ldots, plots="2")} see section \ref{sec:groupLocation})
+\item Include units somewhere on plots -- either axis labels or title
+\item Human-readable output from functions \texttt{compareGroups()}, \texttt{groupLocation()}, \texttt{groupShape()}, \texttt{groupSpread()} by using \texttt{print()} methods
+\item Rayleigh parameter estimates from possibly elliptical distributions -- see DiDonato (2007): ``Computation of the Circular Error Probable (CEP) and Confidence Intervals in Bombing Tests''
+\item Repeat simulations from McMillan \& McMillan (2008) to estimate CEP correction factors for elliptical distributions for different confidence levels
+\item Function which accepts extreme order statistics (maximum spread) to allow inference for Rayleigh parameters $\sigma$, RSD, MR
+\item Find and fit platykurtic distribution type that allows for more near misses than normal distribution
+\item Add formulas for calculated statistics and literature references to this vignette
+\item Allow dates be associated with group data to track accuracy and precision performance over time
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\end{document}

@@ -1,5 +1,16 @@
 getMinBBox <-
 function(xy) {
+    UseMethod("getMinBBox")
+}
+
+getMinBBox.data.frame <-
+function(xy) {
+    xy <- getXYmat(xy, xyTopLeft=FALSE, relPOA=FALSE)
+    NextMethod("getMinBBox")
+}
+
+getMinBBox.default <-
+function(xy) {
     if(!is.matrix(xy))  { stop("xy must be a matrix") }
     if(!is.numeric(xy)) { stop("xy must be numeric") }
     if(ncol(xy) != 2)   { stop("xy must have two columns") }
@@ -28,7 +39,7 @@ function(xy) {
     rangeO  <- matrix(numeric(n*2), ncol=2)   # orth subspace
     widths  <- numeric(n)
     heights <- numeric(n)
-    for(i in seq(along=numeric(n))) {
+    for(i in seq(along=H)) {
         rangeH[i, ] <- range(projMat[  i, ])
         rangeO[i, ] <- range(projMat[n+i, ])  # orth subspace is in 2nd half
         widths[i]   <- abs(diff(rangeH[i, ]))
@@ -57,5 +68,14 @@ function(xy) {
     eUp  <- e * sign(e[2])                  # rotate upwards 180 deg if necessary
     deg  <- atan2(eUp[2], eUp[1])*180 / pi  # angle in degrees
 
-    return(list(pts=pts, width=widths[eMin], height=heights[eMin], angle=deg))
+    ## box size
+    bbWidth  <- widths[eMin]
+    bbHeight <- heights[eMin]
+
+    ## figure of merit and its diagonal
+    FoM    <- (bbWidth + bbHeight) / 2
+    bbDiag <- sqrt(bbWidth^2 + bbHeight^2)
+
+    return(list(pts=pts, width=bbWidth, height=bbHeight,
+                FoM=FoM, diag=bbDiag, angle=deg))
 }
