@@ -2,9 +2,10 @@ import(graphics)
 import(stats)
 import(grDevices)
 
-importFrom(utils, count.fields, read.delim, read.csv)
+importFrom(utils, count.fields, read.delim, read.csv, read.table)
 importFrom(boot, boot, boot.ci)
 importFrom(coin, ansari_test, fligner_test, kruskal_test, wilcox_test)
+importFrom(CompQuadForm, davies)
 importFrom(energy, mvnorm.etest)
 importFrom(mvoutlier, aq.plot, pcout)
 importFrom(robustbase, covMcd)
@@ -12,12 +13,17 @@ importFrom(KernSmooth, bkde2D)
 
 export(analyzeGroup,
        combineData, compareGroups,
-       drawBox, drawBox2, drawCircle, drawEllipse,
-       fromMOA,
-       getBoundingBox, getCEP, getConfEll, getDistToCtr, getMaxPairDist,
-       getMinBBox, getMinCircle, getMOA, getRayParam, getXYmat,
+       drawBox, drawBox2, drawCircle, drawEllipse, drawGroup, drawTarget,
+       dHoyt, pHoyt, qHoyt, rHoyt,
+       getHoytParam, getRayParam,
+       getMOA, fromMOA,
+       getCEP, getHitProb,
+       getBoundingBox, getConfEll, getDistToCtr, 
+	   getMaxPairDist, getMinBBox, getMinCircle, getXYmat,
        groupLocation, groupShape, groupSpread,
-       readDataMisc, readDataOT1, readDataOT2)
+       pmvnEll, qmvnEll,
+       readDataMisc, readDataOT1, readDataOT2,
+       simRingCount)
 
 S3method(getBoundingBox, data.frame)
 S3method(getBoundingBox, default)
@@ -33,8 +39,16 @@ S3method(drawCircle, list)
 S3method(drawCircle, default)
 S3method(drawEllipse, list)
 S3method(drawEllipse, default)
+S3method(drawGroup, data.frame)
+S3method(drawGroup, default)
 S3method(getDistToCtr, data.frame)
 S3method(getDistToCtr, default)
+S3method(getHitProb, data.frame)
+S3method(getHitProb, default)
+S3method(getHoytParam, data.frame)
+S3method(getHoytParam, list)
+S3method(getHoytParam, matrix)
+S3method(getHoytParam, default)
 S3method(getMaxPairDist, data.frame)
 S3method(getMaxPairDist, default)
 S3method(getMinBBox, data.frame)
@@ -49,3 +63,5 @@ S3method(groupShape, data.frame)
 S3method(groupShape, default)
 S3method(groupSpread, data.frame)
 S3method(groupSpread, default)
+S3method(simRingCount, data.frame)
+S3method(simRingCount, default)

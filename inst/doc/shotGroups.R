@@ -1,75 +1,162 @@
-### R code from vignette source 'shotGroups.Rnw'
-### Encoding: ISO8859-1
 
-###################################################
-### code chunk number 1: setup
-###################################################
-options(replace.assign=TRUE, useFancyQuotes=FALSE, show.signif.stars=FALSE, digits=4, width=70)
+## ----setup, include=FALSE, cache=FALSE-----------------------------------
+## library(knitr)
+## set global chunk options
+knitr::opts_chunk$set(fig.align='center', fig.show='hold')
+knitr::opts_chunk$set(tidy=FALSE, message=FALSE, warning=FALSE, comment=NA)
+options(replace.assign=TRUE, width=75, digits=4, useFancyQuotes=FALSE, show.signif.stars=FALSE)
 
 
-###################################################
-### code chunk number 2: s1 (eval = FALSE)
-###################################################
+## ----cReadData, eval=FALSE-----------------------------------------------
 ## library(shotGroups, verbose=FALSE)       # load shotGroups package
 ## 
 ## ## read text files and save to data frame
-## ## not run, use data frame provided in package instead
+## ## not run, we later use data frame provided in package instead
 ## DFgroups <- readDataMisc(fPath="c:/path/to/files",
 ##                          fNames=c("series1.dat", "series2.dat"))
 
 
-###################################################
-### code chunk number 3: s2a (eval = FALSE)
-###################################################
+## ----cAnalyzeGroup, eval=FALSE-------------------------------------------
 ## library(shotGroups, verbose=FALSE)       # load shotGroups package
-## analyzeGroup(DFtalon, conversion='m2mm')
+## analyzeGroup(DFtalon, conversion="m2mm")
 ## 
 ## ## output not shown, see following sections for results
 
 
-###################################################
-### code chunk number 4: s2b
-###################################################
+## ----cGroupShape, out.width='3in'----------------------------------------
 library(shotGroups, verbose=FALSE)       # load shotGroups package
-groupShape(DFtalon, bandW=0.25, outlier='mcd')
+groupShape(DFtalon, bandW=0.4, outlier="mcd")
 
 
-###################################################
-### code chunk number 5: s3
-###################################################
+## ----cGroupSpread, out.width='3in'---------------------------------------
 library(shotGroups, verbose=FALSE)       # load shotGroups package
-groupSpread(DFtalon, CEPtype=c("Rayleigh", "Grubbs", "RAND"), level=0.95,
-            sigmaType='Rayleigh', dstTarget=10, conversion='m2mm')
+groupSpread(DFtalon, CEPtype=c("CorrNormal", "GrubbsPatnaik", "Rayleigh"),
+            level=0.95, bootCI="basic", dstTarget=10, conversion="m2mm")
 
 
-###################################################
-### code chunk number 6: s4
-###################################################
+## ----cGroupLocation, out.width='3in'-------------------------------------
 library(shotGroups, verbose=FALSE)       # load shotGroups package
-groupLocation(DFtalon, dstTarget=10, conversion='m2cm',
-              level=0.95, plots=2, target='BDS25m', caliber=5.56)
+groupLocation(DFtalon, dstTarget=10, conversion="m2cm",
+              level=0.95, plots=FALSE, bootCI="basic")
 
 
-###################################################
-### code chunk number 7: s5
-###################################################
+## ----cCmpGr, eval=FALSE--------------------------------------------------
+## shots$Series <- shots$Group
+
+
+## ----cCompareGroups, out.width='3in'-------------------------------------
 library(shotGroups, verbose=FALSE)       # load shotGroups package
+
+## only use first 3 groups of DFtalon
 DFsub <- subset(DFtalon, Series %in% 1:3)
-compareGroups(DFsub, conversion='m2mm')
+compareGroups(DFsub, conversion="m2mm")
 
 
-###################################################
-### code chunk number 8: s6
-###################################################
+## ----cDescPrecMeas, out.width='3in'--------------------------------------
 library(shotGroups, verbose=FALSE)       # load shotGroups package
 getBoundingBox(DFtalon)                  # axis-aligned bounding box
 getMinBBox(DFtalon)                      # minimum-area bounding box
-getMinCircle(DFtalon)                    # minimum covering circle
-getCEP(DFtalon, type=c("Rayleigh", "Grubbs"))    # circular error probable
-getConfEll(DFtalon)                      # confidence ellipse
+getMinCircle(DFtalon)                    # minimum enclosing circle
 getMaxPairDist(DFtalon)                  # maximum pairwise distance
-getRayParam(DFtalon)                     # Rayleigh parameter estimates
-getMOA(c(1, 2, 10),   dst=100, conversion='m2cm')  # convert to MOA
-fromMOA(c(0.5, 1, 2), dst=100, conversion='m2cm')  # convert from MOA
+
+
+## ----cCEP, out.width='3in'-----------------------------------------------
+## circular error probable
+getCEP(DFscar17, type=c("GrubbsPatnaik", "Rayleigh"), level=0.5,
+       dstTarget=100, conversion="yd2in")
+
+## confidence ellipse
+getConfEll(DFscar17, level=0.95,
+           dstTarget=100, conversion="yd2in")
+
+
+## ----cHitProb------------------------------------------------------------
+## Rayleigh parameter estimates with 95% confidence interval
+getRayParam(DFscar17, level=0.95)
+
+
+## ----cHitProb1, out.width='3in'------------------------------------------
+## for the Grubbs-Patnaik estimate
+getHitProb(DFscar17, r=0.8414825, unit="in", accuracy=FALSE,
+           dstTarget=100, conversion="yd2in", type="GrubbsPatnaik")
+
+## for the Rayleigh estimate
+getHitProb(DFscar17, r=0.8290354, unit="in", accuracy=FALSE,
+           dstTarget=100, conversion="yd2in", type="Rayleigh")
+
+
+## ----cHitProb2, out.width='3in'------------------------------------------
+getHitProb(DFscar17, r=1, unit="MOA", accuracy=FALSE,
+           dstTarget=100, conversion="yd2in", type="CorrNormal")
+
+
+## ----cExtrapolCEP1-------------------------------------------------------
+## 50% circular error probable for group shot at 100yd
+CEP100yd <- getCEP(DFscar17, type=c("GrubbsPatnaik", "Rayleigh"),
+                   level=0.5, dstTarget=100, conversion="yd2in")
+
+## CEP in absolute and angular size units
+CEP100yd$CEP
+
+## extract CEP in MOA
+CEPmoa <- CEP100yd$CEP["MOA", c("GrubbsPatnaik", "Rayleigh")]
+
+## 50% CEP in inch for the same group extrapolated to 100m
+fromMOA(CEPmoa, dst=100, conversion="m2in")
+
+
+## ----cExtrapolCEP2-------------------------------------------------------
+## 1 inch at 100 m in MOA
+MOA <- getMOA(1, dst=100, conversion="m2in")
+
+getHitProb(DFscar17, r=MOA, unit="MOA", accuracy=FALSE,
+           dstTarget=100, conversion="yd2in", type="GrubbsPatnaik")
+
+
+## ----cDrawGroup1, out.width='3in'----------------------------------------
+library(shotGroups, verbose=FALSE)       # load shotGroups package
+dg1 <- drawGroup(DFcciHV, xyTopLeft=TRUE, bb=TRUE, minCirc=TRUE,
+                 maxSpread=TRUE, scaled=TRUE, dstTarget=100,
+                 conversion="yd2in", caliber=5.56, unit="cm", alpha=0.5,
+                 target=NA)
+
+## minimum enclosing circle parameters in cm
+dg1$minCirc
+
+## show Grubbs CEP estimate for 50%, 90% and 95%
+dg2 <- drawGroup(DFcciHV, xyTopLeft=TRUE, CEP="GrubbsPatnaik", scaled=TRUE,
+                 level=c(0.5, 0.9, 0.95), dstTarget=100, conversion="yd2in",
+                 caliber=5.56, unit="cm", alpha=0.5, target=NA)
+
+## Grubbs CEP estimate for 50%, 90% and 95%
+dg2$CEP
+
+
+## ----cDrawGroup2, out.width='3in'----------------------------------------
+library(shotGroups, verbose=FALSE)       # load shotGroups package
+dg3 <- drawGroup(DFcciHV, xyTopLeft=TRUE, bbMin=TRUE, bbDiag=TRUE,
+                 confEll=TRUE, ringID=TRUE, level=0.5, scaled=TRUE,
+                 dstTarget=100, conversion="yd2in", caliber=5.56, unit="MOA",
+                 alpha=0.5, target="ISSF_100yd")
+
+## simulated total ring count with maximum possible
+dg3$ringCount
+
+
+## ----cSimRingCount-------------------------------------------------------
+library(shotGroups, verbose=FALSE)       # load shotGroups package
+## simulated ring count and maximum possible with given number of shots
+simRingCount(DFscar17, target="ISSF_100m", caliber=7.62, unit="in")
+
+
+## ----cMOAcenter----------------------------------------------------------
+## convert object sizes in cm to MOA, distance in m
+getMOA(c(1, 2, 10), dst=100, conversion="m2cm", type="MOA")
+
+## convert from SMOA to object sizes in inch, distance in yard
+fromMOA(c(0.5, 1, 2), dst=100, conversion="yd2in", type="SMOA")
+
+## convert from object sizes in mm to milrad, distance in m
+fromMOA(c(1, 10, 20), dst=100, conversion="m2mm", type="milrad")
 
 

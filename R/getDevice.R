@@ -1,14 +1,14 @@
-## multiple calls to dev.new() currently don't work under RStudio
-## do nothing instead
+## open drawing device depending on context
 getDevice <-
 function() {
-    ## if under RStudio -> change device to explicit call
+    ## if under RStudio -> don't open new device
     dev <- getOption("device")
     if(class(dev) == "character") {
         if(dev == "RStudioGD") {
             dev <- function(...) {}
-#             ## find out which function to use for opening a new plot window
-#             ## find out operating system
+            ## alternative: open new device explicitly depending on platform
+            ## find out which function to use for opening a new plot window
+            ## find out operating system
 #             osType <- .Platform$OS.type
 #             if(osType == "windows") {
 #                 dev <- windows
@@ -23,6 +23,7 @@ function() {
         }
     }                                    # if(class(dev) == "character")
 
-#    dev <- function(...) {}
+    ## if not in interactive mode -> don't open new device
+    if(!interactive()) { dev <- function(...) {} }
     return(dev)
 }

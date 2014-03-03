@@ -1,21 +1,31 @@
 \name{getMOA}
 \alias{getMOA}
-\title{Conversion to minutes of angle}
-\description{Converts object size to MOA (minutes of angle).}
-\usage{getMOA(x, dst, conversion = 'm2cm')}
+\title{Conversion of absolute size to MOA, SMOA or milliradian}
+\description{Converts object size to angular measure (minute of angle MOA = arcminute, Shooter's MOA SMOA, milliradian milrad).}
+\usage{getMOA(x, dst, conversion = 'm2cm', type = c('MOA', 'SMOA', 'milrad'))}
 \arguments{
   \item{x}{a numerical vector of object sizes.}
   \item{dst}{a numerical vector of viewing distances.}
   \item{conversion}{how to convert the measurement unit for distance to target to that of the (x,y)-coordinates. Either a character vector indicating the conversion like \code{'m2cm'} for meter to centimeter, \code{'yd2in'} for yards to inches, or \code{'ft2cm'} for feet to cm. Imperial (yd, ft, in) and metric units (m, cm, mm) can be freely mixed. Alternatively, a numerical vector giving the multiplication factor for conversion: 100 for m to cm, 36 for yd to in, and 12 for ft to in.}
+  \item{type}{type of angular measure: \code{'MOA'} for minute of angle, \code{'SMOA'} for Shooter's MOA, \code{'milrad'} for milliradian. See details.}
+}
+\details{
+1 MOA (minute of angle, arcmin) = 1/60 degree. Shooter's MOA = SMOA = Inches Per Hundred Yards IPHY. 1 inch at 100 yards = 1 SMOA. 1 milliradian = 1/1000 radian. Details are given in the vignette, see \code{vignette('shotGroups') .}
 }
 \value{A numerical vector with the MOA values.}
 \seealso{\code{\link[shotGroups]{fromMOA}}}
 \examples{
-objSize <- seq(10, 30, by=5)  # cm
-objDst  <- 25                 # m
-getMOA(objSize, dst=objDst, conversion='m2cm')
+size <- seq(1, 20, by=5)   # inch
+dst  <- 100                # yard
+getMOA(size, dst=dst, conversion='yd2in', type='MOA')
 
 # this should return objSize
-fromMOA(getMOA(objSize, objDst, conversion='m2cm'),
-        objDst, conversion='m2cm')
+MOA <- getMOA(size, dst=dst, conversion='yd2in', type='MOA')
+fromMOA(MOA, dst=dst, conversion='yd2in', type='MOA')
+        
+# SMOA
+getMOA(c(1, 2, 5), dst=100, conversion='yd2in', type='SMOA')
+
+# milliradian
+getMOA(c(10, 20, 50), dst=100, conversion='m2mm', type='milrad')
 }

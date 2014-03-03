@@ -100,22 +100,22 @@ drawEllipse.default <-
 function(x, shape, radius=1, nv=100, axes=FALSE,
          fg=par("fg"), bg=NA, colCtr=NA,
          lty=par("lty"), lwd=par("lwd"), pch=par("pch"), cex=par("cex")) {
-    if(!is.numeric(x))     { stop("x must be numeric") }
-    if(!is.vector(x))      { stop("x must be a vector") }
-    if(length(x) != 2)     { stop("x must have length two") }
-    if(!is.matrix(shape))  { stop("shape must be a matrix") }
-    if(!is.numeric(shape)) { stop("shape must be numeric") }
-    if(any(dim(shape) != c(2, 2))) { stop("shape must be a (2 x 2)-matrix") }
+    if(!is.numeric(x))       { stop("x must be numeric") }
+    if(!is.vector(x))        { stop("x must be a vector") }
+    if(length(x) != 2)       { stop("x must have length two") }
+    if(!is.matrix(shape))    { stop("shape must be a matrix") }
+    if(!is.numeric(shape))   { stop("shape must be numeric") }
+    if(any(dim(shape) != 2)) { stop("shape must be a (2 x 2)-matrix") }
     if(!isTRUE(all.equal(max(abs(shape - t(shape))), 0, check.attributes=FALSE))) {
         stop("shape must be symmetric")
     }
 
-    CD     <- chol(shape, pivot=TRUE)      # Cholesky-decomposition
-    CDord  <- order(attr(CD, "pivot"))
+    CF     <- chol(shape, pivot=TRUE)      # Cholesky-factor
+    CFord  <- order(attr(CF, "pivot"))
     angles <- seq(0, 2*pi, length.out=nv)  # angles in radians
-    ell    <- radius * cbind(cos(angles), sin(angles)) %*% CD[ , CDord]  # ellipse
+    ell    <- radius * cbind(cos(angles), sin(angles)) %*% CF[ , CFord]  # ellipse
     ellCtr <- sweep(ell, 2, x, "+")        # move ellipse to center
-    
+
     ## draw center, ellipse
     points(x[1], x[2], col=colCtr, pch=pch, lwd=lwd, cex=cex)  # center
     polygon(ellCtr, border=fg, col=bg, lwd=lwd, lty=lty)       # ellipse
@@ -124,11 +124,11 @@ function(x, shape, radius=1, nv=100, axes=FALSE,
     if(axes) {
         eig    <- eigen(shape)
         eigScl <- eig$vectors %*% diag(radius * sqrt(eig$values))
-        
+
         # matrix with scaled ellipse axes
         xMat <- rbind(x[1] + eigScl[1, ], x[1] - eigScl[1, ])
         yMat <- rbind(x[2] + eigScl[2, ], x[2] - eigScl[2, ])
-        
+
         matlines(xMat, yMat, col=fg, lwd=lwd, lty=lty)
     }
 }

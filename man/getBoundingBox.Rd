@@ -18,8 +18,8 @@ A list with the following information about the bounding box:
   \item{pts}{a numerical 4-vector giving the coordinates \code{xleft}, \code{ybottom}, \code{xright}, \code{ytop}.}
   \item{width}{width of the box.}
   \item{height}{height of the box.}
-  \item{FoM}{figure of merit, i.e., the average side length of the box: (\code{width} + \code{height}) / 2}
-  \item{diag}{length of box diagonal}
+  \item{FoM}{figure of merit, i.e., the average side length of the box: (\code{width} + \code{height}) / 2.}
+  \item{diag}{length of box diagonal.}
 }
 \seealso{
 \code{\link[shotGroups]{drawBox}},

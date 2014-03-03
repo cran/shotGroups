@@ -1,28 +1,59 @@
-\documentclass[a4paper]{article}
+\documentclass[11pt,%
+parskip=half,%
+paper=a4,%
+headings=small,%
+DIV12]{scrartcl}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \usepackage[latin1]{inputenc}
 \usepackage[T1]{fontenc}
-\usepackage[pdfusetitle,bookmarks=true]{hyperref}
-\usepackage{a4wide}
+\usepackage[final,babel,activate=true]{microtype}
+\usepackage{lmodern}
+\usepackage{upquote}
+\usepackage{url}
+\usepackage[pdftex,%
+bookmarks=true,
+plainpages=false,%
+unicode=true,%
+pdfpagelabels=true,%
+colorlinks=true,%
+linkcolor=blue,%
+citecolor=blue,%
+filecolor=blue,%
+urlcolor=blue,%
+pdftitle={Statistical analysis of shooting results with the R shotGroups package},%
+pdfauthor={Daniel Wollschlaeger}]{hyperref}
+\usepackage{apacite}                     % after hyperref
+
 \setlength{\parskip}{0.7ex plus0.1ex minus0.1ex}
 \setlength{\parindent}{0em}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%\VignetteIndexEntry{Analyzing shooting data using shotGroups}
+\ifdefined\hlstd
+\renewcommand{\hlstd}[1]{\textcolor[rgb]{0,0,0}{#1}}%
+\fi
+
+\ifdefined\hlcom
+\renewcommand{\hlcom}[1]{\textcolor[rgb]{0.5,0.4,0.5}{#1}}%
+\fi
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%\VignetteIndexEntry{Analyzing shooting precision and accuracy using shotGroups}
 %\VignetteDepends{shotGroups}
 %\VignetteKeywords{shotGroups}
 %\VignettePackage{shotGroups}
+%\VignetteEngine{knitr::knitr}
+%%%%\SweaveOpts{engine=R}
 
 \begin{document}
 
-%\SweaveOpts{engine=R}
-
-\title{Analyzing shape, accuracy, and precison of shooting results with the \texttt{shotGroups} package}
+\title{Analyzing shape, accuracy, and precison of shooting results with \texttt{shotGroups}}
 \author{Daniel Wollschl\"{a}ger%
   \thanks{Email: \url{dwoll@kuci.org}}}
 \date{\today}
@@ -30,25 +61,30 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-<<setup, echo=FALSE>>=
-options(replace.assign=TRUE, useFancyQuotes=FALSE, show.signif.stars=FALSE, digits=4, width=70)
+<<setup, include=FALSE, cache=FALSE>>=
+## library(knitr)
+## set global chunk options
+knitr::opts_chunk$set(fig.align='center', fig.show='hold')
+knitr::opts_chunk$set(tidy=FALSE, message=FALSE, warning=FALSE, comment=NA)
+options(replace.assign=TRUE, width=75, digits=4, useFancyQuotes=FALSE, show.signif.stars=FALSE)
 @
 
 \maketitle
+\tableofcontents
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Introduction}
 \label{sec:introduction}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-The \texttt{shotGroups} package provides functions to read in, plot, statistically describe, analyze, and compare shot group data with respect to group shape, precision, and accuracy. This includes graphical methods, descriptive statistics, and inference tests using standard, but also nonparametric and robust statistical methods. The data can be imported from files produced by OnTarget PC and OnTarget TDS,\footnote{\url{http://www.ontargetshooting.com/}} or from custom data files in text format with a similar structure.
+The \texttt{shotGroups} package adds functionality to the open source statistical environment \textsf{R} \cite{RDevelopmentCoreTeam2008c}.\footnote{For an introduction to \textsf{R}, see \citeA{Dalgaard2008}, Try\textsf{R} (\url{http://tryr.codeschool.com/}) or Quick-\textsf{R} (\url{http://www.statmethods.net/}).} It provides functions to read in, plot, statistically describe, analyze, and compare shooting data with respect to group shape, precision, and accuracy. This includes graphical methods, descriptive statistics, and inference tests using standard, but also nonparametric and robust statistical techniques. The data can be imported from files produced by OnTarget PC and OnTarget TDS \cite{Block2014}, or from custom data files in text format with a similar structure.
+
+The package includes limited support for the analysis of three-dimensional data (see sections \ref{sec:CEP}, \ref{sec:CEPinv}),
 
 Use \verb+help(package="shotGroups")+ for a list of all functions and links to the detailed help pages with information on options, usage and output.
 
-Note that this vignette currently does not include the diagrams produced by each analysis function.
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Performing an analysis}
+\section{Analyzing bullet hole data}
 \label{sec:analysisSteps}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -57,13 +93,12 @@ Analyzing shot groups usually takes the following steps:
 \begin{itemize}
 \item Read in data (section \ref{sec:readData})
 \item Perform either a comprehensive numerical as well as graphical analysis of a group's shape, location (accuracy), and spread (precision) with \texttt{analyzeGroup()} (section \ref{sec:analyzeGroup}) \ldots
-\item \ldots or analyze these aspects of a group separately with \texttt{groupShape()} (section \ref{sec:groupShape}), \texttt{groupSpread()} (section \ref{sec:groupSpread}), \texttt{groupLocation()} (section \ref{sec:groupLocation}) and a number of utility functions to calculate individual statistical parameters (section \ref{sec:utilityFunctions})
+\item \ldots or analyze these aspects of a group separately with \texttt{groupShape()} (section \ref{sec:groupShape}), \texttt{groupSpread()} (section \ref{sec:groupSpread}), \texttt{groupLocation()} (section \ref{sec:groupLocation})
 \item Numerically and visually compare different groups in terms of their shape, location (accuracy), and spread (precision) with \texttt{compareGroups()} (section \ref{sec:compareGroups})
+\item Use additional utility functions (section \ref{sec:addFunc}) to individually explore different aspects of a given group
 \end{itemize}
 
-A good description of statistical techniques for shot group analysis can be found at
-
-\url{http://ballistipedia.com/}.
+\citeA{Grubbs1964b} and \url{http://ballistipedia.com/} are good sources for statistical methods for analyzing shot groups.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Reading in data}
@@ -72,37 +107,39 @@ A good description of statistical techniques for shot group analysis can be foun
 
 To import data into R, it should be saved as a text file with the following format:
 \begin{itemize}
-\item The file should have one row for each shot, and one column for each coordinate or any other variable.
-\item Columns should be separated by tabs or other whitespace. This type of text file can be exported from OnTarget PC/TDS, or from a spreadsheet application like Excel or Calc.
-\item The file needs a header in the first line giving the variable names, and should contain at least the $(x,y)$-coordinates of points of impact, either with variable names \texttt{Point.X}, \texttt{Point.Y} or just \texttt{X}, \texttt{Y}.
-\item For several analysis functions, the following additional variables are useful: \texttt{Group} (group number), \texttt{Distance} (distance to target), and \texttt{Aim.X}, \texttt{Aim.Y} (point of aim).
-\item Note that \textsf{R} is case sensitive, so the aforementioned variable names need to match exactly.
-\item If you have output files from OnTarget PC/TDS, you can read multiple files with \texttt{readDataOT1()} (for OnTarget PC v1.1*), or with \texttt{readDataOT2()} (for OnTarget PC v2.1* and OnTarget TDS v3.7*).
-\item If you have other whitespace or tab-delimited text files with the structure outlined above, you can read multiple files with \texttt{readDataMisc()}.
-\item If your data is saved in some other text file format, consult the help for \texttt{read.table()}.
+\item The file should have one row for each shot, and one column for each coordinate as well as for any other variable such as distance to target, point-of-aim coordinates.
+\item Columns should be separated by commas, tabs or other whitespace. This type of text file can be exported from OnTarget PC/TDS, or from a spreadsheet application like Excel or Calc.
+\item The file needs a header in the first line giving the variable names, and should contain at least the coordinates of points of impact, either with variable names \texttt{Point.X}, \texttt{Point.Y} or just \texttt{X}, \texttt{Y}.
+\item For several analysis functions, the following additional variables are useful: \texttt{Group} (group number), \texttt{Distance} (distance to target), and \texttt{Aim.X}, \texttt{Aim.Y} (point of aim). If these variables are missing, default values are assumed with a warning.
+\item Note that \textsf{R} is case sensitive, so the aforementioned variable names must match exactly.
+\item If you have output files from OnTarget PC/TDS, you can read multiple files with \texttt{readDataOT1()} (for OnTarget PC v1.*), or with \texttt{readDataOT2()} (for OnTarget PC v2.* and OnTarget TDS v3.*).
+\item If you have other whitespace or comma-separated text files with the structure outlined above, you can read multiple files with \texttt{readDataMisc()}. For three-dimensional data, this function also recognizes variables \texttt{Point.Z} or \texttt{Z} and \texttt{Aim.Z}.
+\item If your data is saved in some other text file format, consult the help for \texttt{read.table()} or the \textsf{R} import/export manual \cite{RDevelopmentCoreTeam2008b}.
 \end{itemize}
 
-<<s1, eval=FALSE>>=
+<<cReadData, eval=FALSE>>=
 library(shotGroups, verbose=FALSE)       # load shotGroups package
 
 ## read text files and save to data frame
-## not run, use data frame provided in package instead
+## not run, we later use data frame provided in package instead
 DFgroups <- readDataMisc(fPath="c:/path/to/files",
                          fNames=c("series1.dat", "series2.dat"))
 @
 
-Note that by default, OnTarget places the origin of the coordinate system in the upper left corner, This can be taken into account by using the function \texttt{analyzeGroup()} (section \ref{sec:analyzeGroup}) which performs a comprehensive analysis of a group's shape, precision and accuracy. When analyzing these aspects separately with \texttt{groupShape()} (section \ref{sec:groupShape}), \texttt{groupSpread()} (section \ref{sec:groupSpread}), and \texttt{groupLocation()} (section \ref{sec:groupLocation}), the scatterplots will be vertically mirror-reversed.
+By default, OnTarget's ``Export Point Data'' places the origin of the coordinate system in the top-left corner. This can be taken into account by correctly setting the option \texttt{xyTopLeft} in functions \texttt{analyzeGroup()} (section \ref{sec:analyzeGroup}), \texttt{compareGroups} (section \ref{sec:compareGroups}), and \texttt{drawGroup()} (section \ref{sec:drawGroup}). In OnTarget TDS, the orientation of the $y$-axis can be changed by checking the box ``Tools $\rightarrow$ Options $\rightarrow$ Options tab $\rightarrow$ Data Export $\rightarrow$ Invert Y-Axis on Export''. If groups appear to be upside-down, \texttt{xyTopLeft} is the setting to change.
+
+When analyzing different aspects of a group separately using \texttt{groupShape()} (section \ref{sec:groupShape}), \texttt{groupSpread()} (section \ref{sec:groupSpread}), and \texttt{groupLocation()} (section \ref{sec:groupLocation}), the scatterplots will be upside-down if the default option of OnTarget was used.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Performing a comprehensive analysis}
+\subsection{Performing a combined analysis}
 \label{sec:analyzeGroup}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \texttt{analyzeGroup()}: This function is a convencience wrapper for the functions presented in sections \ref{sec:groupShape}, \ref{sec:groupSpread}, and \ref{sec:groupLocation}. It analyzes a group's shape, precision, and accuracy in one go, and collects the results.
 
-<<s2a, eval=FALSE>>=
+<<cAnalyzeGroup, eval=FALSE>>=
 library(shotGroups, verbose=FALSE)       # load shotGroups package
-analyzeGroup(DFtalon, conversion='m2mm')
+analyzeGroup(DFtalon, conversion="m2mm")
 
 ## output not shown, see following sections for results
 @
@@ -117,25 +154,26 @@ analyzeGroup(DFtalon, conversion='m2mm')
 Reported statistical parameters and tests:
 
 \begin{itemize}
-\item Correlation matrix including a robust estimate
-\item Outlier identification using robust Mahalanobis distances and adjusted quantiles from the $\chi^{2}$-distribution
-\item Shapiro-Wilk normality tests for the distribution of $x$- and $y$-coordinates
-\item Energy test for bivariate normality of $(x,y)$-coordinates
+\item Correlation matrix including a robust estimate using the MCD method (from package \texttt{robustbase}; \citeNP{Rousseeuw2009})
+\item Outlier identification: Either using squared robust Mahalanobis distances and adjusted quantiles from the $\chi^{2}$-distribution, or using robust principal components analysis (PCA) with options to tune the sensitivity (from package \texttt{mvoutlier}; \citeNP{Filzmoser2011b})
+\item Shapiro-Wilk normality tests for the distribution of $x$- and $y$-coordinates. For more than 5000 observations, the drop-in Kolmogorov-Smirnov-test is reported instead.
+\item Energy test for bivariate normality of $(x,y)$-coordinates (from package \texttt{energy}; \citeNP{Rizzo2013})
 \end{itemize}
 
 Plots:
 
 \begin{itemize}
-\item Combined plot for multivariate outlier identification using robust Mahalanobis distances and adjusted quantiles from the $\chi^{2}$-distribution
+\item Combined plot for multivariate outlier identification using squared robust Mahalanobis distances and adjusted quantiles from the $\chi^{2}$-distribution (from package \texttt{mvoutlier})
 \item $\chi^{2}$ Q-Q-plot for eyeballing multivariate normality of $(x,y)$-coordinates
-\item Heatmap of a nonparametric 2D-kernel density estimate for the $(x,y)$-coordinates together with group center and error ellipse based on a robust estimate for the covariance matrix
+\item Heatmap of a nonparametric 2D-kernel density estimate for the $(x,y)$-coordinates  (from package \texttt{KernSmooth}; \citeNP{Wand2013}) together with robust group center and robust error ellipse
 \item Q-Q-plots for eyeballing normality of $x$- and $y$-coordinates 
-\item Histogram for $x$- and $y$-coordinates including a fitted normal distribution as well as a nonparametric kernel density estimate
+\item Histogram of $x$- and $y$-coordinates including a fitted normal distribution as well as a nonparametric kernel density estimate
 \end{itemize}
 
-<<s2b, fig=FALSE, out.width='5in'>>=
+%%<<cGroupShape, fig=FALSE, out.width='3in'>>=
+<<cGroupShape, out.width='3in'>>=
 library(shotGroups, verbose=FALSE)       # load shotGroups package
-groupShape(DFtalon, bandW=0.25, outlier='mcd')
+groupShape(DFtalon, bandW=0.4, outlier="mcd")
 @
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -143,34 +181,35 @@ groupShape(DFtalon, bandW=0.25, outlier='mcd')
 \label{sec:groupSpread}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\texttt{groupSpread()}: Assess precision using empirical and parametric spread measures with confidence intervals. Where possible, also use robust estimates based on the MCD method for estimating of the covariance matrix.
+\texttt{groupSpread()}: Assess precision using empirical and parametric spread measures with confidence intervals. Where possible, also use the MCD method for a robust estimate of the covariance matrix (from package \texttt{robustbase}). Bootstrap confidence intervals are from package \texttt{boot} \cite{Canty2009} with 1499 replications.
 
 Reported statistical parameters and tests:
 
 \begin{itemize}
-\item Standard deviations of $x$- and $y$ coordinates including a robust estimate together with parametric and bootstrap confidence intervals (in original measurement units and MOA)
-\item Covariance matrix of $(x,y)$-coordinates including a robust estimate
-\item Empirical mean and median radius as well as estimated Rayleigh precision parameter $\sigma$, estimated Rayleigh radial standard deviation RSD, and estimated Rayleigh mean radius MR together with parametric and bootstrap confidence intervals for $\sigma$, RSD, and MR (in original measurement units and MOA)
-\item Maximum pairwise distance (center-to-center, a.k.a. maximum spread, in original measurement units and MOA)
-\item Width and height of bounding box with diagonal and figure of merit as well as of the (oriented) minimum bounding box (in original measurement units and MOA)
-\item Radius for the minimum enclosing circle (in original measurement units and MOA)
-\item Length of semi-major and semi-minor axis of the confidence ellipse including these measures for the confidence ellipse based on a robust estimate for the covariance matrix (in original measurement units and MOA)
-\item Aspect ratio and flattening of the (robust) confidence ellipse
-\item Estimates for the circular error probable CEP (Rayleigh, Grubbs-Patnaik, modified RAND-234, in original measurement units and MOA)
+\item (Robust) Standard deviations of $x$- and $y$-coordinates together with parametric and bootstrap confidence intervals (in original measurement units, MOA, SMOA, milrad)
+\item (Robust) Covariance matrix of $(x,y)$-coordinates
+\item Empirical mean and median radius as well as estimated Rayleigh precision parameter $\sigma$, estimated Rayleigh radial standard deviation RSD $=\sigma \sqrt{\frac{4-\pi}{2}}$, and estimated Rayleigh mean radius MR $=\sigma \sqrt{\frac{\pi}{2}}$ together with parametric and bootstrap confidence intervals for $\sigma$, RSD, and MR (in original measurement units, MOA, SMOA, milrad)
+\item Maximum pairwise distance (center-to-center, = maximum spread, in original measurement units, MOA, SMOA, milrad)
+\item Width and height of bounding box with diagonal and figure of merit as well as of the (oriented) minimum-area bounding box (in original measurement units, MOA, SMOA, milrad)
+\item Radius for the minimum enclosing circle (in original measurement units, MOA, SMOA, milrad)
+\item Length of semi-major and semi-minor axis of the (robust) confidence ellipse (in original measurement units, MOA, SMOA, milrad)
+\item Aspect ratio $\sqrt{\kappa}$ (with condition index $\kappa$) and flattening $1-\frac{1}{\sqrt{\kappa}}$ of the (robust) confidence ellipse as well as the trace and determinant of the covariance matrix
+\item Estimate for the circular error probable CEP (see section \ref{sec:CEP}; in original measurement units, MOA, SMOA, milrad)
 \end{itemize}
 
 Plots:
 
 \begin{itemize}
-\item Scatterplot of the $(x,y)$-coordinates together with group center, circle with average distance to center, and confidence ellipse -- the latter also based on a robust estimate for the covariance matrix
-\item Scatterplot of the $(x,y)$-coordinates together with the bounding box, minimum bounding box, minimum enclosing circle, and maximum group spread
-\item Histogram for distances to group center including a Rayleigh fit and a nonparametric kernel density estimate
+\item Scatterplot of the $(x,y)$-coordinates together with group center, circle with average distance to center, and (robust) confidence ellipse
+\item Scatterplot of the $(x,y)$-coordinates together with the bounding box, minimum-area bounding box, minimum enclosing circle, and maximum group spread
+\item Histogram of distances to group center including a Rayleigh fit and a nonparametric kernel density estimate
 \end{itemize}
 
-<<s3, fig=FALSE, out.width='5in'>>=
+%%<<cGroupSpread, fig=FALSE, out.width='3in'>>=
+<<cGroupSpread, out.width='3in'>>=
 library(shotGroups, verbose=FALSE)       # load shotGroups package
-groupSpread(DFtalon, CEPtype=c("Rayleigh", "Grubbs", "RAND"), level=0.95,
-            sigmaType='Rayleigh', dstTarget=10, conversion='m2mm')
+groupSpread(DFtalon, CEPtype=c("CorrNormal", "GrubbsPatnaik", "Rayleigh"),
+            level=0.95, bootCI="basic", dstTarget=10, conversion="m2mm")
 @
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -178,13 +217,13 @@ groupSpread(DFtalon, CEPtype=c("Rayleigh", "Grubbs", "RAND"), level=0.95,
 \label{sec:groupLocation}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\texttt{groupLocation()}: Assess accuracy of a group using empirical and parametric measures.
+\texttt{groupLocation()}: Assess accuracy of a group using empirical and parametric measures. Where possible, also use the MCD method for a robust estimate of the covariance matrix (from package \texttt{robustbase}). Bootstrap confidence intervals are from package \texttt{boot} with 1499 replications.
 
 Reported statistical parameters and tests:
 
 \begin{itemize}
-\item $(x,y)$-offset of group center relative to point of aim with the same measure for a robust estimation of the group center
-\item Distance from group center to point of aim with the same measure for a robust estimation of the group center (in original measurement units and MOA)
+\item $(x,y)$-offset of (robust) group center relative to point of aim
+\item Distance from (robust) group center to point of aim (in original measurement units, MOA, SMOA, milrad)
 \item Hotelling's $T^{2}$-test result for equality of the true group center with point of aim
 \item Parametric and bootstrap confidence intervals for the true center's $x$- and $y$-coordinate
 \end{itemize}
@@ -192,13 +231,14 @@ Reported statistical parameters and tests:
 Plots:
 
 \begin{itemize}
-\item Scatterplot of the $(x,y)$-coordinates together with group center as well as a robust estimation of group center. If requested, bullet holes are drawn to scale on a target background (currently, only a very limited number of target types is implemented).
+\item Scatterplot of the $(x,y)$-coordinates together with (robust) group center.
 \end{itemize}
 
-<<s4, fig=FALSE, out.width='5in'>>=
+%%<<cGroupLocation, fig=FALSE, out.width='3in'>>=
+<<cGroupLocation, out.width='3in'>>=
 library(shotGroups, verbose=FALSE)       # load shotGroups package
-groupLocation(DFtalon, dstTarget=10, conversion='m2cm',
-              level=0.95, plots=2, target='BDS25m', caliber=5.56)
+groupLocation(DFtalon, dstTarget=10, conversion="m2cm",
+              level=0.95, plots=FALSE, bootCI="basic")
 @
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -206,86 +246,420 @@ groupLocation(DFtalon, dstTarget=10, conversion='m2cm',
 \label{sec:compareGroups}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\texttt{compareGroups()}: Compare two or more groups with regards to their precision and accuracy using empirical measures and statistical tests.
+\texttt{compareGroups()}: Compare two or more groups with regard to their precision and accuracy using empirical measures and statistical tests.
 
-\texttt{compareGroups()} requires an additional factor \texttt{Series} that identifies shot groups. OnTarget PC/TDS' \texttt{Group} variable identifies groups just within one file, \texttt{Series} should number groups also across different original files. When you read in data with \texttt{readDataOT1()}, \texttt{Series} is added automatically (same for \texttt{readDataOT2()} and \texttt{readDataMisc()}). Otherwise, you can just copy variable \texttt{Groups} to \texttt{Series} in a data frame called \texttt{shots} with \texttt{shots\$Series <- shots\$Group} \quad.
+\texttt{compareGroups()} requires that the data includes a variable \texttt{Series} that identifies shot groups. OnTarget PC/TDS' variable \texttt{Group} identifies groups just within one file, \texttt{Series} should number groups also across different original files. When you read in data with \texttt{readDataOT1()}, \texttt{Series} is added automatically (same for \texttt{readDataOT2()} and \texttt{readDataMisc()}). For data from just one file, you can otherwise copy variable \texttt{Group} to \texttt{Series} in a data frame called \texttt{shots} with
+
+<<cCmpGr, eval=FALSE>>=
+shots$Series <- shots$Group
+@
 
 Reported statistical parameters and tests:
 
 \begin{itemize}
-\item Group centers relative to the respective point of aim
-\item Distances from group centers to their respective point of aim (in original measurement units and MOA)
-\item MANOVA result from testing equality of group centers relative to their respective point of aim
+\item Group center offset from the respective point of aim
+\item Distances from group centers to their respective point of aim (in original measurement units, MOA, SMOA, milrad)
+\item MANOVA result from testing equality of group center offset from the respective point of aim
 \item Group correlation matrices for the $(x,y)$-coordinates
-\item Group standard deviations for the $x$- and $y$-coordinates including parametric 95\%-confidence intervals (in original measurement units and MOA)
-\item Average distances from points to their respective group center (in original measurement units and MOA)
-\item Maximum pairwise distance between points for each group (center-to-center, a.k.a. maximum spread, in original measurement units and MOA)
-\item Figure of merit FoM and diagonal of the minimum bounding box for each group (in original measurement units and MOA)
-\item Radius of the minimum enclosing circle for each group (in original measurement units and MOA)
-\item Rayleigh estimate for the 50\% circular error probable (CEP) in each group (in original measurement units and MOA)
+\item Group standard deviations of the $x$- and $y$-coordinates including parametric 95\%-confidence intervals (in original measurement units, MOA, SMOA, milrad)
+\item Average distances from points to their respective group center (in original measurement units, MOA, SMOA, milrad)
+\item Maximum pairwise distance between points for each group (center-to-center, = maximum spread, in original measurement units, MOA, SMOA, milrad)
+\item Figure of merit FoM and diagonal of the (oriented) minimum-area bounding box for each group (in original measurement units, MOA, SMOA, milrad)
+\item Radius of the minimum enclosing circle for each group (in original measurement units, MOA, SMOA, milrad)
+\item Estimate for the 50\% circular error probable (CEP) in each group (see section \ref{sec:CEP}; in original measurement units, MOA, SMOA, milrad)
 \item Ansari-Bradley-test results from testing equality of group variances for $x$- and $y$-coordinates -- when two groups are compared. With more than two groups, the Fligner-Killeen-test is used
-\item Wilcoxon-Rank-Sum-test result from testing equality of average point distances to their respective group center -- when two groups are compared. With more than two groups, the Kruskal-Wallis-test is used
+\item Wilcoxon-Rank-Sum-test (= Mann-Whitney-$U$-test) result from testing equality of average point distances to their respective group center -- when two groups are compared. With more than two groups, the Kruskal-Wallis-test is used
 \end{itemize}
+
+The Ansari-Bradley-, Fligner-Killeen-, Wilcoxon-Rank-Sum-, and Kruskal-Wallis-tests are implemented as permutation tests using the \texttt{coin} package \cite{Hothorn2008a}. The tests for two groups (Ansari-Bradley, Wilcoxon) use the exact permutation distribution, the tests for more than two groups (Fligner-Killeen, Kruskal-Wallis) use the approximate permutation distribution with 9999 random permutations.
 
 Plots:
 
 \begin{itemize}
 \item Scatterplot showing all groups as well as their respective center and 50\%-confidence ellipse
-\item Scatterplot showing all groups as well as their respective minimum bounding box, minimum enclosing circle, and maximum group spread
+\item Scatterplot showing all groups as well as their respective (minimum) bounding box and maximum group spread
 \item Scatterplot showing all groups as well as their respective minimum enclosing circle and circle with average distance to center
 \end{itemize}
 
-<<s5, fig=FALSE, out.width='5in'>>=
+%%<<cCompareGroups, fig=FALSE, out.width='3in'>>=
+<<cCompareGroups, out.width='3in'>>=
 library(shotGroups, verbose=FALSE)       # load shotGroups package
+
+## only use first 3 groups of DFtalon
 DFsub <- subset(DFtalon, Series %in% 1:3)
-compareGroups(DFsub, conversion='m2mm')
+compareGroups(DFsub, conversion="m2mm")
 @
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Utility functions}
-\label{sec:utilityFunctions}
+\section{Additional functionality}
+\label{sec:addFunc}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-The \texttt{shotGroups} package also provides a number of utility functions that can be used separately. These functions accept either a data frame or a matrix with $(x,y)$-coordinates. For more information on additional options, see the respective help page.
+The \texttt{shotGroups} package also provides a number of utility functions that can be used separately to \ldots
 
 \begin{itemize}
-\item \texttt{getBoundingBox()}, \texttt{getMinBBox()}: Calculates the vertices of the bounding box / of the minimum-area (possibly oriented) bounding box
-\item \texttt{getMinCircle()}: Calculates center and radius of the minimum enclosing circle
-\item \texttt{getCEP()}: Calculates the Rayleigh, Grubbs-Patnaik, and modified RAND R-234 estimate for the circular error probable
-\item \texttt{getConfEll()}: Calculates the 2D-confidence ellipse under the assumption of bivariate normality. Also includes the ellipse based on a robust estimate for the covariance matrix of the $(x,y)$-coordinates
-\item \texttt{getDistToCtr()}: Calculates the distances of a set of points to their center
-\item \texttt{getMaxPairDist()}: Calculates the maximum of pairwise distances between points
-\item \texttt{getRayParam()}: Estimates the radial precision parameter $\sigma$ of the Rayleigh distribution together with the Rayleigh radial standard deviation RSD and the Rayleigh mean MR, including parametric confidence intervals
-\item \texttt{getMOA()}, \texttt{fromMOA()}: Converts object size to MOA or vice versa.
+\item calculate individual descriptive precision measures (section \ref{sec:descPrecMeas})
+\item estimate hit probabilities: either get the region that is expected to contain a certain fraction of shots, or get the estimated fraction of shots expected to be within a given region (section \ref{sec:hitProbability})
+\item plot a group to scale on a target background and add precision indicators (section \ref{sec:drawGroup})
+\item simulate the ring count for a given group, bullet diameter, and target type (section \ref{sec:simRingCount})
+\item convert between absolute and angular size units MOA, SMOA, and milrad (section \ref{sec:unitConversion})
+\item try an analysis on collections of empirical data included in the package (section \ref{sec:datasets})
 \end{itemize}
 
-<<s6, out.width='5in'>>=
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Descriptive precision measures}
+\label{sec:descPrecMeas}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The following functions can be used to calculate precision measures that summarize some feature of the group's geometry. Section \ref{sec:drawGroup} illustrates how to add these precision indicators to a plot of the group.
+
+\begin{itemize}
+\item \texttt{getBoundingBox()}: Calculates the vertices, length of diagonal, and figure of merit (FoM) of the axis-aligned bounding box. This is the smallest rectangle that contains all points (bullet hole centers), and has edges parallel to the $x$- and $y$-axes.
+\item \texttt{getMinBBox()}: Calculates the vertices, length of diagonal, and figure of merit (FoM) of the minimum-area bounding box. This is the smallest, possibly oriented rectangle that contains all points (bullet hole centers). Uses the rotating calipers algorithm \cite{Toussaint1983}.
+\item \texttt{getMinCircle()}: Calculates center and radius of the minimum enclosing circle. This is the smallest circle that contains all points (bullet hole centers). Uses the Skyum algorithm \cite{Skyum1991}.
+\item \texttt{getDistToCtr()}: Calculates the distances of a set of points to their center. The mean or median can then be taken as a precision measure.
+\item \texttt{getMaxPairDist()}: Calculates the maximum of all pairwise distances between points.
+\end{itemize}
+
+<<cDescPrecMeas, out.width='3in'>>=
 library(shotGroups, verbose=FALSE)       # load shotGroups package
 getBoundingBox(DFtalon)                  # axis-aligned bounding box
 getMinBBox(DFtalon)                      # minimum-area bounding box
-getMinCircle(DFtalon)                    # minimum covering circle
-getCEP(DFtalon, type=c("Rayleigh", "Grubbs"))    # circular error probable
-getConfEll(DFtalon)                      # confidence ellipse
+getMinCircle(DFtalon)                    # minimum enclosing circle
 getMaxPairDist(DFtalon)                  # maximum pairwise distance
-getRayParam(DFtalon)                     # Rayleigh parameter estimates
-getMOA(c(1, 2, 10),   dst=100, conversion='m2cm')  # convert to MOA
-fromMOA(c(0.5, 1, 2), dst=100, conversion='m2cm')  # convert from MOA
 @
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Included data sets}
+\subsection{Estimating hit probability}
+\label{sec:hitProbability}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Beyond calculating decriptive/geometric precision measures, \texttt{shotGroups} also includes functions that provide inferential statistics to estimate hit probabilities.
+
+\begin{itemize}
+\item Section \ref{sec:CEP} shows how to estimate the circular, spherical or elliptical region that is expected to contain a given fraction of shots.
+\item Section \ref{sec:CEPinv} describes how to estimate the fraction of shots expected to be within a given distance to the true group center.
+\item Section \ref{sec:extrapolCEP} covers the extrapolation of hit probabilities to different distances other than the one a group was actually shot at.
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Region for a given hit probability: CEP, SEP and confidence ellipse}
+\label{sec:CEP}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The following functions estimate the region that is expected to contain a given fraction of shots (bullet hole centers) under different assumptions. The given fraction of shots is the same as the probability for one shot to lie within the calculated region. The functions can use the MCD method for a robust estimate of the group center and covariance matrix (from package \texttt{robustbase}). See section \ref{sec:litCEP} for more references to relevant literature.
+
+\begin{itemize}
+\item \texttt{getCEP()}: Calculates estimates for the Circular Error Probable CEP. For three-dimensional data, the Spherical Error Probable SEP is returned. The CEP/SEP estimate is the radius of the circle/sphere around the true mean $\mu$ of the distribution that is expected to cover a certain fraction of points. If systematic accuracy bias is ignored, $\mu$ is assumed to coincide with the group center. If systematic accuracy bias is taken into account, $\mu$ is assumed to be the point of aim, possibly offset from the group center. The following estimates are available:
+\begin{itemize}
+\item \texttt{CorrNormal}: If systematic accuracy bias is ignored, this estimate is based on the closed-form solution for the distribution of radial error in the bivariate normal distribution re-written in polar coordinates (radius and angle; \citeNP{Hoyt1947,Paris2009a,Paris2009b}). Shot coordinates may be correlated and have unequal variances. If systematic accuracy bias is taken into account, package \texttt{CompQuadForm} \cite{Duchesne2010} is used to calculate the cdf of radial error using numerical integration of the multivariate normal distribution over an offset disc \cite{DiDonato1961a,Evans1985} or sphere \cite{DiDonato1988}. The quantile function uses numerical root finding to get the inverse cdf. The \texttt{CorrNormal} estimate is available for all proability levels and generalizes to three dimensions.
+\item \texttt{GrubbsPearson}: The Grubbs-Pearson estimate \cite{Grubbs1964a} is based on the Pearson three-moment central $\chi^{2}$-approximation \cite{Imhof1961,Pearson1959} of the cumulative distribution function of radial error in bivariate normal variables. Shot coordinates may be correlated and have unequal variances. The eigenvalues of the covariance matrix of coordinates are used as variance estimates since they are the variances of the principal components (the PCA-rotated = decorrelated data). For probabilities $\geq 0.25$, the approximation is very close to the true cumulative distribution function (cdf) used in \texttt{CorrNormal} -- but easier to calculate. For probabilities $< 0.25$ and some distribution shapes, the approximation can diverge from the true cdf. The Grubbs-Pearson estimate is available for all proability levels, and generalizes to three dimensions.
+\item \texttt{GrubbsPatnaik}: The Grubbs-Patnaik estimate \cite{Grubbs1964a} differs from the Grubbs-Pearson estimate insofar as it is based on the \citeA{Patnaik1949} two-moment central $\chi^{2}$-approximation of the true cumulative distribution function of radial error. For probabilities $< 0.5$ and some distribution shapes, the approximation can diverge from the true cdf.
+\item \texttt{GrubbsLiu}: The Grubbs-Liu estimate was not proposed by Grubbs but follows the same principle as his original estimates. It differs from them insofar as it is based on the \citeA{Liu2009} four-moment non-central $\chi^{2}$-approximation of the true cumulative distribution function of radial error. For \texttt{accuracy=FALSE}, it is identical to \texttt{GrubbsPearson}.
+\item \texttt{Rayleigh}: This estimate uses the Rayleigh distribution with a bias-corrected estimate of its scale parameter $\sigma$ \cite{Singh1992}. The Rayleigh distribution assumes uncorrelated multivariate normal shot coordinates with equal variances $\sigma^{2}$. Numerical simulations suggest reasonable coverage for aspect ratios of the error ellipse not exceeding 4, and for quantiles in the range of $[0.5, 0.9]$. The Rayleigh estimate is available for all proability levels, and generalizes to three dimensions.
+\item \texttt{Ethridge}: The Ethridge estimate \cite{Ethridge1983} is not based on the assumption of multivariate normality of shot coordinates but uses a robust unbiased estimator for the median radius \cite{Hogg1967}. The Ethridge estimate is also documented in Puhek \citeyear{Puhek1992}.\footnote{Note that the formula for the Hogg weighted location estimate is wrong in \citeA{Puhek1992,Tongue1993,Wang2013b,Wang2014,Williams1997}.} This estimate can only be reported for probability 0.5 but generalizes to three dimensions.
+\item \texttt{RAND}: The modified RAND R-234 estimate \cite{RAND1952} is a weighted sum of the square root of the eigenvalues of the covariance matrix, that is of the standard deviations of the two principal components. The bias correction with \texttt{accuracy=TRUE} is based on a cubic regression fit to tabulated data \cite{Pesapane1977,Puhek1992}. This estimate can only be reported for probability 0.5 and does not generalize to three dimensions.
+%\item \texttt{Valstar}: The Valstar estimate \cite{Ethridge1983,Puhek1992} can only be reported for level 0.5 and two-dimensional data. It differs from the RAND-estimate only for highly elliptical distributions and in its method of correcting for systematic accuracy bias.
+\end{itemize}
+\item \texttt{getConfEll()}: Calculates the confidence ellipse for the true mean of the distribution under the assumption of multivariate normality of shot coordinates. The coordinates may be correlated and have unequal variances. The confidence ellipse gives the iso-probability contour, the points on its rim all have the same Mahalanobis distance to the center. The result also includes the ellipse based on a robust estimate for the covariance matrix of the coordinates using the MCD algorithm (from package \texttt{robustbase}). The confidence ellipse generalizes to three-dimensional data.
+\end{itemize}
+
+<<cCEP, out.width='3in'>>=
+## circular error probable
+getCEP(DFscar17, type=c("GrubbsPatnaik", "Rayleigh"), level=0.5,
+       dstTarget=100, conversion="yd2in")
+
+## confidence ellipse
+getConfEll(DFscar17, level=0.95,
+           dstTarget=100, conversion="yd2in")
+@
+
+Function \texttt{getRayParam()} estimates the Rayleigh distribution's radial precision parameter $\sigma$ together with its radial standard deviation RSD $=\sigma \sqrt{\frac{4-\pi}{2}}$, and its
+mean radius MR $=\sigma \sqrt{\frac{\pi}{2}}$, including parametric confidence intervals.
+
+<<cHitProb>>=
+## Rayleigh parameter estimates with 95% confidence interval
+getRayParam(DFscar17, level=0.95)
+@
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Hit probability for a given region}
+\label{sec:CEPinv}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Given a circle or sphere with radius $r$ around the true mean of the bullet hole distribution, \texttt{getHitProb()} estimates the expected fraction of shots that has at most distance $r$ to the group center. The estimated fraction of shots is the same as the estimated probability for one shot to lie in the circle with radius $r$. The probability can be calculated using the correlated bivariate normal, Grubbs-Pearson $\chi^{2}$, Grubbs-Patnaik $\chi^{2}$, Grubbs-Liu $\chi^{2}$, and Rayleigh distribution as explained in section \ref{sec:CEP}.
+
+In the example given below, we plug in the results for the 50\%-CEP as calculated by \texttt{getCEP()} in section \ref{sec:CEP} for $r$, and therefore expect a hit probability of 50\%.
+
+<<cHitProb1, out.width='3in'>>=
+## for the Grubbs-Patnaik estimate
+getHitProb(DFscar17, r=0.8414825, unit="in", accuracy=FALSE,
+           dstTarget=100, conversion="yd2in", type="GrubbsPatnaik")
+
+## for the Rayleigh estimate
+getHitProb(DFscar17, r=0.8290354, unit="in", accuracy=FALSE,
+           dstTarget=100, conversion="yd2in", type="Rayleigh")
+@
+
+Another calculation gives the estimated fraction of shots within a circle with radius 1\,MOA.
+
+<<cHitProb2, out.width='3in'>>=
+getHitProb(DFscar17, r=1, unit="MOA", accuracy=FALSE,
+           dstTarget=100, conversion="yd2in", type="CorrNormal")
+@
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Extrapolating CEP and confidence ellipse to different distances}
+\label{sec:extrapolCEP}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Function \texttt{getCEP()} returns the radius of the circular error probable (CEP) in absolute and angular size units, as does \texttt{getConfEll()} for the size of the confidence ellipse (section \ref{sec:CEP}). Since angular size measures can be converted back to absolute size for arbitrary distances (\ref{sec:moaCenter}), it is possible to estimate the absolute size of the CEP and confidence ellipse for distances different than the one a group was actually shot at.
+
+Given an observed group shot at 100\,yd, one might, for example, calculate the radius of the circle at 300\,m that is expected to contain $50\%$ of the shots. This calculation is highly idealized as it makes the assumption that all influences on precision scale linearly with distance. Under most circumstances, this assumption is invalid. Generally, extrapolating beyond observed data can often be misleading. However, projecting CEP to slightly different distances might still give a sufficient approximation.
+
+<<cExtrapolCEP1>>=
+## 50% circular error probable for group shot at 100yd
+CEP100yd <- getCEP(DFscar17, type=c("GrubbsPatnaik", "Rayleigh"),
+                   level=0.5, dstTarget=100, conversion="yd2in")
+
+## CEP in absolute and angular size units
+CEP100yd$CEP
+
+## extract CEP in MOA
+CEPmoa <- CEP100yd$CEP["MOA", c("GrubbsPatnaik", "Rayleigh")]
+
+## 50% CEP in inch for the same group extrapolated to 100m
+fromMOA(CEPmoa, dst=100, conversion="m2in")
+@
+
+Given a group shot at 100\,yd, one may be interested in the expected fraction of shots within a circular region with radius $r=$ 1\,inch around the group center at the distance of 100\,m (section \ref{sec:CEPinv}). To this end, we first convert 1\,inch at 100\,m to MOA, and then supply the MOA value to \texttt{getHitProb()}.
+
+<<cExtrapolCEP2>>=
+## 1 inch at 100 m in MOA
+MOA <- getMOA(1, dst=100, conversion="m2in")
+
+getHitProb(DFscar17, r=MOA, unit="MOA", accuracy=FALSE,
+           dstTarget=100, conversion="yd2in", type="GrubbsPatnaik")
+@
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Literature related to CEP}
+\label{sec:litCEP}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The literature on the circular error probable (CEP) is extensive and diverse: Applications for CEP are found in areas such as target shooting, missile ballistics, or positional accuracy of navigation and guidance systems like GPS. The statistical foundations in quadratic forms of normal variables are important for analyzing the power of inference tests. The Hoyt and Rayleigh distribution have applications in (wireless) signal processing.
+
+The following list is by no means intended to be complete. Beware that the quality of the cited articles is not uniformly high. The relevant publications may be roughly categorized into different groups:
+
+\begin{itemize}
+\item Articles that develop a CEP estimator or the modification of one -- e.\,g., RAND-234 \cite{RAND1952}, modified RAND-234 \cite{Pesapane1977}, \citeA{Grubbs1964a}, Rayleigh \cite{Culpepper1978,Saxena2005,Singh1992}, \citeA{Ethridge1983}, \citeA{Spall1992}, correlated bivariate normal \cite{DiDonato1961a,Evans1985}. Some articles focus on the confidence intervals for CEP \cite{DiDonato2007,Sathe1991,Taub1983b,Thomas1973,Zhang2012}.
+\item Articles or Master's theses comparing the characteristics of CEP estimators in different scenarios \cite{Blischke1966,Elder1986,Kamat1962,McMillan2008,Moranda1959,Moranda1960,Nelson1988,Puhek1992,Tongue1993,Taub1983a,Wang2013a,Wang2013b,Wang2014,Williams1997}.
+\item Publications studying the correlated bivariate normal distribution re-written in polar coordinates radius and angle \cite{Chew1962,Greenwalt1962,Harter1960,Hoover1984,Hoyt1947}. The distribution of the radius is known as the Hoyt \citeyear{Hoyt1947} distribution. The closed form expression for its cumulative distribution function has only recently been identified as the symmetric difference between two Marcum $Q$-functions \cite{Paris2009a,Paris2009b}. The latter are special cases of the non-central $\chi^{2}$-distribution \cite{Nuttall1975}.
+\item \citeA{DiDonato1961a,DiDonato1961b,DiDonato1962a,DiDonato1962b,Evans1985} develop methods to use the correlated bivariate normal distribution for CEP estimation when systematic accuracy bias must be taken into account. This requires integrating the distribution over a disc that is not centered on the true mean of the shot group but on the point of aim. This so-called \emph{offset circle probability} is the probability of a quadratic form of a normal variable \cite{Duchesne2010}. The exact distribution of quadratic forms is a weighted average of non-central $\chi^{2}$-distributions and difficult to calculate without numerical tools. Therefore, the \citeA{Patnaik1949} two-moment central $\chi^{2}$-approximation or the Pearson \cite{Imhof1961,Pearson1959} three-moment central $\chi^{2}$-approximation are often used. Recently, \cite{Liu2009} proposed a four-moment non-central $\chi^{2}$-approximation.
+\item A number of articles present algorithms for the efficient numerical calculation of the Hoyt cumulative distribution function (cdf), as well as for its inverse, the quantile function \cite{DiDonato2004,DiDonato2007,Pyati1993,Shnidman1995}. Numerical algorithms to efficiently and precisely calculate the distribution of quadratic forms of normal random variables were proposed by \citeA{Davies1980,Farebrother1984,Farebrother1990,Imhof1961,Sheil1977}. A comparison and implementation can be found in \citeA{Duchesne2010}.
+\item The Spherical Error Probable is developed in \citeA{DiDonato1988,Singh1962,Singh1970}.
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Plotting scaled bullet holes on a target background}
+\label{sec:drawGroup}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Function \texttt{drawGroup()} serves to illustrate a group of bullet holes by drawing the holes to scale on a target background, possibly adding the following features:
+
+\begin{itemize}
+\item The diagram can be drawn in original measurement units, in absolute size units m, cm, mm, yd, ft, in, or in angular measures MOA, SMOA, milrad.
+\item A target background can be selected from a number of pre-defined circular target types from different shooting federations (ISSF, DSB, BDS, BDMP, see \texttt{help(targets)}). Targets can also be plotted just by themselves using \texttt{drawTarget()}.
+\item Precision indicators can be added to the plot individually:
+\begin{itemize}
+\item (Minimum-area) bounding box with diagonal
+\item Minimum enclosing circle
+\item Maximum group spread
+\item Circle with mean distance to group center
+\item (Robust) confidence ellipse
+\item Circular error probable CEP
+\end{itemize}
+\item If a known target is supplied, the simulated ring value for each shot can be displayed (see section \ref{sec:simRingCount})
+\end{itemize}
+
+\texttt{drawGroup()} invisibly returns all the information that is shown in the diagram converted to the requested measurement unit. In the following example, the original measurement unit for $(x,y)$-coordinates was inch, the group is here drawn converted to cm. The second example shows how to plot a CEP estimator for multiple levels.
+
+%%<<cDrawGroup1, fig=TRUE, out.width='3in'>>=
+<<cDrawGroup1, out.width='3in'>>=
+library(shotGroups, verbose=FALSE)       # load shotGroups package
+dg1 <- drawGroup(DFcciHV, xyTopLeft=TRUE, bb=TRUE, minCirc=TRUE,
+                 maxSpread=TRUE, scaled=TRUE, dstTarget=100,
+                 conversion="yd2in", caliber=5.56, unit="cm", alpha=0.5,
+                 target=NA)
+
+## minimum enclosing circle parameters in cm
+dg1$minCirc
+
+## show Grubbs CEP estimate for 50%, 90% and 95%
+dg2 <- drawGroup(DFcciHV, xyTopLeft=TRUE, CEP="GrubbsPatnaik", scaled=TRUE,
+                 level=c(0.5, 0.9, 0.95), dstTarget=100, conversion="yd2in",
+                 caliber=5.56, unit="cm", alpha=0.5, target=NA)
+
+## Grubbs CEP estimate for 50%, 90% and 95%
+dg2$CEP
+@
+
+Now draw the group with coordinates converted to MOA, add the minimum-area bounding box, 50\%-confidence ellipse, use the ISSF 100\,yd target, and show the ring value for each shot (see section \ref{sec:simRingCount}).
+
+%%<<cDrawGroup2, fig=TRUE, out.width='3in'>>=
+<<cDrawGroup2, out.width='3in'>>=
+library(shotGroups, verbose=FALSE)       # load shotGroups package
+dg3 <- drawGroup(DFcciHV, xyTopLeft=TRUE, bbMin=TRUE, bbDiag=TRUE,
+                 confEll=TRUE, ringID=TRUE, level=0.5, scaled=TRUE,
+                 dstTarget=100, conversion="yd2in", caliber=5.56, unit="MOA",
+                 alpha=0.5, target="ISSF_100yd")
+
+## simulated total ring count with maximum possible
+dg3$ringCount
+@
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Simulate ring count}
+\label{sec:simRingCount}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Given the $(x,y)$-coordinates of a group, bullet diameter, and target type with definition of ring diameters, \texttt{simRingCount()} calculates a simulated ring count. This is an idealized calculation as it assumes that bullet holes exactly have the bullet diameter, and that rings exactly have the diameter given in the target definition. The count thus ignores the possibility of ragged bullet holes as well as the physical width of the ring markings. The simulated ring count therefore need not be equal to the calculated ring count from the corresponding physical target.
+
+As an example, we simulate the ring count for the \texttt{DFscar17} data from shooting a .308 rifle (bullet diameter 7.62\,mm) at 100\,yd, using the ISSF target made for rifle shooting at 100\,m.
+
+<<cSimRingCount>>=
+library(shotGroups, verbose=FALSE)       # load shotGroups package
+## simulated ring count and maximum possible with given number of shots
+simRingCount(DFscar17, target="ISSF_100m", caliber=7.62, unit="in")
+@
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Conversion between absolute and angular size units}
+\label{sec:unitConversion}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+In addition to absolute length units, group size is often reported in terms of its angular diameter. Angles can be measured equivalently either in degree or in radian. If $x$ is the angular measurement in radian, and $\varphi$ the angular measurement in degree for the same angle, then $\frac{x}{2 \pi} = \frac{\varphi}{360}$ such that conversion between degree and radian is given by $x = \frac{2 \pi}{360} \cdot \varphi$ and $\varphi = \frac{360}{2 \pi} \cdot x$ (figure \ref{fig:anglesCircle}).
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=4.5cm]{anglesCircle}
+\vspace*{-1em}
+\caption{Angle $\varphi$ (degree) with corresponding arc length $x$ (radian) in the unit circle.}
+\label{fig:anglesCircle}
+\end{figure}
+
+The angular size of an object with absolute size $s$ is its angular diameter at a given distance $d$. This is the angle $\alpha$ subtended by the object with the line of sight centered on it (figure \ref{fig:anglesCenter}).
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=8cm]{anglesCenter}
+\vspace*{-1em}
+\caption{Angular diameter of object with absolute size $s$ at distance to target $d$. Right triangle formed by $d$ and object of size $s/2$. $s$ corresponds to angle $\alpha$ (degree) and arc length $x$ (radian).}
+\label{fig:anglesCenter}
+\end{figure}
+
+The \texttt{shotGroups} package includes functions \texttt{getMOA()} and \texttt{fromMOA()} to convert from absolute object size to the angular measures MOA, SMOA, milrad and vice versa. The functions need the distance to target $d$, object sizes $s$ and measurement units for $d$ and $s$. The option \texttt{type} controls which angular measure is returned:
+
+\begin{itemize}
+\item \texttt{type="MOA"}: Convert to/from MOA = minute of angle = arcmin. The circle is divided into 360 degrees, 1 MOA = $1/60$ degree such that the circle has $360 \cdot 60 = 21600$ MOA.
+\item \texttt{type="SMOA"}: Convert to/from SMOA = Shooter's MOA = Inches Per Hundred Yards IPHY. 1 inch at 100 yards = 1 SMOA.
+\item \texttt{type="milrad"}: Convert to/from milrad = milliradian = 1/1000 radian. 1 radian is 1 unit of arc length on the unit circle which has a circumference of $2 \pi$. The circle is thus divided into $2 \pi \cdot 1000 \approx 6283.19$ milrad.
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Calculating the angular diameter of an object}
+\label{sec:moaCenter}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Figure \ref{fig:anglesCenter} shows how the angle $\alpha$ subtended by an object of size $s$ at distance $d$ can be calculated from the right triangle with hypotenuse $d$ and cathetus $s/2$: $\tan\left(\frac{\alpha}{2}\right) = \frac{s}{2} \cdot \frac{1}{d}$, therefore $\alpha = 2 \cdot \arctan\left(\frac{s}{2 d}\right)$.
+
+Assuming that the result from functions $\tan(\cdot)$ and $\arctan(\cdot)$ is in radian, and that distance to target $d$ and object size $s$ are measured in the same unit, this leads to the following formulas for calculating $\alpha$ in MOA, SMOA and $x$ in milrad based on $d$ and $s$:
+
+\begin{itemize}
+\item Angle $\alpha$ in MOA: $\alpha = 60 \cdot \frac{360}{2 \pi} \cdot 2 \cdot \arctan\left(\frac{s}{2 d}\right) = \frac{21600}{\pi} \cdot \arctan\left(\frac{s}{2 d}\right)$
+\item Angle $\alpha$ in SMOA: By definition, size $s=1$ inch at $d = 100$ yards ($= 3600$ inch) is 1 SMOA.\\[1ex]
+Conversion factors to/from MOA are $\frac{21600}{\pi} \cdot \arctan\left(\frac{1}{2 \cdot 3600}\right) \approx 0.95493$ (fairly close to $3/\pi$), and $\frac{\pi}{21600} \cdot \frac{1}{\arctan(1/7200)} \approx 1.04720$ (fairly close to $\pi/3$).\\[1ex]
+$\alpha = \frac{\pi}{21600} \cdot \frac{1}{\arctan(1/7200)} \cdot \frac{21600}{\pi} \cdot \arctan\left(\frac{s}{2 d}\right) = \frac{1}{\arctan(1/7200)} \cdot \arctan\left(\frac{s}{2 d}\right)$
+\item Arc length $x$ in milrad: $x = 1000 \cdot 2 \cdot \arctan\left(\frac{s}{2 d}\right) = 2000 \cdot \arctan\left(\frac{s}{2 d}\right)$.\\[1ex]
+Conversion factors to/from MOA are $\frac{21600}{2000 \pi} \approx 3.43775$ and $\frac{2000 \pi}{21600} \approx 0.29089$.
+\end{itemize}
+
+Likewise, object size $s$ can be calculated from an angular measurement and distance to target $d$:
+\begin{itemize}
+\item From angle $\alpha$ in MOA: $s = 2 \cdot d \cdot \tan\left( \frac{(2 \pi/360) (\alpha / 60)}{2} \right) = 2 \cdot d \cdot \tan\left(\alpha \cdot \frac{\pi}{21600}\right)$
+\item From angle $\alpha$ in SMOA: $s = \frac{21600}{\pi} \cdot \arctan\left(\frac{1}{7200}\right) \cdot 2 \cdot d \cdot \tan\left(\alpha \cdot \frac{\pi}{21600}\right)$
+\item From arc length $x$ in milrad: $s = 2 \cdot d \cdot \tan\left(\frac{x/1000}{2}\right) = 2 \cdot d \cdot \tan(0.0005 x)$
+\end{itemize}
+
+<<cMOAcenter>>=
+## convert object sizes in cm to MOA, distance in m
+getMOA(c(1, 2, 10), dst=100, conversion="m2cm", type="MOA")
+
+## convert from SMOA to object sizes in inch, distance in yard
+fromMOA(c(0.5, 1, 2), dst=100, conversion="yd2in", type="SMOA")
+
+## convert from object sizes in mm to milrad, distance in m
+fromMOA(c(1, 10, 20), dst=100, conversion="m2mm", type="milrad")
+@
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Less accurate calculation of angular size}
+\label{sec:moaSit}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Sometimes, a slightly different angular size is reported as corresponding to absolute size $s$ at distance $d$: This is the angle $\alpha'$ subtended by the object if it ``sits'' on the line of sight (figure \ref{fig:anglesSit}). $\alpha'$ can be calculated from the right triangle with hypotenuse $d$ and cathetus $s$: $\tan(\alpha') = \frac{s}{d}$, therefore $\alpha' = \arctan(\frac{s}{d})$.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=6.2cm]{anglesSit}
+\vspace*{-1em}
+\caption{Object ``sits'' on line of sight: right triangle formed by distance to target $d$ and object of size $s$. $s$ corresponds to angle $\alpha'$ (degree) and arc length $x'$ (radian).}
+\label{fig:anglesSit}
+\end{figure}
+
+If size $s$ is small compared to distance $d$, the difference between the actual angular diameter $\alpha$ and approximate angular size $\alpha'$ is negligible, but it becomes noticeable once $s$ gets bigger in relation to $d$ (figure \ref{fig:anglesCmp}).
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=7.9cm]{anglesCmp}
+\vspace*{-1em}
+\caption{Comparison between actual angular diameter $\alpha$ (red) and the approximate angular size $\alpha'$ (blue) as well as between arc lengths $x$ (red) and $x'$ (blue) corresponding to $s$ at distance $d$.}
+\label{fig:anglesCmp}
+\end{figure}
+
+% Assuming that the result from functions $\tan(\cdot)$ and $\arctan(\cdot)$ is in radian, and that distance to target $d$ and object size $s$ are measured in the same unit, this leads to the following formulas for calculating $\alpha'$ in MOA, SMOA and $x'$ in milrad based on $d$ and $s$:
+% 
+% \begin{itemize}
+% \item Angle $\alpha'$ in MOA: $\alpha' = 60 \cdot \frac{360}{2 \pi} \cdot \arctan\left(\frac{s}{d}\right) = \frac{10800}{\pi} \cdot \arctan\left(\frac{s}{d}\right)$
+% \item Angle $\alpha'$ in SMOA: By definition, size $s=1$ inch at $d = 100$ yards ($= 3600$ inch) is 1 SMOA.\\[1ex]
+% Conversion factors to/from MOA are $\frac{1080}{\pi} \cdot \arctan\left(\frac{1}{3600}\right) \approx 0.95493$ (fairly close to $3/\pi$), and $\frac{\pi}{10800} \cdot \frac{1}{\arctan(1/3600)} \approx 1.04720$ (fairly close to $\pi/3$).\\[1ex]
+% $\alpha' = \frac{\pi}{10800} \cdot \frac{1}{\arctan(1/3600)} \cdot \frac{10800}{\pi} \cdot \arctan\left(\frac{s}{d}\right) = \frac{1}{\arctan(1/3600)} \cdot \arctan\left(\frac{s}{d}\right)$
+% \item Arc length $x'$ in milrad: $x' = 1000 \cdot \arctan\left(\frac{s}{d}\right)$.\\[1ex]
+% Conversion factors to/from MOA are $\frac{10800}{1000 \pi} \approx 3.43775$ and $\frac{1000 \pi}{10800} \approx 0.29089$.
+% \end{itemize}
+% 
+% Likewise, object size $s$ can be calculated from an angular measurement and distance to target $d$:
+% \begin{itemize}
+% \item From angle $\alpha'$ in MOA: $s = d \cdot \tan\left(\frac{2 \pi}{360} \cdot \frac{\alpha'}{60}\right) = d \cdot \tan\left(\alpha' \cdot \frac{\pi}{10800}\right)$
+% \item From angle $\alpha'$ in SMOA: $s = \frac{10800}{\pi} \cdot \arctan\left(\frac{1}{3600}\right) \cdot d \cdot \tan\left(\alpha' \cdot \frac{\pi}{10800}\right)$
+% \item From arc length $x'$ in milrad: $s = d \cdot \tan(x'/1000) = d \cdot \tan(0.001 x')$
+% \end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Included data sets}
 \label{sec:datasets}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 The \texttt{shotGroups} package includes a number of empirical data sets with shooting results:
 
 \begin{itemize}
-\item \texttt{DF300BLK}: One group of shooting a Noveske AR-15 rifle in 300BLK at 100yd (20 observations)\footnote{\label{ftn:DF300BLK}Thanks: David Bookstaber \url{http://ballistipedia.com/}}
-\item \texttt{DFcciHV}: Two groups of shooting a PWS T3 rifle in .22LR at 100yd (40 observations, see footnote \ref{ftn:DF300BLK})
-\item \texttt{DFcm}: Several groups of shooting a 9x19mm pistol at 25m (487 observations)
-\item \texttt{DFtalon}: Several groups of shooting a Talon SS air rifle at 10m (180 observations)\footnote{\label{ftn:DFtalon}Thanks: Charles \& Paul McMillan \url{http://statshooting.com/}}
-\item \texttt{DFsavage}: Several groups of shooting a Savage 12 FT/R rifle in .308 Win at distances from 100 to 300m (180 observations, see footnote \ref{ftn:DFtalon})
-\item \texttt{DFscar17}: One group of shooting an FN SCAR 17 rifle in .308 Win at 100yd (10 observations, see footnote \ref{ftn:DF300BLK})
+\item \texttt{DF300BLK}: One group of shooting a Noveske AR-15 rifle in 300BLK at 100\,yd with factory ammunition (20 observations)\footnote{\label{ftn:DF300BLK}Thanks: David Bookstaber \url{http://ballistipedia.com/}}
+\item \texttt{DF300BLKhl}: Three groups of shooting a Noveske AR-15 rifle in 300BLK at 100\,yd with handloaded ammunition (60 observations, see footnote \ref{ftn:DF300BLK})
+\item \texttt{DFcciHV}: Two groups of shooting a PWS T3 rifle in .22LR at 100\,yd (40 observations, see footnote \ref{ftn:DF300BLK})
+\item \texttt{DFcm}: Several groups of shooting a 9x19mm pistol at 25\,m (487 observations)
+\item \texttt{DFtalon}: Several groups of shooting a Talon SS air rifle at 10\,m (180 observations)\footnote{\label{ftn:DFtalon}Thanks: Charles \& Paul McMillan \url{http://statshooting.com/}}
+\item \texttt{DFsavage}: Several groups of shooting a Savage 12 FT/R rifle in .308 Win at distances from 100 to 300\,m (180 observations, see footnote \ref{ftn:DFtalon})
+\item \texttt{DFscar17}: One group of shooting an FN SCAR 17 rifle in .308 Win at 100\,yd (10 observations, see footnote \ref{ftn:DF300BLK})
 \end{itemize}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -294,18 +668,22 @@ The \texttt{shotGroups} package includes a number of empirical data sets with sh
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{itemize}
-\item Make diagrams show up in this vignette
-\item Provide the option to render data in units SMOA (exactly 1'' at 100 yards) or mils, instead of MOA
-\item Provide the option to specify bullet diameter, and then render the points in all group plots using that size, with alpha-blending so that overlaps can be distinguished (as in \texttt{groupLocation(\ldots, plots="2")} see section \ref{sec:groupLocation})
-\item Include units somewhere on plots -- either axis labels or title
+\item CEP parametric/bootstrap CIs
 \item Human-readable output from functions \texttt{compareGroups()}, \texttt{groupLocation()}, \texttt{groupShape()}, \texttt{groupSpread()} by using \texttt{print()} methods
-\item Rayleigh parameter estimates from possibly elliptical distributions -- see DiDonato (2007): ``Computation of the Circular Error Probable (CEP) and Confidence Intervals in Bombing Tests''
-\item Repeat simulations from McMillan \& McMillan (2008) to estimate CEP correction factors for elliptical distributions for different confidence levels
-\item Function which accepts extreme order statistics (maximum spread) to allow inference for Rayleigh parameters $\sigma$, RSD, MR
-\item Find and fit platykurtic distribution type that allows for more near misses than normal distribution
-\item Add formulas for calculated statistics and literature references to this vignette
+\item Function which accepts extreme order statistics (maximum spread) to allow inference for Rayleigh parameters $\sigma$, RSD, MR \cite{Taylor1975,Taylor1977}
+\item Add formulas for calculated statistics to this vignette
+\item Consider platykurtic distribution type that allows for more near misses than normal distribution; spatial Poisson process
 \item Allow dates be associated with group data to track accuracy and precision performance over time
+\item Allow 3D data where applicable
 \end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\bibliographystyle{apacite}
+\renewcommand{\BAvailFrom}{URL\ }
+\renewcommand{\APACrefURL}{URL\ }
+\bibliography{lit}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
