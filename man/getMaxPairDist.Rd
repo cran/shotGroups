@@ -12,7 +12,6 @@
 \arguments{
   \item{xy}{either a numerical (n x p)-matrix with the coordinates of n points in p-dimensional space (1 row of coordinates per point), or a data frame with either the variables \code{X}, \code{Y} or \code{Point.X}, \code{Point.Y}.}
 }
-\details{No coordinate transforms are done (unlike in \code{\link[shotGroups]{groupLocation}}, \code{\link[shotGroups]{groupShape}}, \code{\link[shotGroups]{groupSpread}}), i.e., origin is not assumed to be in top-left corner, and points are not taken relative to point of aim.}
 \value{
 A list with the following components
 \item{d}{numerical value with the maximum pairwise distance between points.}

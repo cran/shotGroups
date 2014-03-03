@@ -3,7 +3,7 @@ getCircleFrom3 <-
 function(xy) {
     if(!is.matrix(xy))  { stop("xy must be a matrix") }
     if(!is.numeric(xy)) { stop("xy must be numeric") }
-    if((nrow(xy) != 3) | (ncol(xy) != 2)) { stop("xy must be (3x2)-matrix") }
+    if(any(dim(xy) != c(3, 2))) { stop("xy must be (3x2)-matrix") }
 
     aa <- xy[1,  ]
     bb <- xy[2,  ]
@@ -53,7 +53,7 @@ function(xy, S) {
     if(!is.numeric(xy)) { stop("xy must be numeric") }
     if(ncol(xy) != 2)   { stop("xy must have two columns") }
     if(!is.numeric(S))  { stop("S must be numeric") }
-    if((length(S) < 2) | (nrow(xy) < 2)) { stop("There must be at least two points") }
+    if((length(S) < 2) || (nrow(xy) < 2)) { stop("There must be at least two points") }
     if(length(S) > nrow(xy)) { stop("There can only be as many indices in S as points in xy") }
 
     n    <- length(S)                    # number of points
@@ -74,7 +74,7 @@ getAngleTri <-
 function(xy, deg=TRUE) {
     if(!is.matrix(xy))  { stop("xy must be a matrix") }
     if(!is.numeric(xy)) { stop("xy must be numeric") }
-    if((nrow(xy) != 3) | (ncol(xy) != 2)) { stop("xy must be (3x2)-matrix") }
+    if(any(dim(xy) != c(3, 2))) { stop("xy must be (3x2)-matrix") }
 
     d   <- dist(xy)
     dAB <- d[1]
@@ -98,7 +98,7 @@ isBiggerThan90 <-
 function(xy) {
     if(!is.matrix(xy))  { stop("xy must be a matrix") }
     if(!is.numeric(xy)) { stop("xy must be numeric") }
-    if((nrow(xy) != 3) | (ncol(xy) != 2)) { stop("xy must be (3x2)-matrix") }
+    if(any(dim(xy) != c(3, 2))) { stop("xy must be (3x2)-matrix") }
 
     d   <- dist(xy)
     dAB <- d[1]

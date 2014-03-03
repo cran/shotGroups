@@ -12,15 +12,19 @@
 \arguments{
   \item{xy}{either a numerical (n x 2)-matrix with the (x,y)-coordinates of n >= 2 points (1 row of coordinates per point), or a data frame with either the variables \code{X}, \code{Y} or \code{Point.X}, \code{Point.Y}.}
 }
-\details{No coordinate transforms are done (unlike in \code{\link[shotGroups]{groupLocation}}, \code{\link[shotGroups]{groupShape}}, \code{\link[shotGroups]{groupSpread}}), i.e., origin is not assumed to be in top-left corner, and points are not taken relative to point of aim.}
+\details{No coordinate transforms are done (unlike in \code{\link[shotGroups]{groupLocation}}, \code{\link[shotGroups]{groupShape}}, \code{\link[shotGroups]{groupSpread}}), i.e., origin is not assumed to be in top-left corner, and points are not taken relative to point of aim.\cr
+Uses the rotating calipers algorithm (Toussaint, 1983).}
 \value{
 A list with the following information about the minimum-area bounding box:
 \item{pts}{a (4 x 2)-matrix containing the coordinates of the (ordered) vertices.}
 \item{width}{width of the box.}
 \item{height}{height of the box.}
-\item{FoM}{figure of merit, i.e., the average side length of the box: (\code{width} + \code{height}) / 2}
-\item{diag}{length of box diagonal}
+\item{FoM}{figure of merit, i.e., the average side length of the box: (\code{width} + \code{height}) / 2.}
+\item{diag}{length of box diagonal.}
 \item{angle}{orientation of the box' longer edge pointing up as returned by \code{\link{atan2}}, but in degree.}
+}
+\references{
+Toussaint, G. T. (1983). Solving geometric problems with the rotating calipers. In Proceedings of the 1983 IEEE MELECON. Athens, Greece: IEEE Computer Society.
 }
 \seealso{
 \code{\link[shotGroups]{drawBox2}},

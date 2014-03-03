@@ -1,7 +1,9 @@
 combineData <-
 function(DFs) {
     if(!is.list(DFs)) { stop("DFs must be a list") }
-    if(!all(sapply(DFs, is.data.frame))) { stop("DFs must be a list of data frames") }
+    if(!all(sapply(DFs, is.data.frame))) {
+        stop("DFs must be a list of data frames")
+    }
 
     ## shared set of variable names
     varNameL <- lapply(DFs, names)       # list of variable names
@@ -16,8 +18,8 @@ function(DFs) {
     if(!all(hasGrp)) {
         warning(c("At least one data frame is missing variable\n",
                   paste(wantsGrp[!hasGrp], collapse=" "),
-                  "\nGroup is set to 1\n"))
-    
+                  "\nGroup is set to 1"))
+
         setGroup <- function(x) {
             if(!("Group" %in% names(x))) { x$Group <- 1 }
             x
@@ -28,7 +30,7 @@ function(DFs) {
     if(!all(hasDst)) {
         warning(c("At least one file is missing variable\n",
                   paste(wantsDst[!hasDst], collapse=" "),
-                  "\nthat may be required later by analysis functions\n"))
+                  "\nthat may be required later by analysis functions"))
     }
 
     ## make sure each data frame has either X, Y or Point.X, Point.Y
@@ -38,23 +40,28 @@ function(DFs) {
         needsXY2 <- c("X", "Y")              # or this
         hasXY1   <- needsXY1 %in% dfNames
         hasXY2   <- needsXY2 %in% toupper(dfNames)
-        
+
         if(!xor(all(hasXY1), all(hasXY2))) { # not (either X, Y or Point.X, Point.Y)
-            stop("Coordinates must be named either X, Y or Point.X, Point.Y\n")
+            stop("Coordinates must be named either X, Y or Point.X, Point.Y")
         }
-        
+
+        if(("Z" %in% toupper(dfNames)) && ("Point.Z" %in% dfNames)) {
+            stop("Coordinates must be named either Z or Point.Z")
+        }
+
         ## if X, Y -> rename to Point.X, Point.Y
         if(all(hasXY2)) {
             dfNames[dfNames %in% c("x", "X")] <- "Point.X"
             dfNames[dfNames %in% c("y", "Y")] <- "Point.Y"
+            dfNames[dfNames %in% c("z", "Z")] <- "Point.Z"
             names(x) <- dfNames
-            warning("Variables X, Y were renamed to Point.X, Point.Y\n")
+            warning("Variables X, Y were renamed to Point.X, Point.Y")
         }
         x
     }
-    
+
     DFs <- lapply(DFs, replaceXY)
-    
+
     ## restrict data frames to shared variables variables
     varsNow <- Reduce(intersect, lapply(DFs, names))  # shared set of variables
     DFrestr <- lapply(DFs, function(x) x[, varsNow])  # only select these
@@ -71,7 +78,7 @@ function(DFs) {
 
     ## convert orgSer to a factor with consecutively numbered levels
     runs         <- rle(as.character(DFall$orgSer))
-    runs$values  <- 1:length(runs$values)
+    runs$values  <- seq_along(runs$values)
     DFall$Series <- factor(inverse.rle(runs))
 
     return(DFall)
