@@ -1,6 +1,28 @@
-$Date: 2014-03-03 09:26:29 +0000 (Mon, 03 Mar 2014) $
+$Date: 2014-07-04 09:26:29 +0000 (Fri, 04 Jul 2014) $
 
 SHOTGROUPS RELEASE VERSIONS at http://cran.r-project.org/
+
+Version 0.5 (July 04, 2014)
+    * compareGroups()
+      - validate input for option CEPtype (needs to be one single type)
+    * getDistance()
+      - new function to get distance from absolute and angular size
+    * getHitProb()
+      - fix bug: type="GrubbsLiu" always returned NA
+    * getMOA(), fromMOA()
+      - now vectorized in all arguments except type
+    * groupShape()
+      - fix bug: don't show outlier-plot with plots=FALSE
+    * pmvnEll()
+      - fix bug: return 0 for r=0 instead of -2
+    * rHoyt()
+      - fix bug with method="cdf"
+    * rmvnEll()
+      - new function to simulate random radial errors from a multivariate
+        normal distribution around an offset center
+    * simRingCount()
+      - fix bug: theoretical maximum count for targets with maximum
+        value != 10
 
 Version 0.4 (March 03, 2014)
 

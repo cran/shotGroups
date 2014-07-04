@@ -15,7 +15,7 @@ function(xy, target, caliber, unit="cm") {
     if(!is.numeric(xy))      { stop("xy must be numeric") }
     if(ncol(xy) != 2)        { stop("xy must have two columns") }
     if(!is.numeric(caliber)) { stop("caliber must be numeric") }
-    if(caliber <= 0)         { stop("caliber must > 0") }
+    if(caliber <= 0)         { stop("caliber must be > 0") }
 
     unit <- match.arg(unit, choices=c("cm", "mm", "m", "in", "ft", "yd"))
 
@@ -34,11 +34,13 @@ function(xy, target, caliber, unit="cm") {
     ## cut with breaks = ring radii
     rings <- if(!is.null(trgt$countMouche) && trgt$countMouche) {
         ## with 1st ring (mouche, ring 10 inner sub-division)
+        maxAll <- with(trgt, maxVal+1)
         with(trgt, cut(dstPOA, breaks=c(0, ringRu, Inf),
                        labels=c((maxVal+1):(maxVal-nRings+1), 0)),
-                       include.lowest=TRUE)
+                       nclude.lowest=TRUE)
     } else {
         ## except 1st ring (mouche, ring 10 inner sub-division)
+        maxAll <- with(trgt, maxVal)
         with(trgt, cut(dstPOA, breaks=c(0, ringRu[-1], Inf),
                        labels=c(maxVal:(maxVal-nRings+1), 0)),
                        include.lowest=TRUE)
@@ -46,7 +48,7 @@ function(xy, target, caliber, unit="cm") {
 
     ## convert factor labels to numeric, then sum
     ringCount <- sum(as.numeric(as.character(rings)))  # observed ring count
-    ringMax   <- 10 * nrow(xy)                         # maximum possible
+    ringMax   <- maxAll * nrow(xy)                     # maximum possible
 
     return(list(count=ringCount, max=ringMax, rings=rings))
 }

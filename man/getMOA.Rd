@@ -13,7 +13,10 @@
 1 MOA (minute of angle, arcmin) = 1/60 degree. Shooter's MOA = SMOA = Inches Per Hundred Yards IPHY. 1 inch at 100 yards = 1 SMOA. 1 milliradian = 1/1000 radian. Details are given in the vignette, see \code{vignette('shotGroups') .}
 }
 \value{A numerical vector with the MOA values.}
-\seealso{\code{\link[shotGroups]{fromMOA}}}
+\seealso{
+\code{\link[shotGroups]{fromMOA}},
+\code{\link[shotGroups]{getDistance}}
+}
 \examples{
 size <- seq(1, 20, by=5)   # inch
 dst  <- 100                # yard

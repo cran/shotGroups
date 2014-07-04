@@ -6,7 +6,7 @@
 \alias{rHoyt}
 \title{The Hoyt Distribution}
 \description{
-Density, distribution function, quantile function, and random deviate generation for the Hoyt distribution. The radius around the true mean in a bivariate normal random variable re-written in polar coordinates (radius and angle) follows a Hoyt distribution. Eequivalently, the modulus of a complex normal random variable does.
+Density, distribution function, quantile function, and random deviate generation for the Hoyt distribution. The radius around the true mean in a bivariate normal random variable re-written in polar coordinates (radius and angle) follows a Hoyt distribution. Equivalently, the modulus of a complex normal random variable does.
 }
 \usage{
 dHoyt(x, qpar, omega)

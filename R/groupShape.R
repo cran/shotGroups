@@ -45,19 +45,29 @@ function(xy, plots=TRUE, bandW=0.5, outlier=c("mcd", "pca"),
 
         #####-------------------------------------------------------------------
         ## outlier-analysis for joint distribution of (x,y)-coords
-        devNew()                         # open new diagram
-        op <- par(no.readonly=TRUE)      # save device parameters
+        if(plots) {
+            devNew()                         # open new diagram
+            op <- par(no.readonly=TRUE)      # save device parameters
+    
+            ## outlier-analysis-plot         # this can fail due to memory constraints
+            outXY <- tryCatch(mvoutlier::aq.plot(xy), error=function(e) {
+                warning(c("mvoutlier::aq.plot() failed:\n", e$message))
+                return(list(outliers=NA)) })
+            par(op)                          # reset device parameters
+        } else {                             # direct graphics to null device
+            pdf(file=NULL)
+            ## outlier-analysis-plot         # this can fail due to memory constraints
+            outXY <- tryCatch(mvoutlier::aq.plot(xy), error=function(e) {
+                warning(c("mvoutlier::aq.plot() failed:\n", e$message))
+                return(list(outliers=NA)) })
+            dev.off()
+        }
 
-        ## outlier-analysis-plot         # this can fail due to memory constraints
-        outXY <- tryCatch(mvoutlier::aq.plot(xy), error=function(e) {
-            warning(c("mvoutlier::aq.plot() failed:\n", e$message))
-            return(list(outliers=NA)) })
         res$Outliers <- if(outlier == "mcd") {  #  identified outliers
             which(outXY$outliers)
         } else if(outlier == "pca") {
             which(mvoutlier::pcout(xy, makeplot=FALSE, ...)$wfinal01 == 0)
         }
-        par(op)                          # reset device parameters
     } else {
         res$corXYrob <- NULL
         res$Outliers <- NULL
@@ -126,8 +136,8 @@ function(xy, plots=TRUE, bandW=0.5, outlier=c("mcd", "pca"),
         ## x-coords
         ## choose y-axis limits
         maxNormX <- getMaxNorm(X, 2)[2]
-        dens     <- hist(X, breaks="FD", plot=FALSE)$density
-        yLims    <- c(0, max(c(dens, maxNormX)))
+        densX    <- hist(X, breaks="FD", plot=FALSE)$density
+        yLims    <- c(0, max(c(densX, maxNormX)))
 
         devNew()                         # open new diagram
         hist(X, ylim=yLims, breaks="FD", freq=FALSE,
@@ -148,8 +158,8 @@ function(xy, plots=TRUE, bandW=0.5, outlier=c("mcd", "pca"),
         ## histogram y-coords
         ## choose y-axis limits
         maxNormY <- getMaxNorm(Y, 2)[2]
-        dens     <- hist(Y, breaks="FD", plot=FALSE)$density
-        yLims    <- c(0, max(c(dens, maxNormY)))
+        densY    <- hist(Y, breaks="FD", plot=FALSE)$density
+        yLims    <- c(0, max(c(densY, maxNormY)))
 
         devNew()                         # open new diagram
         hist(Y, ylim=yLims, breaks="FD", freq=FALSE,
@@ -226,4 +236,178 @@ function(xy, plots=TRUE, bandW=0.5, outlier=c("mcd", "pca"),
     #####-----------------------------------------------------------------------
     ## return all the collected numerical results and tests
     return(res)
+}
+
+groupShapePlot <-
+function(xy, which=1, bandW=0.5, outlier=c("mcd", "pca"),
+         dstTarget=100, conversion="m2cm", ...) {
+    
+    if(!is.data.frame(xy)) { stop("xy must be a data.frame") }
+    xy <- getXYmat(xy)
+    if(!is.numeric(xy))    { stop("xy must be numeric") }
+    if(ncol(xy) != 2)      { stop("xy must have two columns") }
+
+    which   <- match.arg(as.character(which), choices=1:7)
+    outlier <- match.arg(outlier)
+
+    #####-----------------------------------------------------------------------
+    ## prepare data
+    X    <- xy[ , 1]                     # x-coords
+    Y    <- xy[ , 2]                     # y-coords
+    Npts <- nrow(xy)                     # number of points
+    res  <- vector("list", 0)            # empty list to later collect the results
+
+    haveRob <- TRUE                      # can we do robust estimation?
+    if(Npts < 4) {
+        warning(c("We need >= 4 points for robust estimations,\n",
+                  "outlier analysis, and chi^2 plot for multivariate normality"))
+        haveRob <- FALSE
+    } else {
+        rob      <- robustbase::covMcd(xy, cor=TRUE)
+        ctrRob   <- rob$center       # robust estimate: group center,
+        covXYrob <- rob$cov          # group covariance matrix
+    }                                   # if(Npts < 4)
+
+    if((which == 1) && haveRob) {
+        #####-------------------------------------------------------------------
+        ## outlier-analysis for joint distribution of (x,y)-coords
+        ## this can fail due to memory constraints
+        op <- par(no.readonly=TRUE)      # save device parameters
+        outXY <- tryCatch(mvoutlier::aq.plot(xy), error=function(e) {
+            warning(c("mvoutlier::aq.plot() failed:\n", e$message))
+            return(list(outliers=NA)) })
+        par(op)                          # reset device parameters
+    }                                    # if((which == 1) && haveRob)
+
+    ## infer (x,y)-coord units from conversion
+    unitXY  <- getUnits(conversion, first=FALSE)
+    unitDst <- getUnits(conversion, first=TRUE)
+
+    ## to determine axis limits later, collect all results in a vector
+    axisLimsX <- numeric(0)
+    axisLimsY <- numeric(0)
+
+    if(which == 2) {
+        #####-------------------------------------------------------------------
+        ## diagram: separate Q-Q-plots for eyeballing normality in x- and y-coords
+        qqnorm(X, pch=20, main="Q-Q-plot x-coordinates for eyeballing normality",
+               sub=paste("distance:", dstTarget, unitDst),
+               xlab="Quantiles from standard normal distribution",
+               ylab=paste0("Observed quantiles [", unitXY, "]"))
+        qqline(X, col="red", lwd=2)      # reference line
+    }
+
+    if(which == 3) {
+        qqnorm(Y, pch=20, main="Q-Q-plot y-coordinates for eyeballing normality",
+               sub=paste("distance:", dstTarget, unitDst),
+               xlab="Quantiles from standard normal distribution",
+               ylab=paste0("Observed quantiles [", unitXY, "]"))
+        qqline(Y, col="red", lwd=2)      # reference line
+    }
+
+    if(which == 4) {
+        #####-------------------------------------------------------------------
+        ## diagram: histograms for x- and y-coords
+        ## x-coords
+        ## choose y-axis limits
+        maxNormX <- getMaxNorm(X, 2)[2]
+        densX    <- hist(X, breaks="FD", plot=FALSE)$density
+        yLims    <- c(0, max(c(densX, maxNormX)))
+
+        hist(X, ylim=yLims, breaks="FD", freq=FALSE,
+             main="Histogram x-coordinates w/ kernel density estimate",
+             sub=paste("distance:", dstTarget, unitDst),
+             xlab=paste0("X [", unitXY, "]"))
+        rug(jitter(X))                   # show single values
+
+        ## add fitted normal curve and kernel density estimate
+        dnormX <- function(x) { dnorm(x, mean(X), sd(X)) }
+        curve(dnormX, lwd=2, col="blue", add=TRUE)
+        lines(density(X), lwd=2, col="red")  # kernel density estimate
+
+        ## add legend
+        legend(x="topleft", legend=c("normal distribution", "kernel density estimate"),
+               col=c("blue", "red"), lty=c(1, 1), lwd=c(2, 2), bg=rgb(1, 1, 1, 0.7))
+    }
+
+    if(which == 5) {
+        ## histogram y-coords
+        ## choose y-axis limits
+        maxNormY <- getMaxNorm(Y, 2)[2]
+        densY    <- hist(Y, breaks="FD", plot=FALSE)$density
+        yLims    <- c(0, max(c(densY, maxNormY)))
+
+        hist(Y, ylim=yLims, breaks="FD", freq=FALSE,
+             main="Histogram y-coordinates w/ kernel density estimate",
+             sub=paste("distance:", dstTarget, unitDst),
+             xlab=paste0("Y [", unitXY, "]"))
+        rug(jitter(Y))                   # show single values
+
+        ## add fitted normal curve and kernel density estimate
+        dnormY <- function(x) { dnorm(x, mean(Y), sd(Y)) }
+        curve(dnormY, lwd=2, col="blue", add=TRUE)
+        lines(density(Y), lwd=2, col="red")  # kernel density estimate
+
+        ## add legend
+        legend(x="topleft",
+               legend=c("normal distribution", "kernel density estimate"),
+               col=c("blue", "red"), lty=c(1, 1), lwd=c(2, 2), bg=rgb(1, 1, 1, 0.7))
+    }
+
+    if(which == 6) {
+        ## chi-square qq-plot for eyeballing multivariate normality
+        ## quantiles of squared robust Mahalanobis distance against quantiles
+        ## from chi^2 distribution with 2 df
+        if(haveRob) {
+            ## for axis limits
+            ellSize   <- 2*sqrt(eigen(covXYrob)$values)
+            axisLimsX <- c(axisLimsX, ctrRob[1] + ellSize[1],
+                                      ctrRob[1] - ellSize[1])
+            axisLimsY <- c(axisLimsY, ctrRob[2] + ellSize[1],
+                                      ctrRob[2] - ellSize[1])
+
+            ## squared robust Mahalanobis-distance
+            mDstSq <- mahalanobis(xy, center=ctrRob, cov=covXYrob)
+            plot(qchisq(ppoints(mDstSq), df=ncol(xy)), sort(mDstSq),
+                 xlab="Quantiles chi^2 distribution",
+                 ylab="Quantiles (robust Mahalanobis distances)^2", pch=20,
+                 main="Chi^2 Q-Q-plot for eyeballing multivariate normality")
+            abline(a=0, b=1, col="red", lwd=2)  # add a reference line
+        }                                # if(haveRob)
+    }
+
+    if(which == 7) {
+        #####-------------------------------------------------------------------
+        ## diagram: 2D-kernel density estimate for joint (x,y)-distribution
+        ## determine axis limits
+        xLims <- range(c(X, axisLimsX))
+        yLims <- range(c(Y, axisLimsY))
+
+        smoothScatter(X, Y, asp=1, bandwidth=bandW, xlim=xLims, ylim=yLims,
+                      main="2D-kernel density estimate and error ellipses",
+                      sub=paste("distance:", dstTarget, unitDst),
+                      xlab=paste0("X [", unitXY, "]"), ylab=paste0("Y [", unitXY, "]"))
+        abline(h=0, v=0, lwd=2)          # add point of aim
+
+        ## add group center and robust estimate for group center
+        if(haveRob) {
+            points(ctrRob[1], ctrRob[2], col=rgb(0.5, 0.5, 0.5, 0.4),
+                   pch=4, lwd=2, cex=1.5)
+
+            ## add robust error ellipses with radius = 1 and = 2
+            drawEllipse(ctrRob, covXYrob, radius=1, fg=rgb(0.5, 0.5, 0.5, 0.4),
+                        pch=4, lwd=2)
+            drawEllipse(ctrRob, covXYrob, radius=2, fg=rgb(0.5, 0.5, 0.5, 0.4),
+                        pch=4, lwd=2)
+        }                                # if(haveRob)
+
+        ## add legend
+        legend(x="bottomleft", legend=c("robust center", "robust error ellipses"),
+               col=c("darkgray", "darkgray"), pch=c(4, NA), lty=c(NA, 1),
+               lwd=c(2, 2), bg=rgb(1, 1, 1, 0.7))
+    }                                    # if(plots)
+
+    #####-----------------------------------------------------------------------
+    ## return all the collected numerical results and tests
+    return(invisible(NULL))
 }

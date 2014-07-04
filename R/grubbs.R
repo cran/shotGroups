@@ -3,11 +3,13 @@
 #####---------------------------------------------------------------------------
 
 ## determine Grubbs parameters from eigenvalues of covariance matrix
+## variance of decorrelated data = eigenvalues
 ## not vectorized
 getGrubbsParam <-
 function(sigma, ctr, accuracy=FALSE) {
     if(!is.matrix(sigma))  { stop("sigma must be a matrix") }
     if(!is.numeric(sigma)) { stop("sigma must be numeric") }
+    if(!isTRUE(all.equal(sigma, t(sigma)))) { stop("sigma must be symmetric") }
     if(missing(ctr))       { ctr <- numeric(ncol(sigma)) }
 
     eig    <- eigen(sigma)               # eigen-system of covariance matrix

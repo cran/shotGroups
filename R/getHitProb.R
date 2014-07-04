@@ -43,10 +43,6 @@ function(xy, r=1, unit="unit", dstTarget=100, conversion="m2cm",
         sigma <- cov(xy)
     }
 
-    ## make sure eigenvalues >= 0 when very small
-    ev     <- eigen(sigma)$values        # eigenvalues
-    eigVal <- ev*sign(ev)
-
     ## error ellipse characteristics -> radii = sqrt of eigenvalues
     ## aspect ratio of ellipse = sqrt of kappa condition index
     aspRat <- sqrt(kappa(sigma, exact=TRUE))
@@ -68,13 +64,13 @@ function(xy, r=1, unit="unit", dstTarget=100, conversion="m2cm",
     #####-----------------------------------------------------------------------
     ## estimate based on correlated bivariate normal distribution
     CorrNorm <- if(accuracy) {
-        ## offset circle probability
+        ## offset circle probability -> mvnEll.R
         pmvnEll(r=rNew, sigma=sigma, mu=numeric(ncol(xy)), x0=ctr, e=diag(ncol(xy)))
     } else {
-        if(ncol(xy) == 2) {              # exact Hoyt distribution
+        if(ncol(xy) == 2) {              # exact Hoyt distribution -> hoyt.R
             HP <- getHoytParam(sigma)
             pHoyt(rNew, qpar=HP$q, omega=HP$omega)
-        } else {
+        } else {                         # 1D/3D case -> mvnEll.R
             pmvnEll(r=rNew, sigma=sigma, mu=numeric(ncol(xy)), x0=ctr, e=diag(ncol(xy)))
         }
     }
@@ -84,7 +80,6 @@ function(xy, r=1, unit="unit", dstTarget=100, conversion="m2cm",
     #####-----------------------------------------------------------------------
     ## Grubbs-Pearson CEP estimate based on Pearson three-moment central
     ## chi^2 approximation (Grubbs, 1964, p55-56)
-    ## variance of decorrelated data = eigenvalues (Puhek, 1992)
     GPP <- getGrubbsParam(sigma, ctr=ctr, accuracy=accuracy)
     GrubbsPearson <- pChisqGrubbs(rNew, m=GPP$m, v=GPP$v, nPrime=GPP$nPrime, type="Pearson")
     names(GrubbsPearson) <- NULL
@@ -100,7 +95,7 @@ function(xy, r=1, unit="unit", dstTarget=100, conversion="m2cm",
     ## approximation (Liu, Tang & Zhang, 2009)
     GrubbsLiu <- pChisqGrubbs(rNew, m=GPP$m, v=GPP$v, muX=GPP$muX, varX=GPP$varX,
                               l=GPP$l, delta=GPP$delta, type="Liu")
-    names(GrubbsPatnaik) <- NULL
+    names(GrubbsLiu) <- NULL
 
     #####-----------------------------------------------------------------------
     ## Rayleigh estimate from Singh
@@ -116,6 +111,6 @@ function(xy, r=1, unit="unit", dstTarget=100, conversion="m2cm",
     #####-----------------------------------------------------------------------
     ## only report the chosen estimates
     CEPinv <- c(CorrNormal=CorrNorm, GrubbsPearson=GrubbsPearson,
-                GrubbsPatnaik=GrubbsPatnaik, GrubbsLiu, Rayleigh=Rayleigh)[type]
+                GrubbsPatnaik=GrubbsPatnaik, GrubbsLiu=GrubbsLiu, Rayleigh=Rayleigh)[type]
     return(CEPinv)
 }

@@ -7,9 +7,10 @@ function(x, dst, conversion="m2cm", type=c("MOA", "SMOA", "milrad")) {
     if(!is.numeric(x))   { stop(  "x must be numeric") }
     if(!is.numeric(dst)) { stop("dst must be numeric") }
 
-    keep <- !is.na(x)
-    if(any(x[keep] < 0)) { stop(  "x must be positive throughout") }
-    if(any(dst <= 0))    { stop("dst must be positive throughout") }
+    keepX   <- !is.na(x)
+    keepDst <- !is.na(dst)
+    if(any(x[keepX]     < 0))  { stop("x must be non-negative throughout") }
+    if(any(dst[keepDst] <= 0)) { stop("dst must be positive throughout") }
     type <- match.arg(type)
 
     ## convert distance measure to the unit of the (x,y)-coordinates
@@ -26,7 +27,7 @@ function(x, dst, conversion="m2cm", type=c("MOA", "SMOA", "milrad")) {
     ## SMOA
     ## get SMOA for 1 MOA = conversion factor for MOA2SMOA
     ## MOA2SMOA <- (pi/21600) * (1/atan(1/7200))
-    MOA2SMOA       <- 1.0471975579301210602603044918909607385383783485554
+    MOA2SMOA       <-    1.0471975579301210602603044918909607385383783485554
     cnst21600pi    <- 6875.4935415698785052157785776926204398886566959877
     cnst1atan17200 <- 7200.0000462962960581466263965930916898334026996030
 
@@ -40,11 +41,11 @@ function(x, dst, conversion="m2cm", type=c("MOA", "SMOA", "milrad")) {
     ##     MOA =(21600/pi)*atan(x/(2*dstCommon)),  # size in arcmin
     ##     SMOA=(1/atan(1/7200))*atan(x/(2*dstCommon)),  # size in SMOA
     ##   milrad=2000*atan(x/(2*dstCommon)))        # size in milliradian
-    angle <- x
-    angle[keep] <- switch(type,
-            MOA =cnst21600pi   *atan(x[keep]/(2*dstCommon)), # size in arcmin
-            SMOA=cnst1atan17200*atan(x[keep]/(2*dstCommon)), # size in SMOA
-          milrad=2000          *atan(x[keep]/(2*dstCommon))) # size in milliradian
+    atanArg <- x/(2*dstCommon)
+    angle   <- switch(type,
+            MOA=cnst21600pi   *atan(atanArg), # size in arcmin
+           SMOA=cnst1atan17200*atan(atanArg), # size in SMOA
+         milrad=          2000*atan(atanArg)) # size in milliradian
 
     return(angle)
 }
@@ -57,9 +58,11 @@ fromMOA <-
 function(x, dst, conversion="m2cm", type=c("MOA", "SMOA", "milrad")) {
     if(!is.numeric(x))   { stop(  "x must be numeric") }
     if(!is.numeric(dst)) { stop("dst must be numeric") }
-    keep <- !is.na(x)
-    if(any(x[keep] < 0)) { stop(  "x must be positive throughout") }
-    if(any(dst <= 0))    { stop("dst must be positive throughout") }
+
+    keepX   <- !is.na(x)
+    keepDst <- !is.na(dst)
+    if(any(x[keepX]     < 0))  { stop("x must be non-negative throughout") }
+    if(any(dst[keepDst] <= 0)) { stop("dst must be positive throughout") }
     type <- match.arg(type)
 
     ## convert distance measure to the unit of the (x,y)-coordinates
@@ -78,7 +81,6 @@ function(x, dst, conversion="m2cm", type=c("MOA", "SMOA", "milrad")) {
     ## MOA2SMOA <- (21600/pi)*atan(1/7200)
     MOA2SMOA    <- 0.95492965241113508367872462693595042591621952511092
     cnstPi21600 <- 0.00014544410433286079807697423070738439278690599071181
-
     ## milrad
     ## convert milliradian to rad, calculate size
     ## rad <- (1/1000)*milrad            # milliradian as rad
@@ -88,15 +90,47 @@ function(x, dst, conversion="m2cm", type=c("MOA", "SMOA", "milrad")) {
     ##     MOA =2*dstCommon*tan(x*pi/21600), # size from arcmin
     ##     SMOA=MOA2SMOA * 2*dstCommon*tan(x*pi/21600), # size from SMOA
     ##   milrad=2*dstCommon*tan(0.0005*x))   # size from milliradian
-    size <- x
-    size[keep] <- switch(type,
-           MOA =2*dstCommon*tan(x[keep]*cnstPi21600), # size from arcmin
-           SMOA=MOA2SMOA*2*dstCommon*tan(x[keep]*cnstPi21600),  # size from SMOA
-         milrad=2*dstCommon*tan(0.0005*x[keep]))      # size from milliradian
+    size <- switch(type,
+             MOA=         2*dstCommon*tan(x*cnstPi21600),  # size from arcmin
+            SMOA=MOA2SMOA*2*dstCommon*tan(x*cnstPi21600),  # size from SMOA
+          milrad=         2*dstCommon*tan(x*0.0005))       # size from milliradian
 
     return(size)
 }
 
+#####---------------------------------------------------------------------------
+## get distance from absolute and angular size
+getDistance <-
+function(x, angular, conversion="m2cm", type=c("MOA", "SMOA", "milrad")) {
+    if(!is.numeric(x)) { stop("x must be numeric") }
+    if(!is.numeric(angular)) { stop("angular must be numeric") }
+
+    keepX   <- !is.na(x)
+    keepAng <- !is.na(angular)
+    if(any(x[keepX] < 0))         { stop("x must be non-negative throughout") }
+    if(any(angular[keepAng] < 0)) { stop("angular must be non-negative throughout") }
+    type <- match.arg(type)
+
+    ## SMOA2MOA <- (21600/pi)*atan(1/7200)
+    SMOA2MOA    <- 0.95492965241113508367872462693595042591621952511092
+    ## pi/(2*60*180)
+    cnstPi21600 <- 0.00014544410433286079807697423070738439278690599071181
+    ## atan(1/7200)
+    cnstAtan7200 <- 0.00013888888799582762807755515064054772884717306648502
+
+    ## distance in unit of (x,y)-coordinates
+    dstCommon <- switch(type,
+           MOA=(x/2)*(1/tan(angular*cnstPi21600)),
+          SMOA=(x/2)*(1/tan(angular*cnstAtan7200)),
+        milrad=(x/2)*(1/tan(angular*0.0005)))
+    
+    ## convert distance measure from the unit of the (x,y)-coordinates
+    dst <- (1/getConvFac(conversion)) * dstCommon
+    return(dst)
+}
+
+#####---------------------------------------------------------------------------
+## get all angular measures for sizes x
 makeMOA <-
 function(x, dst, conversion) {
     if(length(x) == 1) {
@@ -111,5 +145,3 @@ function(x, dst, conversion) {
             milrad=getMOA(x, dst=dst, conversion=conversion, type="milrad"))
     }
 }
-
-## TODO: range estimation -> input size, MOA/SMOA/milrad, output distance

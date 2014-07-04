@@ -25,7 +25,7 @@ function(xy, xyTopLeft=TRUE, bb=FALSE, bbMin=FALSE, bbDiag=FALSE, minCirc=FALSE,
     if(!is.numeric(xy))      { stop("xy must be numeric") }
     if(ncol(xy) != 2)        { stop("xy must have two columns") }
     if(!is.numeric(caliber)) { stop("caliber must be numeric") }
-    if(caliber <= 0)         { stop("caliber must > 0") }
+    if(caliber <= 0)         { stop("caliber must be > 0") }
     if(!all(is.numeric(level)))    { stop("level must be numeric") }
     if(any(level <= 0))      { stop("level must be > 0") }
     if(!is.numeric(alpha))   { stop("alpha must be numeric") }

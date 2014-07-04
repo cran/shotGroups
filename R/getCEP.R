@@ -51,23 +51,23 @@ function(xy, level=0.5, dstTarget=100, conversion="m2cm", accuracy=FALSE,
 
     ## make sure eigenvalues >= 0 when very small
     ev     <- eigen(sigma)$values        # eigenvalues
-    eigVal <- ev*sign(ev)
+    lambda <- ev*sign(ev)
 
     ## error ellipse characteristics -> radii = sqrt of eigenvalues
-    ## aspect ratio of ellipse = sqrt of kappa condition index
+    ## aspect ratio of ellipse = sqrt of condition index kappa
     aspRat <- sqrt(kappa(sigma, exact=TRUE))
     flat   <- 1 - (1/aspRat)             # flattening
 
     #####-----------------------------------------------------------------------
-    ## CEP estimate based on correlated bivariate normal distribution -> corrNorm.R
+    ## CEP estimate based on correlated bivariate normal distribution
     CorrNorm <- if(accuracy) {
-        ## quantile from offset circle probability
+        ## quantile from offset circle probability -> mvnEll.R
         qmvnEll(level, mu=numeric(ncol(xy)), sigma=sigma, e=diag(ncol(xy)), x0=ctr)
     } else {
-        if(ncol(xy) == 2) {              # exact Hoyt distribution
+        if(ncol(xy) == 2) {              # exact Hoyt distribution -> hoyt.R
             HP <- getHoytParam(sigma)
             qHoyt(level, qpar=HP$q, omega=HP$omega)
-        } else {
+        } else {                         # 1D/3D case -> mvnEll.R
             qmvnEll(level, mu=numeric(ncol(xy)), sigma=sigma, e=diag(ncol(xy)),
                     x0=numeric(ncol(xy)))
         }
@@ -78,7 +78,6 @@ function(xy, level=0.5, dstTarget=100, conversion="m2cm", accuracy=FALSE,
     #####-----------------------------------------------------------------------
     ## Grubbs-Pearson CEP estimate based on Pearson three-moment central
     ## chi^2 approximation (Grubbs, 1964, p55-56)
-    ## variance of decorrelated data = eigenvalues (Puhek, 1992)
     GPP <- getGrubbsParam(sigma, ctr=ctr, accuracy=accuracy)
     GrubbsPearson <- qChisqGrubbs(level, m=GPP$m, v=GPP$v, nPrime=GPP$nPrime, type="Pearson")
     names(GrubbsPearson) <- NULL
@@ -94,7 +93,7 @@ function(xy, level=0.5, dstTarget=100, conversion="m2cm", accuracy=FALSE,
     ## approximation (Liu, Tang & Zhang, 2009)
     GrubbsLiu <- qChisqGrubbs(level, m=GPP$m, v=GPP$v, muX=GPP$muX, varX=GPP$varX,
                               l=GPP$l, delta=GPP$delta, type="Liu")
-    names(GrubbsPatnaik) <- NULL
+    names(GrubbsLiu) <- NULL
     
     #####-----------------------------------------------------------------------
     ## Rayleigh CEP estimate from Williams, 1997
@@ -140,7 +139,7 @@ function(xy, level=0.5, dstTarget=100, conversion="m2cm", accuracy=FALSE,
     ## modified RAND-234 CEP estimate for 50% from Williams, 1997
     ## using the semi-major and semi-minor axes of the error ellipse (PCA)
     RAND <- if(ncol(xy) == 2) {          # only available for 2D case
-        RAND50MPI <- 0.563*sqrt(eigVal[1]) + 0.614*sqrt(eigVal[2])
+        RAND50MPI <- 0.563*sqrt(lambda[1]) + 0.614*sqrt(lambda[2])
         RAND50 <- if(accuracy) {        # take systematic location bias into account
             bias <- sqrt(sum(ctr^2)) / RAND50MPI
             if((bias > 2.2) && ("RAND" %in% type)) {
@@ -161,7 +160,7 @@ function(xy, level=0.5, dstTarget=100, conversion="m2cm", accuracy=FALSE,
                       "probably more than what RAND CEP should be considered for"))
         }
 
-        ## RAND is only available for levels 0.5, 0.9, 0.95
+        ## RAND is only available for level 0.5
         if(level != 0.5) {
             if("RAND" %in% type) {
                 warning("RAND CEP estimate is only available for level 0.5")
@@ -196,13 +195,13 @@ function(xy, level=0.5, dstTarget=100, conversion="m2cm", accuracy=FALSE,
 #     ## using the semi-major and semi-minor axes of the error ellipse (PCA)
 #     Valstar <- if(ncol(xy) == 2) {       # only available for 2D case
 #         ValstarMPI <- if((1/aspRat) <= 0.369) {
-#             0.675*sqrt(eigVal[1]) + sqrt(eigVal[2])/(1.2*sqrt(eigVal[1]))
+#             0.675*sqrt(lambda[1]) + sqrt(lambda[2])/(1.2*sqrt(lambda[1]))
 #         } else {
-#             0.562*sqrt(eigVal[1]) + 0.615*sqrt(eigVal[2])  # almost RAND
+#             0.562*sqrt(lambda[1]) + 0.615*sqrt(lambda[2])  # almost RAND
 #         }
 #
 #         Valstar50 <- if(accuracy) {          # take systematic location bias into account
-#             Valstar <- sqrt(ValstarMPI + sum(ctr^2))
+#             Valstar <- sqrt(ValstarMPI^2 + sum(ctr^2))
 #         } else {                             # ignore location bias
 #             ValstarMPI
 #         }                                    # if(accuracy)

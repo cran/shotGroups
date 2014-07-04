@@ -9,6 +9,8 @@ function(r=1, sigma=diag(2), mu, e, x0, lower.tail=TRUE) {
     if(missing(mu)) { mu <- numeric(ncol(sigma)) }
     if(missing(x0)) { x0 <- numeric(ncol(sigma)) }
     if(missing(e))  { e  <- diag(ncol(sigma)) }
+    if(!isTRUE(all.equal(sigma, t(sigma)))) { stop("sigma must be symmetric") }
+    if(!isTRUE(all.equal(e, t(e))))         { stop("e must be symmetric") }
 
     ## check e, sigma positive definite
     eEV <- eigen(e)$values
@@ -27,9 +29,11 @@ function(r=1, sigma=diag(2), mu, e, x0, lower.tail=TRUE) {
               length(x0) == ncol(sigma))
 
     pp   <- numeric(length(r))               # initialize probabilities to 0
-    keep <- which((r >= 0) & is.finite(r))   # keep non-negative x
+    keep <- which((r > 0) & is.finite(r))    # keep positive x
     if(length(keep) < 1) {                   # nothing to do
-        pp[!is.finite(r)] <- NA
+        pp[!is.finite(r)]    <- NA
+        pp[which(r == -Inf)] <- 0
+        pp[which(r ==  Inf)] <- 1
         return(pp)
     }
 
@@ -66,35 +70,25 @@ function(p, sigma=diag(2), mu, e, x0, lower.tail=TRUE, loUp=NULL) {
     if(missing(x0)) { x0 <- numeric(ncol(sigma)) }
     if(missing(e))  { e  <- diag(ncol(sigma)) }
 
-    ## check e, sigma positive definite
-    eEV <- eigen(e)$values
-    sEV <- eigen(sigma)$values
-    if(!all(eEV >= -sqrt(.Machine$double.eps) * abs(eEV[1]))) {
-        stop("e is numerically not positive definite")
-    }
-
-    if(!all(sEV >= -sqrt(.Machine$double.eps) * abs(sEV[1]))) {
-        stop("sigma is numerically not positive definite")
-    }
-
-    ## check dimensions match
-    stopifnot(length(x0) == length(mu),
-              length(x0) == ncol(e),
-              length(x0) == ncol(sigma))
-
+    ## checks on mu, sigma, e are done in getGrubbsParam(), pmvnEll()
+    ## initialize quantiles to NA
     qq   <- as.numeric(rep(NA, length(p)))
     keep <- which((p >= 0) & (p < 1))
     if(length(keep) < 1) { return(qq) }
 
     ## determine search interval(s) for uniroot()
     if(is.null(loUp)) {                  # no search interval given
-        ## use Grubbs-Liu chi^2 quantile +- 300% for root finding
+        ## use Grubbs-Liu chi^2 quantile +- 50% for root finding
+        ## Grubbs-Liu chi^2 and correlated normal can diverge for p <= 0.25
         GP <- getGrubbsParam(sigma=sigma, ctr=(x0-mu), accuracy=TRUE)
-        qGrubbs <- qChisqGrubbs(p[keep], m=GP$m, v=GP$v, n=GP$n, muX=GP$muX,
-                                varX=GP$varX, l=GP$l, delta=GP$delta,
-                                lower.tail=lower.tail, type="Liu")
-        qLo  <- max(0, qGrubbs - 3*qGrubbs)
-        qUp  <- qGrubbs + 3*qGrubbs
+        qGrubbs   <- qChisqGrubbs(p[keep], m=GP$m, v=GP$v, muX=GP$muX,
+                                  varX=GP$varX, l=GP$l, delta=GP$delta,
+                                  lower.tail=lower.tail, type="Liu")
+        qGrubbs.4 <- qChisqGrubbs(0.4, m=GP$m, v=GP$v, muX=GP$muX,
+                                  varX=GP$varX, l=GP$l, delta=GP$delta,
+                                  lower.tail=lower.tail, type="Liu")
+        qLo  <- ifelse(p[keep] <= 0.25, 0,         0.5*qGrubbs)
+        qUp  <- ifelse(p[keep] <= 0.25, qGrubbs.4, 1.5*qGrubbs)
         loUp <- split(cbind(qLo, qUp), seq_along(p))
     } else {
         if(is.matrix(loUp)) {
@@ -121,4 +115,81 @@ function(p, sigma=diag(2), mu, e, x0, lower.tail=TRUE, loUp=NULL) {
 						   lower.tail=lower.tail[1]))
 
     return(qq)
+}
+
+## random variates
+rmvnEll <-
+function(n, sigma=diag(2), mu, e, x0, method=c("eigen", "chol", "cdf"), loUp=NULL) {
+    if(missing(mu)) { mu <- numeric(ncol(sigma)) }
+    if(missing(x0)) { x0 <- numeric(ncol(sigma)) }
+    if(missing(e))  { e  <- diag(ncol(sigma)) }
+    method <- match.arg(method)
+    
+    ## checks on mu, sigma, e are done in getGrubbsParam(), pmvnEll()
+    ## if n is a vector, its length determines number of random variates
+    n <- if(length(n) > 1) { length(n) } else { n }
+
+    rn <- if(method == "eigen") {
+        lambda <- eigen(sigma)$values    # eigenvalues
+
+        ## simulated 2D normal vectors with mean 0
+        X  <- matrix(rnorm(n*ncol(sigma)), nrow=n)     # with identity cov-mat
+        xy <- X %*% diag(sqrt(lambda), length(lambda)) # with cov-mat sigma
+
+        ## move to mean mu-x0
+        xyMove <- sweep(xy, 2, mu-x0, FUN="+")
+        sqrt(rowSums(xyMove^2))          # distances to center
+    } else if(method == "chol") {
+        CF    <- chol(sigma, pivot=TRUE) # Cholesky-factor
+        idx   <- order(attr(CF, "pivot"))
+        CFord <- CF[, idx]
+
+        ## simulated 2D normal vectors with mean 0 and cov-mat sigma
+        xy <- matrix(rnorm(n*ncol(sigma)), nrow=n) %*% CFord
+
+        ## move to mean mu-x0
+        xyMove <- sweep(xy, 2, mu-x0, FUN="+")
+        sqrt(rowSums(xyMove^2))          # distances to center
+    } else if(method == "cdf") {
+        ## root finding of pmvnEll() given uniform random probabilities:
+        ## find x such that F(x) - U = 0
+        cdf <- function(x, u, sigma, mu, e, x0) {
+            pmvnEll(x, sigma=sigma, mu=mu, e=e, x0=x0) - u
+        }
+
+        ## find quantile via uniroot() with error handling
+        getQ <- function(u, sigma, mu, e, x0, loUp) {
+            tryCatch(uniroot(cdf, interval=loUp, u=u, sigma=sigma, mu=mu, e=e, x0=x0)$root,
+                     error=function(e) return(NA))
+        }
+
+        u <- runif(n)                        # uniform random numbers
+
+        ## determine search interval(s) for uniroot()
+        if(is.null(loUp)) {                  # no search interval given
+            ## use Grubbs chi^2 quantile +- 50% for root finding
+            ## Grubbs-Liu chi^2 and correlated normal can diverge for p <= 0.25
+            GP <- getGrubbsParam(sigma=sigma, ctr=(x0-mu), accuracy=TRUE)
+            qGrubbs   <- qChisqGrubbs(u, m=GP$m, v=GP$v, muX=GP$muX,
+                                      varX=GP$varX, l=GP$l, delta=GP$delta, type="Liu")
+            qGrubbs.4 <- qChisqGrubbs(0.4, m=GP$m, v=GP$v, muX=GP$muX,
+                                      varX=GP$varX, l=GP$l, delta=GP$delta, type="Liu")
+            qLo  <- ifelse(u <= 0.25, 0,         0.5*qGrubbs)
+            qUp  <- ifelse(u <= 0.25, qGrubbs.4, 1.5*qGrubbs)
+            loUp <- split(cbind(qLo, qUp), seq_along(u))
+        } else {
+            if(is.matrix(loUp)) {
+                loUp <- split(loUp, 1:nrow(loUp))
+            } else if(is.vector(loUp)) {
+                loUp <- list(loUp)
+            } else if(!is.list(loUp)) {
+                stop("loUp must be a list, a matrix, a vector, or missing entirely")
+            }
+        }
+
+        unlist(Map(getQ, u=u, sigma=list(sigma), mu=list(mu), e=list(e),
+                   x0=list(x0), loUp=loUp))
+    }
+
+    return(rn)
 }

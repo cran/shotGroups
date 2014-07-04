@@ -92,8 +92,7 @@ function(x, scaleSq=1) {
     keep <- which((x >= 0) | !is.finite(x))
     if(length(keep) < 1) { return(dens) }
 
-    res <- exp(log(x[keep]) - 0.5*(x[keep]^2 / scaleSq[keep]) - log(scaleSq[keep]))
-    dens[keep] <- ifelse(is.nan(res), 0, res)  # if NaN, set to 0
+    dens[keep] <- exp(log(x[keep]) - 0.5*(x[keep]^2 / scaleSq[keep]) - log(scaleSq[keep]))
 
     ## special case not caught so far
     dens[is.infinite(x)] <- 0

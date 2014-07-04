@@ -106,7 +106,7 @@ function(x, shape, radius=1, nv=100, axes=FALSE,
     if(!is.matrix(shape))    { stop("shape must be a matrix") }
     if(!is.numeric(shape))   { stop("shape must be numeric") }
     if(any(dim(shape) != 2)) { stop("shape must be a (2 x 2)-matrix") }
-    if(!isTRUE(all.equal(max(abs(shape - t(shape))), 0, check.attributes=FALSE))) {
+    if(!isTRUE(all.equal(shape, t(shape)))) {
         stop("shape must be symmetric")
     }
 

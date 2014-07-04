@@ -26,10 +26,6 @@ getHoytParam.data.frame <-
 function(x) {
     sigma <- cov(getXYmat(x))            # covariance matrix
     x     <- eigen(sigma)$values         # eigenvalues
-    if(!all(x >= -sqrt(.Machine$double.eps) * abs(x[1]))) {
-        stop("Covariance matrix is numerically not positive definite")
-    }
-
     NextMethod("getHoytParam")
 }
 
@@ -41,11 +37,15 @@ function(x) {
     if(!all(sapply(x, dim) == 2))   { stop("x must be (2 x 2)-matrix") }
 
     getEV <- function(sigma) {           # eigenvalues from covariance matrix
-        eigVal <- eigen(sigma)$values
-        if(!all(eigVal >= -sqrt(.Machine$double.eps) * abs(eigVal[1]))) {
+        if(!isTRUE(all.equal(sigma, t(sigma)))) {
+            stop("x must be symmetric")
+        }
+
+        lambda <- eigen(sigma)$values
+        if(!all(lambda >= -sqrt(.Machine$double.eps) * abs(lambda[1]))) {
             stop("x is numerically not positive definite")
         }
-        eigVal
+        lambda
     }
 
     ev  <- lapply(x, getEV)              # eigenvalues for all matrices
@@ -61,22 +61,23 @@ function(x) {
 ## based on covariance matrix
 getHoytParam.matrix <-
 function(x) {
-    if(any(dim(x) != 2)) { stop("x must be a (2 x 2)-matrix") }
+    if(any(dim(x) != 2))            { stop("x must be a (2 x 2)-matrix") }
+    if(!isTRUE(all.equal(x, t(x)))) { stop("x must be symmetric") }
 
     x <- eigen(x)$values
-    if(!all(x >= -sqrt(.Machine$double.eps) * abs(x[1]))) {
-        stop("x is numerically not positive definite")
-    }
-
     NextMethod("getHoytParam")
 }
 
-## based on vector of eigenvalues
+## based on 2-vector of eigenvalues
+## not vectorized
 getHoytParam.default <-
 function(x) {
     if(!is.numeric(x)) { stop("x must be numeric") }
     if(any(x < 0))     { stop("x must be >= 0") }
     if(length(x) != 2) { stop("x must have length 2") }
+    if(!all(x >= -sqrt(.Machine$double.eps) * abs(max(x)))) {
+        stop("x is numerically not positive definite")
+    }
 
     x   <- sort(x, decreasing=TRUE)      # largest eigenvalue first
     ev1 <- x[1]
@@ -95,8 +96,8 @@ function(qpar, omega) {
     nnaO <- which(!is.na(omega))
     stopifnot(all(qpar[nnaQ] > 0), all(qpar[nnaQ] < 1), all(omega[nnaO] > 0))
 
-    ev2 <- omega / ((1/qpar^2) + 1)      # 1st eigenvalues
-    ev1 <- omega - ev2                   # 2nd eigenvalues
+    ev2 <- omega / ((1/qpar^2) + 1)      # 2nd eigenvalue
+    ev1 <- omega - ev2                   # 1st eigenvalue
 
     ## sort each pair of eigenvalues in descending order
     ev1ord <- pmax(ev1, ev2)
@@ -183,7 +184,9 @@ function(q, qpar, omega, lower.tail=TRUE) {
 
     pp   <- numeric(length(q))               # initialize probabilities to 0
     keep <- which((q >= 0) | !is.finite(q))  # keep non-negative x, NA, NaN, -Inf, Inf
-    if(length(keep) < 1) { return(pp) }      # nothing to do
+    if(length(keep) < 1) {                   # nothing to do
+        return(pp)
+    }
 
     alphaQ <- (sqrt((1 - qpar[keep]^4))/(2*qpar[keep])) * sqrt((1 + qpar[keep])/(1 - qpar[keep]))
      betaQ <- (sqrt((1 - qpar[keep]^4))/(2*qpar[keep])) * sqrt((1 - qpar[keep])/(1 + qpar[keep]))
@@ -288,16 +291,16 @@ function(p, qpar, omega, lower.tail=TRUE, loUp=NULL) {
     if(length(keep) < 1) { return(qq) }
 
     if(is.null(loUp)) {                  # no search interval given
-        ## use Grubbs chi^2 quantile +- 25% for root finding and
+        ## use Grubbs chi^2 quantile +- 25% for root finding
         ## Grubbs-Pearson chi^2 and correlated normal can diverge for p <= 0.25
         GP <- getGPfromHP(qpar, omega)             # Grubbs parameters
-        qGrubbs   <- qChisqGrubbs(p,   m=GP$m, v=GP$v, n=GP$n, nPrime=GP$nPrime,
+        qGrubbs   <- qChisqGrubbs(p,   m=GP$m, v=GP$v, nPrime=GP$nPrime,
                                   type="Pearson", lower.tail=lower.tail)
         ## Grubbs 0.4 quantile
-        qGrubbs.4 <- qChisqGrubbs(0.4, m=GP$m, v=GP$v, n=GP$n, nPrime=GP$nPrime,
+        qGrubbs.4 <- qChisqGrubbs(0.4, m=GP$m, v=GP$v, nPrime=GP$nPrime,
                                   type="Pearson", lower.tail=lower.tail)
-        qLo  <- ifelse(p <= 0.25, 0,         qGrubbs - 0.25*qGrubbs)
-        qUp  <- ifelse(p <= 0.25, qGrubbs.4, qGrubbs + 0.25*qGrubbs)
+        qLo  <- ifelse(p <= 0.25, 0,         0.75*qGrubbs)
+        qUp  <- ifelse(p <= 0.25, qGrubbs.4, 1.25*qGrubbs)
         loUp <- split(cbind(qLo, qUp), seq_along(p))
     } else {
         if(is.matrix(loUp)) {
@@ -331,22 +334,24 @@ function(n, qpar, omega, method=c("eigen", "chol", "cdf"), loUp=NULL) {
     is.na(omega) <- (omega <= 0) | !is.finite(qpar)
     method <- match.arg(method)
 
+    ## if n is a vector, its length determines number of random variates
+    n     <- if(length(n) > 1) { length(n) } else { n }
     qpar  <- qpar[1]                     # only first shape parameter is used
     omega <- omega[1]                    # only first scale parameter is used
 
     rn <- if(method == "eigen") {
-        eVal <- unlist(getEVfromHoyt(qpar, omega))     # eigenvalues
+        lambda <- unlist(getEVfromHoyt(qpar, omega))   # eigenvalues
 
         ## simulated 2D normal vectors with mean 0
-        X    <- matrix(rnorm(n*length(eVal)), nrow=n)  # with identity cov-mat
-        xy   <- X %*% diag(sqrt(eVal), length(eVal))
+        X  <- matrix(rnorm(n*length(lambda)), nrow=n)  # with identity cov-mat
+        xy <- X %*% diag(sqrt(lambda), length(lambda))
         sqrt(rowSums(xy^2))              # distances to center
     } else if(method == "chol") {
-        ev    <- getEVfromHoyt(qpar, omega)
-        sigma <- cbind(c(ev$ev1, 0), c(0, ev$ev2))
-        CF    <- chol(sigma, pivot=TRUE) # Cholesky-factor
-        idx   <- order(attr(CF, "pivot"))
-        CFord <- CF[, idx]
+        lambda <- getEVfromHoyt(qpar, omega)
+        sigma  <- cbind(c(lambda$ev1, 0), c(0, lambda$ev2))
+        CF     <- chol(sigma, pivot=TRUE) # Cholesky-factor
+        idx    <- order(attr(CF, "pivot"))
+        CFord  <- CF[, idx]
 
         ## simulated 2D normal vectors with mean 0
         xy <- matrix(rnorm(n*ncol(sigma)), nrow=n) %*% CFord
@@ -368,15 +373,13 @@ function(n, qpar, omega, method=c("eigen", "chol", "cdf"), loUp=NULL) {
 
         ## determine search interval(s) for uniroot()
         if(is.null(loUp)) {                  # no search interval given
-            ## use Grubbs chi^2 quantile +- 25% for root finding and
+            ## use Grubbs chi^2 quantile +- 25% for root finding
             ## Grubbs-Pearson chi^2 and correlated normal can diverge for p <= 0.25
             GP <- getGPfromHP(qpar, omega)   # Grubbs parameters and quantiles
-            qGrubbs   <- qChisqGrubbs(u,   m=GP$m, v=GP$v, n=GP$n,
-                                      nPrime=GP$nPrime, type="Pearson")
-            qGrubbs.4 <- qChisqGrubbs(0.4, m=GP$m, v=GP$v, n=GP$n,
-                                      nPrime=GP$nPrime, type="Pearson")
-            qLo  <- ifelse(u <= 0.25, 0,         qGrubbs - 0.25*qGrubbs)
-            qUp  <- ifelse(u <= 0.25, qGrubbs.4, qGrubbs + 0.25*qGrubbs)
+            qGrubbs   <- qChisqGrubbs(u,   m=GP$m, v=GP$v, nPrime=GP$nPrime, type="Pearson")
+            qGrubbs.4 <- qChisqGrubbs(0.4, m=GP$m, v=GP$v, nPrime=GP$nPrime, type="Pearson")
+            qLo  <- ifelse(u <= 0.25, 0,         0.75*qGrubbs)
+            qUp  <- ifelse(u <= 0.25, qGrubbs.4, 1.25*qGrubbs)
             loUp <- split(cbind(qLo, qUp), seq_along(u))
         } else {
             if(is.matrix(loUp)) {

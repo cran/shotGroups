@@ -352,11 +352,11 @@ The following functions estimate the region that is expected to contain a given 
 \begin{itemize}
 \item \texttt{getCEP()}: Calculates estimates for the Circular Error Probable CEP. For three-dimensional data, the Spherical Error Probable SEP is returned. The CEP/SEP estimate is the radius of the circle/sphere around the true mean $\mu$ of the distribution that is expected to cover a certain fraction of points. If systematic accuracy bias is ignored, $\mu$ is assumed to coincide with the group center. If systematic accuracy bias is taken into account, $\mu$ is assumed to be the point of aim, possibly offset from the group center. The following estimates are available:
 \begin{itemize}
-\item \texttt{CorrNormal}: If systematic accuracy bias is ignored, this estimate is based on the closed-form solution for the distribution of radial error in the bivariate normal distribution re-written in polar coordinates (radius and angle; \citeNP{Hoyt1947,Paris2009a,Paris2009b}). Shot coordinates may be correlated and have unequal variances. If systematic accuracy bias is taken into account, package \texttt{CompQuadForm} \cite{Duchesne2010} is used to calculate the cdf of radial error using numerical integration of the multivariate normal distribution over an offset disc \cite{DiDonato1961a,Evans1985} or sphere \cite{DiDonato1988}. The quantile function uses numerical root finding to get the inverse cdf. The \texttt{CorrNormal} estimate is available for all proability levels and generalizes to three dimensions.
-\item \texttt{GrubbsPearson}: The Grubbs-Pearson estimate \cite{Grubbs1964a} is based on the Pearson three-moment central $\chi^{2}$-approximation \cite{Imhof1961,Pearson1959} of the cumulative distribution function of radial error in bivariate normal variables. Shot coordinates may be correlated and have unequal variances. The eigenvalues of the covariance matrix of coordinates are used as variance estimates since they are the variances of the principal components (the PCA-rotated = decorrelated data). For probabilities $\geq 0.25$, the approximation is very close to the true cumulative distribution function (cdf) used in \texttt{CorrNormal} -- but easier to calculate. For probabilities $< 0.25$ and some distribution shapes, the approximation can diverge from the true cdf. The Grubbs-Pearson estimate is available for all proability levels, and generalizes to three dimensions.
+\item \texttt{CorrNormal}: If systematic accuracy bias is ignored, this estimate is based on the closed-form solution for the distribution of radial error in the bivariate normal distribution re-written in polar coordinates (radius and angle; \citeNP{Hoyt1947,Paris2009a,Paris2009b}). Shot coordinates may be correlated and have unequal variances. If systematic accuracy bias is taken into account, package \texttt{CompQuadForm} \cite{Duchesne2010} is used to calculate the cdf of radial error using numerical integration of the multivariate normal distribution over an offset disc \cite{DiDonato1961a,Evans1985} or sphere \cite{DiDonato1988}. The quantile function uses numerical root finding to get the inverse cdf. The \texttt{CorrNormal} estimate is available for all probability levels and generalizes to three dimensions.
+\item \texttt{GrubbsPearson}: The Grubbs-Pearson estimate \cite{Grubbs1964a} is based on the Pearson three-moment central $\chi^{2}$-approximation \cite{Imhof1961,Pearson1959} of the cumulative distribution function of radial error in bivariate normal variables. Shot coordinates may be correlated and have unequal variances. The eigenvalues of the covariance matrix of coordinates are used as variance estimates since they are the variances of the principal components (the PCA-rotated = decorrelated data). For probabilities $\geq 0.25$, the approximation is very close to the true cumulative distribution function (cdf) used in \texttt{CorrNormal} -- but easier to calculate. For probabilities $< 0.25$ and some distribution shapes, the approximation can diverge from the true cdf. The Grubbs-Pearson estimate is available for all probability levels, and generalizes to three dimensions.
 \item \texttt{GrubbsPatnaik}: The Grubbs-Patnaik estimate \cite{Grubbs1964a} differs from the Grubbs-Pearson estimate insofar as it is based on the \citeA{Patnaik1949} two-moment central $\chi^{2}$-approximation of the true cumulative distribution function of radial error. For probabilities $< 0.5$ and some distribution shapes, the approximation can diverge from the true cdf.
 \item \texttt{GrubbsLiu}: The Grubbs-Liu estimate was not proposed by Grubbs but follows the same principle as his original estimates. It differs from them insofar as it is based on the \citeA{Liu2009} four-moment non-central $\chi^{2}$-approximation of the true cumulative distribution function of radial error. For \texttt{accuracy=FALSE}, it is identical to \texttt{GrubbsPearson}.
-\item \texttt{Rayleigh}: This estimate uses the Rayleigh distribution with a bias-corrected estimate of its scale parameter $\sigma$ \cite{Singh1992}. The Rayleigh distribution assumes uncorrelated multivariate normal shot coordinates with equal variances $\sigma^{2}$. Numerical simulations suggest reasonable coverage for aspect ratios of the error ellipse not exceeding 4, and for quantiles in the range of $[0.5, 0.9]$. The Rayleigh estimate is available for all proability levels, and generalizes to three dimensions.
+\item \texttt{Rayleigh}: This estimate uses the Rayleigh distribution with a bias-corrected estimate of its scale parameter $\sigma$ \cite{Singh1992}. The Rayleigh distribution assumes uncorrelated multivariate normal shot coordinates with equal variances $\sigma^{2}$. Numerical simulations suggest reasonable coverage for aspect ratios of the error ellipse not exceeding 4, and for quantiles in the range of $[0.5, 0.9]$. The Rayleigh estimate is available for all probability levels, and generalizes to three dimensions.
 \item \texttt{Ethridge}: The Ethridge estimate \cite{Ethridge1983} is not based on the assumption of multivariate normality of shot coordinates but uses a robust unbiased estimator for the median radius \cite{Hogg1967}. The Ethridge estimate is also documented in Puhek \citeyear{Puhek1992}.\footnote{Note that the formula for the Hogg weighted location estimate is wrong in \citeA{Puhek1992,Tongue1993,Wang2013b,Wang2014,Williams1997}.} This estimate can only be reported for probability 0.5 but generalizes to three dimensions.
 \item \texttt{RAND}: The modified RAND R-234 estimate \cite{RAND1952} is a weighted sum of the square root of the eigenvalues of the covariance matrix, that is of the standard deviations of the two principal components. The bias correction with \texttt{accuracy=TRUE} is based on a cubic regression fit to tabulated data \cite{Pesapane1977,Puhek1992}. This estimate can only be reported for probability 0.5 and does not generalize to three dimensions.
 %\item \texttt{Valstar}: The Valstar estimate \cite{Ethridge1983,Puhek1992} can only be reported for level 0.5 and two-dimensional data. It differs from the RAND-estimate only for highly elliptical distributions and in its method of correcting for systematic accuracy bias.
@@ -454,7 +454,7 @@ The following list is by no means intended to be complete. Beware that the quali
 \begin{itemize}
 \item Articles that develop a CEP estimator or the modification of one -- e.\,g., RAND-234 \cite{RAND1952}, modified RAND-234 \cite{Pesapane1977}, \citeA{Grubbs1964a}, Rayleigh \cite{Culpepper1978,Saxena2005,Singh1992}, \citeA{Ethridge1983}, \citeA{Spall1992}, correlated bivariate normal \cite{DiDonato1961a,Evans1985}. Some articles focus on the confidence intervals for CEP \cite{DiDonato2007,Sathe1991,Taub1983b,Thomas1973,Zhang2012}.
 \item Articles or Master's theses comparing the characteristics of CEP estimators in different scenarios \cite{Blischke1966,Elder1986,Kamat1962,McMillan2008,Moranda1959,Moranda1960,Nelson1988,Puhek1992,Tongue1993,Taub1983a,Wang2013a,Wang2013b,Wang2014,Williams1997}.
-\item Publications studying the correlated bivariate normal distribution re-written in polar coordinates radius and angle \cite{Chew1962,Greenwalt1962,Harter1960,Hoover1984,Hoyt1947}. The distribution of the radius is known as the Hoyt \citeyear{Hoyt1947} distribution. The closed form expression for its cumulative distribution function has only recently been identified as the symmetric difference between two Marcum $Q$-functions \cite{Paris2009a,Paris2009b}. The latter are special cases of the non-central $\chi^{2}$-distribution \cite{Nuttall1975}.
+\item Publications studying the correlated bivariate normal distribution re-written in polar coordinates radius and angle \cite{Chew1962,Greenwalt1962,Harter1960,Hoover1984,Hoyt1947}. The distribution of the radius is known as the Hoyt \citeyear{Hoyt1947} distribution. The closed form expression for its cumulative distribution function has only recently been identified as the symmetric difference between two first-order Marcum $Q$-functions \cite{Marcum1950,Paris2009a,Paris2009b}. The latter a special cases of the non-central $\chi^{2}$-distribution \cite{Nuttall1975}. The statistical literature on coverage problems in the multivariate normal distribution is reviewed in \citeA{Guenther1964}.
 \item \citeA{DiDonato1961a,DiDonato1961b,DiDonato1962a,DiDonato1962b,Evans1985} develop methods to use the correlated bivariate normal distribution for CEP estimation when systematic accuracy bias must be taken into account. This requires integrating the distribution over a disc that is not centered on the true mean of the shot group but on the point of aim. This so-called \emph{offset circle probability} is the probability of a quadratic form of a normal variable \cite{Duchesne2010}. The exact distribution of quadratic forms is a weighted average of non-central $\chi^{2}$-distributions and difficult to calculate without numerical tools. Therefore, the \citeA{Patnaik1949} two-moment central $\chi^{2}$-approximation or the Pearson \cite{Imhof1961,Pearson1959} three-moment central $\chi^{2}$-approximation are often used. Recently, \cite{Liu2009} proposed a four-moment non-central $\chi^{2}$-approximation.
 \item A number of articles present algorithms for the efficient numerical calculation of the Hoyt cumulative distribution function (cdf), as well as for its inverse, the quantile function \cite{DiDonato2004,DiDonato2007,Pyati1993,Shnidman1995}. Numerical algorithms to efficiently and precisely calculate the distribution of quadratic forms of normal random variables were proposed by \citeA{Davies1980,Farebrother1984,Farebrother1990,Imhof1961,Sheil1977}. A comparison and implementation can be found in \citeA{Duchesne2010}.
 \item The Spherical Error Probable is developed in \citeA{DiDonato1988,Singh1962,Singh1970}.
@@ -566,6 +566,8 @@ The \texttt{shotGroups} package includes functions \texttt{getMOA()} and \texttt
 \item \texttt{type="milrad"}: Convert to/from milrad = milliradian = 1/1000 radian. 1 radian is 1 unit of arc length on the unit circle which has a circumference of $2 \pi$. The circle is thus divided into $2 \pi \cdot 1000 \approx 6283.19$ milrad.
 \end{itemize}
 
+Function \texttt{getDistance()} returns the distance to an object given its absolute size and angular size in MOA, SMOA, or milrad.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsubsection{Calculating the angular diameter of an object}
 \label{sec:moaCenter}
@@ -573,7 +575,7 @@ The \texttt{shotGroups} package includes functions \texttt{getMOA()} and \texttt
 
 Figure \ref{fig:anglesCenter} shows how the angle $\alpha$ subtended by an object of size $s$ at distance $d$ can be calculated from the right triangle with hypotenuse $d$ and cathetus $s/2$: $\tan\left(\frac{\alpha}{2}\right) = \frac{s}{2} \cdot \frac{1}{d}$, therefore $\alpha = 2 \cdot \arctan\left(\frac{s}{2 d}\right)$.
 
-Assuming that the result from functions $\tan(\cdot)$ and $\arctan(\cdot)$ is in radian, and that distance to target $d$ and object size $s$ are measured in the same unit, this leads to the following formulas for calculating $\alpha$ in MOA, SMOA and $x$ in milrad based on $d$ and $s$:
+Assuming that the argument for $\tan(\cdot)$ and the result from $\arctan(\cdot)$ are in radian, and that distance to target $d$ and object size $s$ are measured in the same unit, this leads to the following formulas for calculating $\alpha$ in MOA, SMOA and $x$ in milrad based on $d$ and $s$:
 
 \begin{itemize}
 \item Angle $\alpha$ in MOA: $\alpha = 60 \cdot \frac{360}{2 \pi} \cdot 2 \cdot \arctan\left(\frac{s}{2 d}\right) = \frac{21600}{\pi} \cdot \arctan\left(\frac{s}{2 d}\right)$
@@ -584,22 +586,39 @@ $\alpha = \frac{\pi}{21600} \cdot \frac{1}{\arctan(1/7200)} \cdot \frac{21600}{\
 Conversion factors to/from MOA are $\frac{21600}{2000 \pi} \approx 3.43775$ and $\frac{2000 \pi}{21600} \approx 0.29089$.
 \end{itemize}
 
-Likewise, object size $s$ can be calculated from an angular measurement and distance to target $d$:
+<<cMOAcenter1>>=
+## convert object sizes in cm to MOA, distance in m
+getMOA(c(1, 2, 10), dst=100, conversion="m2cm", type="MOA")
+@
+
+Likewise, absolute object size $s$ can be calculated from angular size and distance to target $d$:
 \begin{itemize}
 \item From angle $\alpha$ in MOA: $s = 2 \cdot d \cdot \tan\left( \frac{(2 \pi/360) (\alpha / 60)}{2} \right) = 2 \cdot d \cdot \tan\left(\alpha \cdot \frac{\pi}{21600}\right)$
 \item From angle $\alpha$ in SMOA: $s = \frac{21600}{\pi} \cdot \arctan\left(\frac{1}{7200}\right) \cdot 2 \cdot d \cdot \tan\left(\alpha \cdot \frac{\pi}{21600}\right)$
-\item From arc length $x$ in milrad: $s = 2 \cdot d \cdot \tan\left(\frac{x/1000}{2}\right) = 2 \cdot d \cdot \tan(0.0005 x)$
+\item From arc length $x$ in milrad: $s = 2 \cdot d \cdot \tan\left(\frac{x/1000}{2}\right) = 2 \cdot d \cdot \tan(x \cdot 0.0005)$
 \end{itemize}
 
-<<cMOAcenter>>=
-## convert object sizes in cm to MOA, distance in m
-getMOA(c(1, 2, 10), dst=100, conversion="m2cm", type="MOA")
-
+<<cMOAcenter2>>=
 ## convert from SMOA to object sizes in inch, distance in yard
 fromMOA(c(0.5, 1, 2), dst=100, conversion="yd2in", type="SMOA")
 
 ## convert from object sizes in mm to milrad, distance in m
 fromMOA(c(1, 10, 20), dst=100, conversion="m2mm", type="milrad")
+@
+
+Conversely, distance to target $d$ can be calculated from absolute object size $s$ and angular size:
+\begin{itemize}
+\item From angle $\alpha$ in MOA:    $d = \frac{s}{2} \cdot \frac{1}{\tan(\alpha \cdot \pi/21600)}$
+\item From angle $\alpha$ in SMOA:   $d = \frac{s}{2} \cdot \frac{1}{\tan(\alpha \cdot \arctan(1/7200))}$
+\item From arc length $x$ in milrad: $d = \frac{s}{2} \cdot \frac{1}{\tan(x \cdot 0.0005)}$
+\end{itemize}
+
+<<cMOAcenter3>>=
+## get distance in yard from object size in inch and angular size in MOA
+getDistance(2, angular=5, conversion="yd2in", type="MOA")
+
+## get distance in m from object size in mm and angular size in milrad
+getDistance(2, angular=0.5, conversion="m2mm", type="milrad")
 @
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

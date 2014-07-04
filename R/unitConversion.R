@@ -127,17 +127,15 @@ function(x="m2cm", first=TRUE) {
     unitLens <- sapply(units, length)    # count parts
     if(!all(unitLens == 2)) {            # check that there are two parts
         warning("Unit not recognized - input must have form like m2cm")
-        return(" ")
+        return("")
     }
 
     knownUnits <- c("m", "cm", "mm", "yd", "yard", "ft", "foot", "feet", "in", "inch")
-    knowsUnit  <- function(x) { all(x %in% knownUnits) }
-
-    isKnown <- sapply(units, knowsUnit)
+    isKnown    <- sapply(units, function(x) { all(x %in% knownUnits) })
     if(!all(isKnown)) {
         warning(c("Unit not recognized - needs to be one of\n",
                   paste(knownUnits, collapse=" ")))
-        return(" ")
+        return("")
     }
 
     ## replace feet with ft, yard with yd, inch with in

@@ -3,7 +3,7 @@
 \docType{data}
 \title{List containing definitions of several circular target types from the shooting federations ISSF, NRA, DSB, BDS, BDMP}
 \description{
-List containing definitions of several circular german (DSB, BDS) and ISSF target types.
+List containing definitions of several circular german (DSB, BDS, BDMP), ISSF, and NRA target types.
 }
 \usage{data(targets)}
 \format{
