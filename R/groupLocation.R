@@ -82,7 +82,7 @@ function(xy, level=0.95, plots=TRUE, bootCI=c("basic", "bca"),
     ctrXci <- rbind(t=rev(Mx-tCrit*sMx)) # t-CI x-coords
     ctrYci <- rbind(t=rev(My-tCrit*sMy)) # t-CI y-coords
 
-    ## nonparametric: bootstrap-CIs for center (basic and BCa)
+    ## non-parametric: bootstrap-CIs for center (basic and BCa)
     if(!("none" %in% bootCI)) {          # do bootstrap CIs
         NrplMin <- 1499                  # minimum number of replications
         Nrpl <- if("bca" %in% bootCI) {  # number of replications

@@ -2,21 +2,22 @@
 \alias{getRayParam}
 \alias{getRayParam.data.frame}
 \alias{getRayParam.default}
-\title{Estimate Rayleigh parameters sigma, RSD, and MR}
-\description{Estimates the radial precision parameter sigma of the Rayleigh distribution together with the Rayleigh radial standard deviation RSD and the Rayleigh mean MR, including parametric confidence intervals.}
-\usage{getRayParam(xy, level = 0.95, accuracy = FALSE)
+\title{Estimate Rayleigh parameters sigma, mean and standard deviation}
+\description{Estimates the radial precision parameter sigma of the Rayleigh distribution together with the radial mean MR and radial standard deviation RSD, including parametric confidence intervals.}
+\usage{getRayParam(xy, level = 0.95, mu, doRob = FALSE)
 
-\method{getRayParam}{data.frame}(xy, level = 0.95, accuracy = FALSE)
+\method{getRayParam}{data.frame}(xy, level = 0.95, mu, doRob = FALSE)
 
-\method{getRayParam}{default}(xy, level = 0.95, accuracy = FALSE)}
+\method{getRayParam}{default}(xy, level = 0.95, mu, doRob = FALSE)}
 \arguments{
-  \item{xy}{either a numerical (n x p)-matrix with the coordinates of n points (1 row of p coordinates per point), or a data frame with either the variables \code{X}, \code{Y} or \code{Point.X}, \code{Point.Y} (optionally \code{Z} or \code{Point.Z}).}
-  \item{level}{a numerical value with the coverage for the confidence intervals for sigma, RSD, MR.}
-  \item{accuracy}{logical: take systematic location bias into account for the sigma estimate? See details.}
+  \item{xy}{either a numerical (n x 2)-matrix with the coordinates of n points (1 row of (x,y)-coordinates per point), or a data frame with either the variables \code{X}, \code{Y} or \code{Point.X}, \code{Point.Y}.}
+  \item{level}{a numerical value with the coverage for the confidence intervals for sigma, MR, RSD.}
+  \item{mu}{numerical 2-vector with the true group center (optional). See details.}
+  \item{doRob}{logical: use robust estimation of covariance matrix as basis for estimators?}
 }
-\details{By default, the reported sigma estimate does not take into account accuracy, i.e., any systematic location bias. The true mean of the distribution is then assumed to coincide with the group center. With \code{accuracy=TRUE}, the true center is set to be the point of aim in the origin 0. RSD and MR each are a constant fraction of sigma.
+\details{When the true mean \code{mu} of the distribution is given, the sigma estimate uses the sum of squared radii for the variance estimate (the total un-corrected variance of the coordinates), and employs the c4(2*N+1) correction factor for taking the square root. When \code{mu} is missing, the sum of squared radii is Bessel-corrected for estimating the center, and c4(3*N-1) is used.
 
-The sigma estimate uses the sum of squared radii as a variance estimate (equal to the total un-corrected variance of the coordinates), and then employs a correction factor for taking the square root. With \code{accuracy=FALSE}, MR is the distance to the group center, otherwise MR is the distance to the point of aim in the origin 0.
+The robust estimate for the covariance matrix of (x,y)-coordinates is from \code{\link[robustbase]{covMcd}} using the MCD algorithm.
 }
 \value{
 A list with the estimates for sigma, RSD, and MR including the confidence intervals.
@@ -25,20 +26,24 @@ A list with the estimates for sigma, RSD, and MR including the confidence interv
 \item{MR}{A vector with the MR estimate and confidence interval bounds as named elements \code{MR}, \code{MRciLo}, \code{MRciUp}.}
 }
 \references{
-\url{http://ballistipedia.com/index.php?title=Measuring_Precision}
+\url{http://ballistipedia.com/index.php?title=Closed_Form_Precision}
+
+Singh, H. P. 1992. Estimation of Circular Probable Error. The Indian Journal of Statistics, Series B 5(3), 289-305.
 }
 \seealso{
+\code{\link[shotGroups]{Rayleigh}},
 \code{\link[shotGroups]{getCEP}},
 \code{\link[shotGroups]{getHitProb}},
-\code{\link[shotGroups]{groupSpread}}
+\code{\link[shotGroups]{groupSpread}},
+\code{\link[robustbase]{covMcd}}
 }
 \examples{
 # coordinates given by a suitable data frame
-getRayParam(DFtalon, level=0.95, accuracy=FALSE)
+getRayParam(DFtalon, level=0.95, doRob=FALSE)
 
 # coordinates given by a matrix
 \dontrun{
 xy <- matrix(round(rnorm(100, 0, 5), 2), ncol=2)
-getRayParam(xy, level=0.95, accuracy=FALSE)
+getRayParam(xy, level=0.95, doRob=FALSE)
 }
 }

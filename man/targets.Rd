@@ -1,9 +1,9 @@
 \name{targets}
 \alias{targets}
 \docType{data}
-\title{List containing definitions of several circular target types from the shooting federations ISSF, NRA, DSB, BDS, BDMP}
+\title{List containing definitions of several circular target types from the shooting federations ISSF, NRA, DSB, BDS, BDMP, DSU}
 \description{
-List containing definitions of several circular german (DSB, BDS, BDMP), ISSF, and NRA target types.
+List containing definitions of several circular german (DSB, BDS, BDMP, DSU), ISSF, and NRA target types.
 }
 \usage{data(targets)}
 \format{
@@ -63,8 +63,18 @@ List containing definitions of several circular german (DSB, BDS, BDMP), ISSF, a
   \item{\code{BDMP3}}{BDMP ZG 1.}
   \item{\code{BDMP4}}{BDMP ZG 2, ZG 3, ZG 4.}
   \item{\code{BDMP5}}{BDMP 300m DG 3, DG 4.}
+
+  \item{\code{DSUa2}}{DSU a2.}
+  \item{\code{DSUb2}}{DSU b2.}
+  \item{\code{DSUb3}}{DSU b3.}
+  \item{\code{DSUb4}}{DSU b4.}
+  \item{\code{DSUb5}}{DSU b5.}
+  \item{\code{DSUb5P}}{DSU b5 Praezision.}
+  \item{\code{DSU_200mP}}{DSU 200m Praezision.}
+  \item{\code{DSU_UITP}}{DSU UIT Praezision (same as \code{ISSF_100m}).}
+  \item{\code{DSU_KKI}}{DSU KK international (same as \code{ISSF_50m}).}}
 }
-}
+
 \details{
 Each target is defined by (at least) the following parameters
 \itemize{

@@ -83,8 +83,8 @@ function(x) {
     ev1 <- x[1]
     ev2 <- x[2]
 
-    qpar  <- 1/sqrt(((ev1+ev2)/ev2) - 1) # Hoyt q
-    omega <- ev1+ev2                     # Hoyt omega
+    qpar  <- 1 / sqrt(((ev1+ev2) / ev2) - 1) # Hoyt q
+    omega <- ev1+ev2                         # Hoyt omega
 
     return(list(q=qpar, omega=omega))
 }
@@ -113,22 +113,22 @@ dHoyt <-
 function(x, qpar, omega) {
     is.na(x)     <- is.nan(x)                # replace NaN with NA
     is.na(qpar)  <- (qpar <= 0)  | (qpar >= 1) | !is.finite(qpar)
-    is.na(omega) <- (omega <= 0) | !is.finite(qpar)
+    is.na(omega) <- (omega <= 0) | !is.finite(omega)
 
     argL  <- recycle(x, qpar, omega)
     x     <- argL[[1]]
     qpar  <- argL[[2]]
     omega <- argL[[3]]
 
-    dens <- numeric(length(x))               # initialize density to 0
-    keep <- which((x >= 0) | !is.finite(x))  # keep non-negative x, NA, -Inf, Inf
-    if(length(keep) < 1) { return(dens) }    # nothing to do
+    dens <- numeric(length(x))                 # initialize density to 0
+    keep <- which((x >= 0) | !is.finite(x))    # keep non-negative x, NA, -Inf, Inf
+    if(length(keep) < 1) { return(dens) }      # nothing to do
 
-    fac1 <-       x[keep]*(  1+qpar[keep]^2)  /  (qpar[keep]  *omega[keep])
-    fac2 <- exp( -x[keep]^2*(1+qpar[keep]^2)^2/(4*qpar[keep]^2*omega[keep]))
-    bArg <-      (x[keep]^2*(1-qpar[keep]^4)  /(4*qpar[keep]^2*omega[keep]))
-    fac3 <- exp(log(besselI(bArg, nu=0, expon.scaled=TRUE)) + bArg)
-    res  <- fac1*fac2*fac3                     # this may be NaN
+    lfac1 <- log(x[keep]) + log(1 + qpar[keep]^2) - log(qpar[keep]*omega[keep])
+    lfac2 <- -x[keep]^2*(1+qpar[keep]^2)^2/(4*qpar[keep]^2*omega[keep])
+    bArg  <- (x[keep]^2*(1-qpar[keep]^4)  /(4*qpar[keep]^2*omega[keep]))
+    lfac3 <- log(besselI(bArg, nu=0, expon.scaled=TRUE)) + bArg
+    res   <- exp(lfac1+lfac2+lfac3)            # this may be NaN
     dens[keep] <- ifelse(is.nan(res), 0, res)  # if so, set to 0
 
     return(dens)
@@ -161,12 +161,21 @@ function(x, qpar, omega) {
 #     ev   <- eigen(sigma)$values
 #     fac1 <- 1/prod(sqrt(ev))
 #     fac2 <- r*exp(-(r^2/(4*ev[1])) * (1 + (ev[1]/ev[2])))
-#     bArg  <-       (r^2/(4*ev[1])) * ((ev[1]/ev[2]) - 1)
+#     bArg <-        (r^2/(4*ev[1])) * ((ev[1]/ev[2]) - 1)
 #     fac3 <- exp(log(besselI(bArg, nu=0, expon.scaled=TRUE)) + bArg)
 #     dens <- fac1*fac2*fac3
 #
 #     return(dens)
 # }
+
+#####---------------------------------------------------------------------------
+## generalized Marcum Q-function from non-central chi^2 distribution
+## Nuttall, AH. (1975). Some integrals involving the Q-M function.
+## IEEE Transactions on Information Theory, 21 (1), 95-96
+marcumQ <-
+function(a, b, nu) {
+    pchisq(b^2, df=2*nu, ncp=a^2, lower.tail=FALSE)
+}
 
 #####---------------------------------------------------------------------------
 ## cdf Hoyt distribution in closed form
@@ -175,7 +184,7 @@ function(x, qpar, omega) {
 pHoyt <-
 function(q, qpar, omega, lower.tail=TRUE) {
     is.na(qpar)  <- (qpar <= 0)  | (qpar >= 1) | !is.finite(qpar)
-    is.na(omega) <- (omega <= 0) | !is.finite(qpar)
+    is.na(omega) <- (omega <= 0) | !is.finite(omega)
 
     argL  <- recycle(q, qpar, omega)
     q     <- argL[[1]]
@@ -183,33 +192,25 @@ function(q, qpar, omega, lower.tail=TRUE) {
     omega <- argL[[3]]
 
     pp   <- numeric(length(q))               # initialize probabilities to 0
-    keep <- which((q >= 0) | !is.finite(q))  # keep non-negative x, NA, NaN, -Inf, Inf
-    if(length(keep) < 1) {                   # nothing to do
-        return(pp)
-    }
+    keep <- which((q >= 0) | !is.finite(q))  # keep non-negative q, NA, NaN, -Inf, Inf
 
     alphaQ <- (sqrt((1 - qpar[keep]^4))/(2*qpar[keep])) * sqrt((1 + qpar[keep])/(1 - qpar[keep]))
      betaQ <- (sqrt((1 - qpar[keep]^4))/(2*qpar[keep])) * sqrt((1 - qpar[keep])/(1 + qpar[keep]))
 
     y <- q[keep] / sqrt(omega[keep])
-    pp[keep] <- if(lower.tail[1]) {
-            marcumQ(alphaQ*y, betaQ*y,  nu=1) - marcumQ(betaQ*y,  alphaQ*y, nu=1)
+    if(lower.tail) {
+        pp[keep] <-     marcumQ(alphaQ*y, betaQ*y,  nu=1) - marcumQ(betaQ*y,  alphaQ*y, nu=1)
+        ## special cases not caught so far
+        pp[which(q == -Inf)] <- 0
+        pp[which(q ==  Inf)] <- 1
     } else {
-        1 + marcumQ(betaQ*y,  alphaQ*y, nu=1) - marcumQ(alphaQ*y, betaQ*y,  nu=1)
+        pp[keep] <- 1 + marcumQ(betaQ*y,  alphaQ*y, nu=1) - marcumQ(alphaQ*y, betaQ*y,  nu=1)
+        ## special cases not caught so far
+        pp[which(q < 0)]    <- 1
+        pp[which(q == Inf)] <- 0
     }
 
-    ## special cases not caught so far
-    pp[which(q == -Inf)] <- 0
-    pp[which(q ==  Inf)] <- 1
     return(pp)
-}
-
-## generalized Marcum Q-function from non-central chi^2 distribution
-## Nuttall, AH. (1975). Some integrals involving the Q-M function.
-## IEEE Transactions on Information Theory, 21 (1), 95-96
-marcumQ <-
-function(a, b, nu) {
-    pchisq(b^2, df=2*nu, ncp=a^2, lower.tail=FALSE)
 }
 
 ## equivalent
@@ -279,7 +280,7 @@ function(a, b, nu) {
 qHoyt <-
 function(p, qpar, omega, lower.tail=TRUE, loUp=NULL) {
     is.na(qpar)  <- (qpar <= 0)  | (qpar >= 1) | !is.finite(qpar)
-    is.na(omega) <- (omega <= 0) | !is.finite(qpar)
+    is.na(omega) <- (omega <= 0) | !is.finite(omega)
 
     argL  <- recycle(p, qpar, omega)
     p     <- argL[[1]]
@@ -291,16 +292,17 @@ function(p, qpar, omega, lower.tail=TRUE, loUp=NULL) {
     if(length(keep) < 1) { return(qq) }
 
     if(is.null(loUp)) {                  # no search interval given
-        ## use Grubbs chi^2 quantile +- 25% for root finding
-        ## Grubbs-Pearson chi^2 and correlated normal can diverge for p <= 0.25
-        GP <- getGPfromHP(qpar, omega)             # Grubbs parameters
-        qGrubbs   <- qChisqGrubbs(p,   m=GP$m, v=GP$v, nPrime=GP$nPrime,
-                                  type="Pearson", lower.tail=lower.tail)
-        ## Grubbs 0.4 quantile
-        qGrubbs.4 <- qChisqGrubbs(0.4, m=GP$m, v=GP$v, nPrime=GP$nPrime,
-                                  type="Pearson", lower.tail=lower.tail)
-        qLo  <- ifelse(p <= 0.25, 0,         0.75*qGrubbs)
-        qUp  <- ifelse(p <= 0.25, qGrubbs.4, 1.25*qGrubbs)
+        ## use Grubbs chi^2 quantile for root finding
+        ## Grubbs-Liu chi^2 and Hoyt can diverge
+        GP <- getGPfromHP(qpar, omega)   # Grubbs parameters
+        qGrubbs   <- qChisqGrubbs(p[keep], m=GP$m, v=GP$v, muX=GP$muX,
+                                  varX=GP$varX, l=GP$l, delta=GP$delta,
+                                  lower.tail=lower.tail, type="Liu")
+        qGrubbs.6 <- qChisqGrubbs(0.6, m=GP$m, v=GP$v, muX=GP$muX,
+                                  varX=GP$varX, l=GP$l, delta=GP$delta,
+                                  lower.tail=lower.tail, type="Liu")
+        qLo  <- ifelse(p[keep] <= 0.5, 0,         0.25*qGrubbs)
+        qUp  <- ifelse(p[keep] <= 0.5, qGrubbs.6, 1.75*qGrubbs)
         loUp <- split(cbind(qLo, qUp), seq_along(p))
     } else {
         if(is.matrix(loUp)) {
@@ -327,11 +329,12 @@ function(p, qpar, omega, lower.tail=TRUE, loUp=NULL) {
     return(qq)
 }
 
+#####---------------------------------------------------------------------------
 ## random numbers from Hoyt distribution
 rHoyt <-
 function(n, qpar, omega, method=c("eigen", "chol", "cdf"), loUp=NULL) {
     is.na(qpar)  <- (qpar <= 0)  | (qpar >= 1) | !is.finite(qpar)
-    is.na(omega) <- (omega <= 0) | !is.finite(qpar)
+    is.na(omega) <- (omega <= 0) | !is.finite(omega)
     method <- match.arg(method)
 
     ## if n is a vector, its length determines number of random variates
@@ -373,13 +376,15 @@ function(n, qpar, omega, method=c("eigen", "chol", "cdf"), loUp=NULL) {
 
         ## determine search interval(s) for uniroot()
         if(is.null(loUp)) {                  # no search interval given
-            ## use Grubbs chi^2 quantile +- 25% for root finding
-            ## Grubbs-Pearson chi^2 and correlated normal can diverge for p <= 0.25
+            ## use Grubbs chi^2 quantile for root finding
+            ## Grubbs-Liu chi^2 and Hoyt can diverge
             GP <- getGPfromHP(qpar, omega)   # Grubbs parameters and quantiles
-            qGrubbs   <- qChisqGrubbs(u,   m=GP$m, v=GP$v, nPrime=GP$nPrime, type="Pearson")
-            qGrubbs.4 <- qChisqGrubbs(0.4, m=GP$m, v=GP$v, nPrime=GP$nPrime, type="Pearson")
-            qLo  <- ifelse(u <= 0.25, 0,         0.75*qGrubbs)
-            qUp  <- ifelse(u <= 0.25, qGrubbs.4, 1.25*qGrubbs)
+            qGrubbs   <- qChisqGrubbs(u, m=GP$m, v=GP$v, muX=GP$muX,
+                                      varX=GP$varX, l=GP$l, delta=GP$delta, type="Liu")
+            qGrubbs.6 <- qChisqGrubbs(0.6, m=GP$m, v=GP$v, muX=GP$muX,
+                                      varX=GP$varX, l=GP$l, delta=GP$delta, type="Liu")
+            qLo  <- ifelse(u <= 0.5, 0,         0.25*qGrubbs)
+            qUp  <- ifelse(u <= 0.5, qGrubbs.6, 1.75*qGrubbs)
             loUp <- split(cbind(qLo, qUp), seq_along(u))
         } else {
             if(is.matrix(loUp)) {

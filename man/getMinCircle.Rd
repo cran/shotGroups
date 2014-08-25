@@ -34,7 +34,7 @@ mc <- getMinCircle(DFsavage)
 # determine axis limits so that circle will be visible
 xLims <- mc$ctr[1] + c(-mc$rad, mc$rad)
 yLims <- mc$ctr[2] + c(-mc$rad, mc$rad)
-plot(Point.Y ~ Point.X, data=DFsavage,
+plot(point.y ~ point.x, data=DFsavage,
      pch=16, asp=1, xlim=xLims, ylim=yLims)
 drawCircle(mc, fg='blue')
 

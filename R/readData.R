@@ -23,20 +23,29 @@ function(fPath=".", fNames, fPat, combine=TRUE) {
         pieces  <- strsplit(f, "\\.")[[1]]
         ext     <- tolower(pieces[length(pieces)]) # file extensions
         nFields <- count.fields(f, sep=",")
-        readFun <- if(isCSV(ext, nFields)) { read.csv } else { read.table }
-        readFun(f, header=TRUE)
+        
+        ## choose appropriate function to read in file
+        readFun <- if(isCSV(ext, nFields)) {
+            read.csv
+        } else {
+            read.table
+        }
+
+        DF      <- readFun(f, header=TRUE)
+        DF$file <- basename(tools::file_path_sans_ext(f))  # add filename
+        setNames(DF, tolower(names(DF))) # convert var names to lower case
     }
 
     ## read multiple files, some possibly csv, some possibly whitespace delimited
     DFs <- lapply(files, readMe)
-    names(DFs) <- paste("file", seq(along=DFs), sep="")  # name them
+    names(DFs) <- paste("file", seq_along(DFs), sep="")  # name them
 
     ## build shared set of variable names
-    varNameL <- lapply(DFs, names)       # list of variable names
-    varNames <- Reduce(intersect, varNameL)
+    varNameL <- lapply(DFs, names)           # list of variable names
+    varNames <- Reduce(intersect, varNameL)  # intersection of all var names
 
     ## make sure that the data frames all have the correct variables
-    wants <- c("Distance", "Group", "Aim.X", "Aim.Y")  # useful
+    wants <- c("distance", "group", "aim.x", "aim.y")  # useful
     has   <- wants %in% varNames
 
     if(!all(has)) {
@@ -48,33 +57,37 @@ function(fPath=".", fNames, fPat, combine=TRUE) {
     ## make sure each data frame has either X, Y or Point.X, Point.Y
     replaceXY <- function(x) {
         dfNames  <- names(x)
-        needsXY1 <- c("Point.X", "Point.Y")  # coordinates must have this name
-        needsXY2 <- c("X", "Y")              # or this
+        needsXY1 <- c("point.x", "point.y")  # coordinates must have this name
+        needsXY2 <- c("x", "y")              # or this
         hasXY1   <- needsXY1 %in% dfNames
-        hasXY2   <- needsXY2 %in% toupper(dfNames)
+        hasXY2   <- needsXY2 %in% dfNames
 
         if(!xor(all(hasXY1), all(hasXY2))) { # not (either X, Y or Point.X, Point.Y)
             stop("Coordinates must be named either X, Y or Point.X, Point.Y")
         }
 
-        if(("Z" %in% toupper(dfNames)) && ("Point.Z" %in% dfNames)) {
+        if(("z" %in% dfNames) && ("point.z" %in% dfNames)) {
             stop("Coordinates must be named either Z or Point.Z")
         }
 
         ## if X, Y, Z -> rename to Point.X, Point.Y, Point.Z
         if(all(hasXY2)) {
-            dfNames[dfNames %in% c("x", "X")] <- "Point.X"
-            dfNames[dfNames %in% c("y", "Y")] <- "Point.Y"
-            dfNames[dfNames %in% c("z", "Z")] <- "Point.Z"
-            names(x) <- dfNames
+            dfNames[dfNames %in% "x"] <- "point.x"
+            dfNames[dfNames %in% "y"] <- "point.y"
+            dfNames[dfNames %in% "z"] <- "point.z"
             warning("Variables X, Y were renamed to Point.X, Point.Y")
+            names(x) <- dfNames
         }
         x
     }
 
     DFs <- lapply(DFs, replaceXY)
 
-    if(combine) { return(combineData(DFs)) } else { return(DFs) }
+    if(combine) {
+        return(combineData(DFs))
+    } else {
+        return(DFs)
+    }
 }
 
 ## read files from OnTarget-output (version 1.*)
@@ -95,16 +108,20 @@ function(fPath=".", fNames, fPat, combine=TRUE) {
 
     ## read in files into a list of data frames
     DFs <- lapply(files, function(f) {
-              read.delim(f, colClasses=c("character", "factor", "character",
-                         "numeric", "numeric", "numeric", "numeric", "numeric",
-                         "numeric", "numeric", "NULL"), strip.white=TRUE) } )
-    names(DFs) <- paste("file", seq(along=DFs), sep="")  # name them
+        DF <- read.delim(f, colClasses=c("character", "factor", "character",
+            "numeric", "numeric", "numeric", "numeric", "numeric",
+            "numeric", "numeric", "NULL"), strip.white=TRUE)
+        DF$file <- basename(tools::file_path_sans_ext(f))  # add filename
+        setNames(DF, tolower(names(DF)))  # convert var names to lower case
+    })
+
+    names(DFs) <- paste("file", seq_along(DFs), sep="")  # name them
 
     ##  build shared set of variable names
     varNames <- Reduce(intersect, lapply(DFs, names))
 
     ## make sure that the data frames all have the correct variables
-    wants <- c("Group", "Distance", "Aim.X", "Aim.Y", "Point.X", "Point.Y")
+    wants <- c("group", "distance", "aim.x", "aim.y", "point.x", "point.y")
     has   <- wants %in% varNames
     if(!all(has)) {
         warning(c("At least one file is missing variable(s)\n",
@@ -112,7 +129,11 @@ function(fPath=".", fNames, fPat, combine=TRUE) {
                   "\nthat may be required later by analysis functions"))
     }
 
-    if(combine) { return(combineData(DFs)) } else { return(DFs) }
+    if(combine) {
+        return(combineData(DFs))
+    } else {
+        return(DFs)
+    }
 }
 
 ## read files from OnTarget-output version 2.*, 3.7*, 3.8*
@@ -139,14 +160,18 @@ function(fPath=".", fNames, fPat, combine=TRUE) {
 
     ## read in files into a list of data frames
     DFs <- lapply(files, function(f) {
-        read.csv(f, colClasses=colClasses, strip.white=TRUE) } )
-    names(DFs) <- paste("file", seq(along=DFs), sep="")  # name them
+        DF      <- read.csv(f, colClasses=colClasses, strip.white=TRUE)
+        DF$file <- basename(tools::file_path_sans_ext(f))  # add filename
+        setNames(DF, tolower(names(DF))) # convert var names to lower case
+    })
+
+    names(DFs) <- paste("file", seq_along(DFs), sep="")  # name them
 
     ##  build shared set of variable names
     varNames <- Reduce(intersect, lapply(DFs, names))
 
     ## make sure that the data frames all have the correct variables
-    wants <- c("Group", "Distance", "Aim.X", "Aim.Y", "Point.X", "Point.Y")
+    wants <- c("group", "distance", "aim.x", "aim.y", "point.x", "point.y")
     has   <- wants %in% varNames
     if(!all(has)) {
         warning(c("At least one file is missing variable(s)\n",

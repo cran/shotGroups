@@ -1,6 +1,97 @@
-$Date: 2014-07-04 09:26:29 +0000 (Fri, 04 Jul 2014) $
+$Date: 2014-08-24 09:51:29 +0000 (Mon, 25 Aug 2014) $
 
 SHOTGROUPS RELEASE VERSIONS at http://cran.r-project.org/
+
+Version 0.6 (August 25, 2014)
+    * Note that this release breaks backwards compatibility in getCEP(),
+      getMOA(), fromMOA(), getDistance(), getRayParam(), groupSpread()
+      by changing arguments (see below)
+    * Vignette
+      - add section about provided distributions
+        (Rayleigh, Maxwell-Boltzmann, Rice, Hoyt, radial error for offset
+        correlated normal variables)
+    * Throughout
+      - variable names of data sets are now always lower case, irrespective
+        of the original file
+    * targets
+      - add DSU targets a2, b2, b3, b4, b5, b5 precision, 200m precision
+        (so far, without simulated score due to oval shape)
+    * combineData(), compareGroups()
+      - create and use more descriptive group labels
+    * compareGroups()
+      - fix bug: statistical tests for equal variance / distance to center
+        were incorrect
+      - add Rayleigh sigma and MR estimates including CI
+      - add option CEPlevel to determine coverage for CEP and the
+        confidence ellipse
+      - add option CIlevel to determine level for sd and Rayleigh sigma/MR CIs
+      - show confidence ellipse for specified level instead of error
+        ellipse
+      - add grouped boxplot of distances to group center
+      - add grouped dotplot of distances to group center including
+        Rayleigh mean radius with CI
+    * dMaxwell(), pMaxwell(), qMaxwell(), rMaxwell()
+      - density function, cumulative distribution function, quantile function,
+        and random deviates for the Maxwell-Boltzmann distribution
+        (= distribution of radius around true center for an uncorrelated
+        trivariate normal variable with equal variances,
+        re-written in polar coordinates radius, azimuth, and elevation)
+    * dRice(), pRice(), qRice(), rRice()
+      - density function, cumulative distribution function, quantile function,
+        and random deviates for the Rice distribution
+        (= distribution of radius around the origin for an uncorrelated
+        bivariate normal variable with equal variances and offset mean,
+        re-written in polar coordinates radius and angle)
+    * dRayleigh(), pRayleigh(), qRayleigh(), rRayleigh()
+      - density function, cumulative distribution function, quantile function,
+        and random deviates for the Rayleigh distribution
+        (= distribution of radius around true center for an uncorrelated
+        bivariate normal variable with equal variances,
+        re-written in polar coordinates radius and angle)
+    * getCEP()
+      - option level has been renamed to CEPlevel
+    * getCEP(), getHitProb()
+      - Rayleigh estimate respects doRob=TRUE
+      - Rayleigh estimate uses Singh C2 correction factor for sigma
+        estimate because true mean is estimated as well
+      - type="Rayleigh" uses the Rice distribution for 2D data whith
+        accuracy=TRUE
+      - type="Rayleigh" uses the Maxwell-Boltzmann distribution for 3D data
+        and accuracy=FALSE, and qmvnEll() with covariance matrix sigma^2*I
+        for 3D data and accuracy=TRUE
+    * getGrubbsParam()
+      - fix bug: correct recycling when parameters are given as vectors
+    * getMaxParam()
+      - new function to estimate parameter sigma of the Maxwell-Boltzmann
+        distribution as well as the mean and standard deviation of 3D radial
+        error, including parametric chi^2 confidence intervals
+    * getMOA(), fromMOA(), getDistance()
+      - rename option type="milrad" to type="mrad"
+      - add option type="mil" for NATO mil (the unit circle circumference is
+        divided into 6400 mils) 
+    * getRayParam()
+      - add option doRob to use robust estimate of center and covariance matrix
+        for parameter estimation
+      - remove option accuracy that is replaced by option mu
+      - new option mu for when the true mean is known. In this case, Singh
+        C1 estimate is used, and chi^2 CI has df=2*N. When the true mean is
+        unknown, Singh C2 estimate is used, and chi^2 CI has df=2*(N-1)
+    * getRiceParam()
+      - new function to estimate parameters nu and sigma of the Rice
+        distribution based on a set of 2D-coordinates, as well as the mean and
+        standard deviation of 2D radial error, including parametric chi^2
+        confidence interval for sigma
+    * groupSpread()
+      - option level was split into CEPlevel and CIlevel to allow for separately
+        setting the CEP/confidence ellipse coverage and the width of the sd CIs
+    * qHoyt(), qmvnEll()
+      - fix bug: result for lower.tail=FALSE and q=-Inf or q=Inf was incorrect
+    * qHoyt(), rHoyt(), qmvnEll(), rmvnEll()
+      - if no search interval loUp is provided, try a wider interval to
+        search for the quantile
+    * pmvnEll()
+      - convert vectors of length 1 for sigma and e to matrix before checking
+        for symmetry
 
 Version 0.5 (July 04, 2014)
     * compareGroups()
@@ -178,8 +269,8 @@ Version 0.3 (January 08, 2013)
       - if no distance to target is given: warn and assume 100
       - coordinates of points of impact can be named either X, Y or Point.X,
         Point.Y
-      - report parametric confidence intervals for standard deviations of x
-        and y
+      - report parametric chi^2 confidence intervals for standard deviations
+        of x and y
       - report figure of merit and length of the diagonal of the minimum-area
         bounding box instead of its width and height
       - report Rayleigh 50% CEP estimate instead of modified RAND-234 estimate

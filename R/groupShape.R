@@ -26,7 +26,7 @@ function(xy, plots=TRUE, bandW=0.5, outlier=c("mcd", "pca"),
     Y    <- xy[ , 2]                     # y-coords
     Npts <- nrow(xy)                     # number of points
     res  <- vector("list", 0)            # empty list to later collect the results
-    devNew  <- getDevice()               # platform-dependent window open
+    devNew <- getDevice()                # platform-dependent window open
 
     haveRob <- TRUE                      # can we do robust estimation?
     if(Npts < 4) {
@@ -54,8 +54,8 @@ function(xy, plots=TRUE, bandW=0.5, outlier=c("mcd", "pca"),
                 warning(c("mvoutlier::aq.plot() failed:\n", e$message))
                 return(list(outliers=NA)) })
             par(op)                          # reset device parameters
-        } else {                             # direct graphics to null device
-            pdf(file=NULL)
+        } else {
+            pdf(file=NULL)                   # redirect diagram to null device
             ## outlier-analysis-plot         # this can fail due to memory constraints
             outXY <- tryCatch(mvoutlier::aq.plot(xy), error=function(e) {
                 warning(c("mvoutlier::aq.plot() failed:\n", e$message))

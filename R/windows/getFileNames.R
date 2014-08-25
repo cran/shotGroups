@@ -1,5 +1,5 @@
 getFileNames <-
-    function(fPath=".", fNames, fPat) {
+function(fPath=".", fNames, fPat) {
     ## do we have file names or a name pattern?
     files <- if(!missing(fNames)) {          # we have file names
         if(is.null(fPath) || is.na(fPath)) { # no path is given

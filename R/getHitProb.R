@@ -1,25 +1,25 @@
 getHitProb <-
 function(xy, r=1, unit="unit", dstTarget=100, conversion="m2cm",
-    accuracy=FALSE, type="CorrNormal", doRob=FALSE) {
+         accuracy=FALSE, type="CorrNormal", doRob=FALSE) {
     UseMethod("getHitProb")
 }
 
 getHitProb.data.frame <-
 function(xy, r=1, unit="unit", dstTarget=100, conversion="m2cm",
-    accuracy=FALSE, type="CorrNormal", doRob=FALSE) {
+         accuracy=FALSE, type="CorrNormal", doRob=FALSE) {
     xy <- getXYmat(xy, xyTopLeft=FALSE, relPOA=FALSE)
     NextMethod("getHitProb")
 }
 
 getHitProb.default <-
 function(xy, r=1, unit="unit", dstTarget=100, conversion="m2cm",
-    accuracy=FALSE, type="CorrNormal", doRob=FALSE) {
+         accuracy=FALSE, type="CorrNormal", doRob=FALSE) {
     if(!is.matrix(xy))  { stop("xy must be a matrix") }
     if(!is.numeric(xy)) { stop("xy must be numeric") }
     if(!is.numeric(r))  { stop("r must be numeric") }
     if(r <= 0)          { stop("r must be > 0") }
 
-    unit <- match.arg(unit, choices=c("unit", "m", "cm", "mm", "yd", "ft", "in", "MOA", "SMOA", "milrad"))
+    unit <- match.arg(unit, choices=c("unit", "m", "cm", "mm", "yd", "ft", "in", "MOA", "SMOA", "mrad", "mil"))
     type <- match.arg(type, choices=c("CorrNormal", "GrubbsPearson", "GrubbsPatnaik", "GrubbsLiu", "Rayleigh"), several.ok=TRUE)
 
     ## check if we can do robust estimation if so required
@@ -54,7 +54,7 @@ function(xy, r=1, unit="unit", dstTarget=100, conversion="m2cm",
     ## convert r to unit of (x,y)-coordinates
     rNew <- if(unit == "unit") {         # keep unit
         r                                # new r = r
-    } else if(unit %in% c("MOA", "SMOA", "milrad")) {
+    } else if(unit %in% c("MOA", "SMOA", "mrad", "mil")) {
         fromMOA(r, dst=dstTarget, conversion=conversion, type=unit)
     } else {                             # absolute size unit
         r2rNew <- getConvFac(paste0(unit, "2", unitXY))
@@ -99,8 +99,25 @@ function(xy, r=1, unit="unit", dstTarget=100, conversion="m2cm",
 
     #####-----------------------------------------------------------------------
     ## Rayleigh estimate from Singh
-    RayParam <- getRayParam(xy, accuracy=accuracy)
-    Rayleigh <- pRayleigh(rNew, scale=RayParam$sigma["sigma"])
+    Rayleigh <- if(ncol(xy) == 2) {      # 2D -> Rayleigh/Rice distribution
+        if(accuracy) {                   # POA != POI -> Rice
+            RiceParam <- getRiceParam(xy, doRob=doRob)
+            pRice(rNew, nu=RiceParam$nu, sigma=RiceParam$sigma["sigma"])
+        } else {                         # POA = POI -> Rayleigh
+            RayParam <- getRayParam(xy, doRob=doRob)
+            pRayleigh(rNew, scale=RayParam$sigma["sigma"])
+        }
+    } else if(ncol(xy) == 3) {           # 3D -> Maxwell-Boltzmann distribution
+        MaxParam <- getMaxParam(xy, doRob=doRob)
+        if(accuracy) {                   # offset circle probability
+            ## circular covariance matrix with estimated M-B param sigma
+            sigMat <- diag(rep(MaxParam$sigma["sigma"]^2, ncol(xy)))
+            pmvnEll(r=rNew, sigma=sigMat, mu=numeric(ncol(xy)), x0=ctr, e=diag(ncol(xy)))
+        } else {                         # no offset
+            pMaxwell(rNew, sigma=MaxParam$sigma["sigma"])
+        }
+    }
+
     names(Rayleigh) <- NULL
     if((aspRat > 4) && ("Rayleigh" %in% type)) {
         warning(c("Aspect ratio of error ellipse is ",

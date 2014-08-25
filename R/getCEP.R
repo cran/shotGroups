@@ -1,31 +1,31 @@
 getCEP <-
-function(xy, level=0.5, dstTarget=100, conversion="m2cm", accuracy=FALSE,
+function(xy, CEPlevel=0.5, dstTarget=100, conversion="m2cm", accuracy=FALSE,
          type="CorrNormal", doRob=FALSE) {
     UseMethod("getCEP")
 }
 
 getCEP.data.frame <-
-function(xy, level=0.5, dstTarget=100, conversion="m2cm", accuracy=FALSE,
+function(xy, CEPlevel=0.5, dstTarget=100, conversion="m2cm", accuracy=FALSE,
          type="CorrNormal", doRob=FALSE) {
     xy <- getXYmat(xy, xyTopLeft=FALSE, relPOA=FALSE)
     NextMethod("getCEP")
 }
 
 getCEP.default <-
-function(xy, level=0.5, dstTarget=100, conversion="m2cm", accuracy=FALSE,
+function(xy, CEPlevel=0.5, dstTarget=100, conversion="m2cm", accuracy=FALSE,
          type="CorrNormal", doRob=FALSE) {
-    if(!is.matrix(xy))     { stop("xy must be a matrix") }
-    if(!is.numeric(xy))    { stop("xy must be numeric") }
-    if(!is.numeric(level)) { stop("level must be numeric") }
-    if(level <= 0)         { stop("level must be > 0") }
+    if(!is.matrix(xy))       { stop("xy must be a matrix") }
+    if(!is.numeric(xy))      { stop("xy must be numeric") }
+    if(!is.numeric(CEPlevel)) { stop("CEPlevel must be numeric") }
+    if(CEPlevel <= 0)         { stop("CEPlevel must be > 0") }
 
     type <- match.arg(type, choices=c("CorrNormal", "GrubbsPearson", "GrubbsLiu",
                       "GrubbsPatnaik", "Rayleigh", "Ethridge", "RAND"), several.ok=TRUE)
 
-    ## check if CI level is given in percent
-    if(level >= 1) {
-        while(level >= 1) { level <- level / 100 }
-        warning(c("level must be in (0,1) and was set to ", level))
+    ## check if CEPlevel is given in percent
+    if(CEPlevel >= 1) {
+        while(CEPlevel >= 1) { CEPlevel <- CEPlevel / 100 }
+        warning(c("CEPlevel must be in (0,1) and was set to ", CEPlevel))
     }
 
     ## check if we can do robust estimation if so required
@@ -62,13 +62,13 @@ function(xy, level=0.5, dstTarget=100, conversion="m2cm", accuracy=FALSE,
     ## CEP estimate based on correlated bivariate normal distribution
     CorrNorm <- if(accuracy) {
         ## quantile from offset circle probability -> mvnEll.R
-        qmvnEll(level, mu=numeric(ncol(xy)), sigma=sigma, e=diag(ncol(xy)), x0=ctr)
+        qmvnEll(CEPlevel, mu=numeric(ncol(xy)), sigma=sigma, e=diag(ncol(xy)), x0=ctr)
     } else {
         if(ncol(xy) == 2) {              # exact Hoyt distribution -> hoyt.R
             HP <- getHoytParam(sigma)
-            qHoyt(level, qpar=HP$q, omega=HP$omega)
+            qHoyt(CEPlevel, qpar=HP$q, omega=HP$omega)
         } else {                         # 1D/3D case -> mvnEll.R
-            qmvnEll(level, mu=numeric(ncol(xy)), sigma=sigma, e=diag(ncol(xy)),
+            qmvnEll(CEPlevel, mu=numeric(ncol(xy)), sigma=sigma, e=diag(ncol(xy)),
                     x0=numeric(ncol(xy)))
         }
     }
@@ -79,26 +79,43 @@ function(xy, level=0.5, dstTarget=100, conversion="m2cm", accuracy=FALSE,
     ## Grubbs-Pearson CEP estimate based on Pearson three-moment central
     ## chi^2 approximation (Grubbs, 1964, p55-56)
     GPP <- getGrubbsParam(sigma, ctr=ctr, accuracy=accuracy)
-    GrubbsPearson <- qChisqGrubbs(level, m=GPP$m, v=GPP$v, nPrime=GPP$nPrime, type="Pearson")
+    GrubbsPearson <- qChisqGrubbs(CEPlevel, m=GPP$m, v=GPP$v, nPrime=GPP$nPrime, type="Pearson")
     names(GrubbsPearson) <- NULL
 
     #####-----------------------------------------------------------------------
     ## Grubbs-Patnaik CEP estimate based on Patnaik two-moment central
     ## chi^2 approximation (Grubbs, 1964, p54)
-    GrubbsPatnaik <- qChisqGrubbs(level, m=GPP$m, v=GPP$v, n=GPP$n, type="Patnaik")
+    GrubbsPatnaik <- qChisqGrubbs(CEPlevel, m=GPP$m, v=GPP$v, n=GPP$n, type="Patnaik")
     names(GrubbsPatnaik) <- NULL
 
     #####-----------------------------------------------------------------------
     ## Grubbs-Liu CEP estimate based on four-moment non-central chi^2
     ## approximation (Liu, Tang & Zhang, 2009)
-    GrubbsLiu <- qChisqGrubbs(level, m=GPP$m, v=GPP$v, muX=GPP$muX, varX=GPP$varX,
+    GrubbsLiu <- qChisqGrubbs(CEPlevel, m=GPP$m, v=GPP$v, muX=GPP$muX, varX=GPP$varX,
                               l=GPP$l, delta=GPP$delta, type="Liu")
     names(GrubbsLiu) <- NULL
-    
+
     #####-----------------------------------------------------------------------
-    ## Rayleigh CEP estimate from Williams, 1997
-    RayParam <- getRayParam(xy, accuracy=accuracy)
-    Rayleigh <- qRayleigh(level, scale=RayParam$sigma["sigma"])
+    ## Rayleigh CEP estimate from Singh, 1992
+    Rayleigh <- if(ncol(xy) == 2) {      # 2D -> Rayleigh distribution
+        if(accuracy) {                   # POA != POI -> Rice
+            RiceParam <- getRiceParam(xy, doRob=doRob)
+            qRice(CEPlevel, nu=RiceParam$nu, sigma=RiceParam$sigma["sigma"])
+        } else {                         # POA = POI -> Rayleigh
+            RayParam <- getRayParam(xy, doRob=doRob)
+            qRayleigh(CEPlevel, scale=RayParam$sigma["sigma"])
+        }
+    } else if(ncol(xy) == 3) {           # 3D -> Maxwell-Boltzmann distribution
+        MaxParam <- getMaxParam(xy, doRob=doRob)
+        if(accuracy) {                   # offset circle probability
+            ## circular covariance matrix with estimated M-B param sigma
+            sigMat <- diag(rep(MaxParam$sigma["sigma"]^2, ncol(xy)))
+            qmvnEll(CEPlevel, sigma=sigMat, mu=numeric(ncol(xy)), x0=ctr, e=diag(ncol(xy)))
+        } else {                         # no offset
+            qMaxwell(CEPlevel, sigma=MaxParam$sigma["sigma"])
+        }
+    }
+
     names(Rayleigh) <- NULL
     if((aspRat > 4) && ("Rayleigh" %in% type)) {
         warning(c("Aspect ratio of error ellipse is ",
@@ -126,9 +143,9 @@ function(xy, level=0.5, dstTarget=100, conversion="m2cm", accuracy=FALSE,
     wHogg  <- (1/dHogg) / sum(1/dHogg)   # weighting factors
     uHogg  <- sum(wHogg * lnDTC)         # log median radius estimate
     Ethridge50 <- exp(uHogg)
-    Ethridge   <- if(level != 0.5) {
+    Ethridge   <- if(CEPlevel != 0.5) {
         if("Ethridge" %in% type) {
-            warning("Ethridge CEP estimate is only available for level 0.5")
+            warning("Ethridge CEP estimate is only available for CEPlevel 0.5")
         }
         NA
     } else {
@@ -160,15 +177,15 @@ function(xy, level=0.5, dstTarget=100, conversion="m2cm", accuracy=FALSE,
                       "probably more than what RAND CEP should be considered for"))
         }
 
-        ## RAND is only available for level 0.5
-        if(level != 0.5) {
+        ## RAND is only available for CEPlevel 0.5
+        if(CEPlevel != 0.5) {
             if("RAND" %in% type) {
-                warning("RAND CEP estimate is only available for level 0.5")
+                warning("RAND CEP estimate is only available for CEPlevel 0.5")
             }
             NA
         } else {
             RAND50
-        }   ## else if(level %in% c(0.9, 0.95)) {
+        }   ## else if(CEPlevel %in% c(0.9, 0.95)) {
             ## RAND CEP estimates for 90% and 95% from McMillan & McMillan, 2008, table 3
             ## multiplication factors depend on aspect ratio
             ## ratios <- seq(1, 4, by=0.5)       # aspect ratios considered in the table
@@ -179,7 +196,7 @@ function(xy, level=0.5, dstTarget=100, conversion="m2cm", accuracy=FALSE,
             ## coef(lm(fac95 ~ ratios))          # R^2 = .939
             ## a <- c("0.9"=1.6832142857, "0.95"=1.9135714286)   # intercepts 90 and 95
             ## b <- c("0.9"=0.1707142857, "0.95"=0.2214285714)   # slopes 90 and 95
-            ## ((a + b*aspRat)*RAND50)[as.character(level)]
+            ## ((a + b*aspRat)*RAND50)[as.character(CEPlevel)]
             ## }
     } else {
         if("RAND" %in% type) {
@@ -206,10 +223,10 @@ function(xy, level=0.5, dstTarget=100, conversion="m2cm", accuracy=FALSE,
 #             ValstarMPI
 #         }                                    # if(accuracy)
 #
-#         ## Valstar is only available for level 0.5
-#         if(level != 0.5) {
+#         ## Valstar is only available for CEPlevel 0.5
+#         if(CEPlevel != 0.5) {
 #             if("Valstar" %in% type) {
-#                 warning("Valstar CEP estimate is only available for level 0.5")
+#                 warning("Valstar CEP estimate is only available for CEPlevel 0.5")
 #             }
 #             NA
 #         } else {

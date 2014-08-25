@@ -1,8 +1,8 @@
 Package: shotGroups
 Type: Package
 Title: Analyze shot group data
-Version: 0.5
-Date: 2014-03-03
+Version: 0.6
+Date: 2014-08-25
 Author: Daniel Wollschlaeger
 Maintainer: Daniel Wollschlaeger <dwoll@kuci.org>
 Depends: R (>= 2.15.2)
@@ -14,11 +14,11 @@ VignetteBuilder: knitr
 Description: Analyzes shooting data with respect to group shape, 
         precision, and accuracy. This includes graphical methods, 
         descriptive statistics, and inference tests using standard, 
-        but also nonparametric and robust statistical methods. Works 
+        but also non-parametric and robust statistical methods. Works 
         with files exported by OnTarget PC and OnTarget TDS or with 
         custom data files in text format with a similar structure.
 License: GPL (>= 2)
-Packaged: 2014-07-04 06:13:58 UTC; Daniel
+Packaged: 2014-08-25 09:19:16 UTC; Daniel
 NeedsCompilation: no
 Repository: CRAN
-Date/Publication: 2014-07-04 13:39:29
+Date/Publication: 2014-08-25 11:46:58

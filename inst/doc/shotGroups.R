@@ -26,7 +26,8 @@ groupShape(DFtalon, bandW=0.4, outlier="mcd")
 ## ----cGroupSpread, out.width='3in'---------------------------------------
 library(shotGroups, verbose=FALSE)       # load shotGroups package
 groupSpread(DFtalon, CEPtype=c("CorrNormal", "GrubbsPatnaik", "Rayleigh"),
-            level=0.95, bootCI="basic", dstTarget=10, conversion="m2mm")
+            CEPlevel=0.5, CIlevel=0.95, bootCI="basic", dstTarget=10,
+            conversion="m2mm")
 
 ## ----cGroupLocation, out.width='3in'-------------------------------------
 library(shotGroups, verbose=FALSE)       # load shotGroups package
@@ -34,13 +35,13 @@ groupLocation(DFtalon, dstTarget=10, conversion="m2cm",
               level=0.95, plots=FALSE, bootCI="basic")
 
 ## ----cCmpGr, eval=FALSE--------------------------------------------------
-#  shots$Series <- shots$Group
+#  shots$series <- shots$group
 
 ## ----cCompareGroups, out.width='3in'-------------------------------------
 library(shotGroups, verbose=FALSE)       # load shotGroups package
 
 ## only use first 3 groups of DFtalon
-DFsub <- subset(DFtalon, Series %in% 1:3)
+DFsub <- subset(DFtalon, series %in% 1:3)
 compareGroups(DFsub, conversion="m2mm")
 
 ## ----cDescPrecMeas, out.width='3in'--------------------------------------
@@ -52,7 +53,7 @@ getMaxPairDist(DFtalon)                  # maximum pairwise distance
 
 ## ----cCEP, out.width='3in'-----------------------------------------------
 ## circular error probable
-getCEP(DFscar17, type=c("GrubbsPatnaik", "Rayleigh"), level=0.5,
+getCEP(DFscar17, type=c("GrubbsPatnaik", "Rayleigh"), CEPlevel=0.5,
        dstTarget=100, conversion="yd2in")
 
 ## confidence ellipse
@@ -63,23 +64,27 @@ getConfEll(DFscar17, level=0.95,
 ## Rayleigh parameter estimates with 95% confidence interval
 getRayParam(DFscar17, level=0.95)
 
+## Maxwell-Boltzmann parameter estimates with 95% confidence interval
+xyz <- matrix(rnorm(60), ncol=3)
+getMaxParam(xyz, level=0.95)
+
 ## ----cHitProb1, out.width='3in'------------------------------------------
 ## for the Grubbs-Patnaik estimate
-getHitProb(DFscar17, r=0.8414825, unit="in", accuracy=FALSE,
+getHitProb(DFscar17, r=0.8414825, unit="in", doRob=FALSE,
            dstTarget=100, conversion="yd2in", type="GrubbsPatnaik")
 
 ## for the Rayleigh estimate
-getHitProb(DFscar17, r=0.8290354, unit="in", accuracy=FALSE,
+getHitProb(DFscar17, r=0.8290354, unit="in", doRob=FALSE,
            dstTarget=100, conversion="yd2in", type="Rayleigh")
 
 ## ----cHitProb2, out.width='3in'------------------------------------------
-getHitProb(DFscar17, r=1, unit="MOA", accuracy=FALSE,
+getHitProb(DFscar17, r=1, unit="MOA", doRob=FALSE,
            dstTarget=100, conversion="yd2in", type="CorrNormal")
 
 ## ----cExtrapolCEP1-------------------------------------------------------
 ## 50% circular error probable for group shot at 100yd
 CEP100yd <- getCEP(DFscar17, type=c("GrubbsPatnaik", "Rayleigh"),
-                   level=0.5, dstTarget=100, conversion="yd2in")
+                   CEPlevel=0.5, dstTarget=100, conversion="yd2in")
 
 ## CEP in absolute and angular size units
 CEP100yd$CEP
@@ -94,8 +99,56 @@ fromMOA(CEPmoa, dst=100, conversion="m2in")
 ## 1 inch at 100 m in MOA
 MOA <- getMOA(1, dst=100, conversion="m2in")
 
-getHitProb(DFscar17, r=MOA, unit="MOA", accuracy=FALSE,
+getHitProb(DFscar17, r=MOA, unit="MOA", doRob=FALSE,
            dstTarget=100, conversion="yd2in", type="GrubbsPatnaik")
+
+## ----cDistributions1, out.width='3in'------------------------------------
+## probability of staying within 10cm of the point of aim
+## Rayleigh distribution
+pRayleigh(10, scale=5)
+
+## Rice distribution with offset x=1, y=1
+pRice(10, nu=sqrt(2), sigma=5)
+
+## Hoyt distribution - unequal variances
+sdX <- 8                              # standard deviation along x
+sdY <- 4                              # standard deviation along y
+hp  <- getHoytParam(c(sdX^2, sdY^2))  # convert to Hoyt parameters
+pHoyt(10, qpar=hp$q, omega=hp$omega)
+
+## general case: unequal variances and offset x=1, y=1
+sigma <- cbind(c(52, 20), c(20, 28))  # covariance matrix
+pmvnEll(r=10, sigma=sigma, mu=c(1, 1), e=diag(2), x0=c(0, 0))
+
+## ----cDistributions2, out.width='3in'------------------------------------
+## 1D - normal distribution with mean 0 for interval [-1.5, 1.5]
+pnorm(1.5, mean=0, sd=2) - pnorm(-1.5, mean=0, sd=2)
+pmvnEll(1.5, sigma=4, mu=0, e=1, x0=0)
+
+## 2D - Rayleigh distribution
+pRayleigh(1.5, scale=2)
+pmvnEll(1.5, sigma=diag(rep(4, 2)), mu=rep(0, 2), e=diag(2), x0=rep(0, 2))
+
+## 3D - Maxwell-Boltzmann distribution
+pMaxwell(1.5, sigma=2)
+pmvnEll(1.5, sigma=diag(rep(4, 3)), mu=rep(0, 3), e=diag(3), x0=rep(0, 3))
+
+## ----cDistributions3, out.width='3in'------------------------------------
+## 1D - normal distribution with mean 1 for interval [-1.5, 1.5]
+pnorm(1.5, mean=1, sd=2) - pnorm(-1.5, mean=1, sd=2)
+pmvnEll(1.5, sigma=4, mu=1, e=1, x0=0)
+
+## 2D - Rice distribution
+pRice(1.5, nu=1, sigma=2)
+pmvnEll(1.5, sigma=diag(c(4, 4)), mu=c(1, 0), e=diag(2), x0=c(0, 0))
+
+## ----cDistributions4, out.width='3in'------------------------------------
+## 2D - Hoyt distribution
+sdX <- 4                              # standard deviation along x
+sdY <- 2                              # standard deviation along y
+hp  <- getHoytParam(c(sdX^2, sdY^2))  # convert to Hoyt parameters
+pHoyt(1.5, qpar=hp$q, omega=hp$omega)
+pmvnEll(1.5, sigma=diag(c(sdX^2, sdY^2)), mu=c(0, 0), e=diag(2), x0=c(0, 0))
 
 ## ----cDrawGroup1, out.width='3in'----------------------------------------
 library(shotGroups, verbose=FALSE)       # load shotGroups package
@@ -138,13 +191,13 @@ getMOA(c(1, 2, 10), dst=100, conversion="m2cm", type="MOA")
 ## convert from SMOA to object sizes in inch, distance in yard
 fromMOA(c(0.5, 1, 2), dst=100, conversion="yd2in", type="SMOA")
 
-## convert from object sizes in mm to milrad, distance in m
-fromMOA(c(1, 10, 20), dst=100, conversion="m2mm", type="milrad")
+## convert from object sizes in mm to mrad, distance in m
+fromMOA(c(1, 10, 20), dst=100, conversion="m2mm", type="mrad")
 
 ## ----cMOAcenter3---------------------------------------------------------
 ## get distance in yard from object size in inch and angular size in MOA
 getDistance(2, angular=5, conversion="yd2in", type="MOA")
 
-## get distance in m from object size in mm and angular size in milrad
-getDistance(2, angular=0.5, conversion="m2mm", type="milrad")
+## get distance in m from object size in mm and angular size in mrad
+getDistance(2, angular=0.5, conversion="m2mm", type="mrad")
 

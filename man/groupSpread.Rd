@@ -4,21 +4,22 @@
 \alias{groupSpread.default}
 \title{Precision: Spread measures of a single group of bullet holes}
 \description{Provides spread measures and their graphical representations for a single group of bullet holes.}
-\usage{groupSpread(xy, plots = TRUE, level = 0.95,
+\usage{groupSpread(xy, plots = TRUE, CEPlevel = 0.5, CIlevel = 0.95,
             CEPtype = 'CorrNormal', bootCI = c('basic', 'bca'),
             dstTarget = 100, conversion = 'm2cm')
 
-\method{groupSpread}{data.frame}(xy, plots = TRUE, level = 0.95,
+\method{groupSpread}{data.frame}(xy, plots = TRUE, CEPlevel = 0.5, CIlevel = 0.95,
             CEPtype = 'CorrNormal', bootCI = c('basic', 'bca'),
             dstTarget = 100, conversion = 'm2cm')
 
-\method{groupSpread}{default}(xy, plots = TRUE, level = 0.95,
+\method{groupSpread}{default}(xy, plots = TRUE, CEPlevel = 0.5, CIlevel = 0.95,
             CEPtype = 'CorrNormal', bootCI = c('basic', 'bca'),
             dstTarget = 100, conversion = 'm2cm')}
 \arguments{
   \item{xy}{either a numerical (n x 2)-matrix with the (x,y)-coordinates of n points (1 row of coordinates per point), or a data frame with either the variables \code{X}, \code{Y} or \code{Point.X}, \code{Point.Y} as well as \code{Aim.X}, \code{Aim.Y} giving the point of aim. If missing, point of aim is assumed to be in (0,0).}
   \item{plots}{logical: show diagrams?}
-  \item{level}{a numerical value giving the level for the confidence intervals (for standard deviations, sigma, RSD, MR) as well as for the coverage of the confidence ellipse and CEP.}
+  \item{CEPlevel}{a numerical value giving the coverage for the CEP and for the confidence ellipse.}
+  \item{CIlevel}{a numerical value giving the level for the confidence intervals (for standard deviations as well as for Rayleigh sigma, RSD, MR).}
   \item{CEPtype}{string indicating which CEP estimate to report from \code{\link[shotGroups]{getCEP}}.}
   \item{bootCI}{a character vector to select which bootstrap confidence interval type to report. Possible types are \code{'none'} (no bootstrap CI), \code{'norm'}, \code{'basic'}, \code{'perc'}, \code{'bca'}. See \code{\link[boot]{boot.ci}}.}
   \item{dstTarget}{a numerical value giving the distance to the target - used in MOA calculation. See \code{\link[shotGroups]{getMOA}}.}
@@ -32,7 +33,7 @@ In addition to the numerical results listed below, this function produces the fo
 \itemize{
 \item a scatterplot of the (x,y)-coordinates together with group center, circle with average distance to center, and 100*\code{level}\%-confidence ellipse - the latter also based on a robust estimate for the covariance matrix
 \item a scatterplot of the (x,y)-coordinates together with the bounding box, minimum bounding box, minimum enclosing circle, and maximum group spread
-\item a histogram of distances to group center including a fitted Rayleigh distribution as well as a nonparametric kernel density estimate
+\item a histogram of distances to group center including a fitted Rayleigh distribution as well as a non-parametric kernel density estimate
 }
 }
 \value{
@@ -43,7 +44,7 @@ A list with the results from the numerical analyses and statistical tests.
 \item{sdXYrob}{robust standard deviations of x- and y-coordinates (in original measurement units, MOA, SMOA, milliradian).}
 \item{covXY}{covariance matrix of (x,y)-coordinates.}
 \item{covXYrob}{robust estimate of covariance matrix of (x,y)-coordinates.}
-\item{distToCtr}{mean and median distance from points to their center as well as estimated Rayleigh parameters sigma (precision), radial standard deviation RSD, and mean radius MR (in original measurement units, MOA, SMOA, milliradian).}
+\item{distToCtr}{mean, median and maximum distance from points to their center as well as estimated Rayleigh parameters sigma (precision), radial standard deviation RSD, and mean radius MR (in original measurement units, MOA, SMOA, milliradian).}
 \item{sigmaCI}{parametric (chi^2) and bootstrap confidence intervals for sigma (in original measurement units, MOA, SMOA, milliradian).}
 \item{RSDci}{parametric (chi^2) and bootstrap confidence intervals for radial standard deviation RSD (number of points), in original measurement units, MOA, SMOA, milliradian).}
 \item{MRci}{parametric (chi^2) and bootstrap confidence intervals for mean radius MR (in original measurement units, MOA, SMOA, milliradian).}
@@ -76,12 +77,12 @@ A list with the results from the numerical analyses and statistical tests.
 \code{\link[boot]{boot}},
 \code{\link[boot]{boot.ci}},
 \code{\link[stats]{kernel}},
-\code{\link[robustbase]{covMcd}},
+\code{\link[robustbase]{covMcd}}
 }
 \examples{
 # coordinates given by a suitable data frame
-res <- groupSpread(DFtalon, CEPtype=c('Grubbs', 'Rayleigh'), level=0.95,
-                   bootCI='basic', dstTarget=10, conversion='m2mm')
+res <- groupSpread(DFtalon, CEPtype=c('Grubbs', 'Rayleigh'), CEPlevel=0.5,
+                   CIlevel=0.95, bootCI='none', dstTarget=10, conversion='m2mm')
 names(res)
 res$sdXYrob
 res$distToCtr
@@ -91,6 +92,6 @@ res$CEP
 # coordinates given by a matrix
 \dontrun{
 xy <- matrix(round(rnorm(200, 0, 5), 2), ncol=2)
-groupSpread(xy, level=0.5, dstTarget=25, conversion='m2cm')
+groupSpread(xy, CEPlevel=0.5, CIlevel=0.95, dstTarget=25, conversion='m2cm')
 }
 }

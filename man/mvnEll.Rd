@@ -39,7 +39,7 @@ The functions are vectorized in \code{r} and \code{p} but not in the remaining p
 
 \code{rmvnEll} with \code{method='eigen'} or with \code{method='chol'} simulates 2D normal deviates based on \code{sigma} and \code{mu}, and then determines the radius around \code{x0}. \code{rmvnEll} with \code{method='cdf'} is much slower as it performs numerical root finding of \code{pmvnEll} given simulated quantiles from a uniform random variable in (0,1). If no search interval for \code{\link[stats]{uniroot}} is provided, the quantiles of an approximating non-central chi^2 distribution are used to determine the search intervals.
 
-See \code{\link[shotGroups]{Hoyt}} for the distribution of radial error around the true center.
+See \code{\link[shotGroups]{Hoyt}} for the distribution of radial error around the true center of correlated bivariate normal variables with unequal variances. See \code{\link[shotGroups]{Rice}} for the distribution of radial error around an offset center for uncorrelated bivariate normal variables with equal variances. See \code{\link[shotGroups]{Rayleigh}} for the distribution of radial error around the true center of uncorrelated bivariate normal variables with equal variances.
 }
 \references{
 DiDonato, A. R., & Jarnagin, M. P. (1961a). Integration of the general bivariate Gaussian

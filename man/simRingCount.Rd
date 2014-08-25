@@ -32,7 +32,7 @@ A list with the following components:
 simRingCount(DFscar17, target='ISSF_100m', caliber=5.56, unit='in')
 
 # ring count for all groups in DFcm data set
-rc <- by(DFcm, DFcm$Series, FUN=simRingCount, target='BDS9',
+rc <- by(DFcm, DFcm$series, FUN=simRingCount, target='BDS9',
          caliber=9, unit='cm')
 
 sapply(rc, function(x) with(x, c(count=count, max=max)))

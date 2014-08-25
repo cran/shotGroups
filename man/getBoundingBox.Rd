@@ -31,7 +31,7 @@ A list with the following information about the bounding box:
 bb <- getBoundingBox(DFsavage)
 
 # draw points and bounding box
-plot(Point.Y ~ Point.X, data=DFsavage, asp=1, pch=16)
+plot(point.y ~ point.x, data=DFsavage, asp=1, pch=16)
 drawBox(bb, fg='blue', colCtr='blue', pch=4, cex=2)
 
 bb$FoM                                   # figure of merit

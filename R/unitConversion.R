@@ -45,7 +45,7 @@ function(conversion="m2cm") {
         idxFT2FT <- conversion %in% c("ft2ft", "feet2feet")
         idxFT2YD <- conversion %in% c("ft2yd", "feet2yd", "ft2yard", "feet2yard")
 
-       ## did we catch all requested conversion types?
+        ## did we catch all requested conversion types?
         idxAll <- idxMM2MM | idxMM2CM | idxMM2M | idxMM2IN | idxMM2FT | idxMM2YD |
                   idxCM2MM | idxCM2CM | idxCM2M | idxCM2IN | idxCM2FT | idxCM2YD |
                   idxM2MM  | idxM2CM  | idxM2M  | idxM2IN  | idxM2FT  | idxM2YD  |

@@ -22,18 +22,18 @@ getHitProb(xy, r=1, unit = 'unit', dstTarget = 100, conversion = 'm2cm',
   \item{conversion}{how to convert the measurement unit for distance to target to that of the shot-coordinates - used in MOA calculation. See \code{\link[shotGroups]{getMOA}}.}
   \item{accuracy}{logical: take systematic location bias into account? See details.}
   \item{type}{string vector indicating which estimation method to use. Possible values are \code{'CorrNormal', 'GrubbsPearson', 'GrubbsPatnaik', 'GrubbsLiu', 'Rayleigh'}.}
-  \item{doRob}{logical: use robust estimation of center and covariance matrix as basis for estimates?}
+  \item{doRob}{logical: use robust estimation of center and covariance matrix as basis for estimates? For Rayleigh only available when \code{accuracy=FALSE}.}
 }
 \details{
 The estimated hit probability is the same as the estimated fraction of shots with a distance to their group center of at most \code{r}.
 
-By default, the estimated hit probability does not take into account accuracy, i.e., any systematic location bias. It is then based on the centered data. Set \code{accuracy=TRUE} to incorporate systematic deviation from point of aim.
+For \code{accuracy=FALSE} (default), the estimated hit probability does not take into account accuracy, i.e., any systematic location bias. The data is then first centered on the empirical group mean, assumed to coincide with the point of aim. Set \code{accuracy=TRUE} to incorporate systematic accuracy bias such that the point of aim is in the origin 0, possibly offset from the true group center.
 \itemize{
-\item \code{CorrNormal}: For \code{accuracy=FALSE} and two-dimensional data, this estimate is based on the quantile function of the correlated bivariate normal distribution re-written in polar coordinates (radius and angle). See \code{\link[shotGroups]{Hoyt}}. For \code{accuracy=TRUE} or three-dimensional data, it is based on the (offset) circle/sphere probabilities for the correlated multivariate normal distribution (DiDonato & Jarnagin, 1961; DiDonato, 1981). See \code{\link[shotGroups]{pmvnEll}}.
+\item \code{CorrNormal}: For \code{accuracy=FALSE} and two-dimensional data, this estimate is based on the quantile function of the correlated bivariate normal distribution re-written in polar coordinates (radius and angle) (see \code{\link[shotGroups]{Hoyt}}). For \code{accuracy=TRUE} or three-dimensional data, it is based on the (offset) circle/sphere probabilities for the correlated multivariate normal distribution (DiDonato & Jarnagin, 1961; DiDonato, 1981, see \code{\link[shotGroups]{pmvnEll}}).
 \item \code{GrubbsPearson}: The Grubbs-Pearson estimate (Grubbs, 1964) is based on the Pearson three-moment central chi^2-approximation of the true cumulative distribution function of radial error. The eigenvalues of the covariance matrix of shot-coordinates are used as variance estimates since they are the variances of the principal components (the PCA-rotated = decorrelated data).
 \item \code{GrubbsPatnaik}: The Grubbs-Patnaik estimate (Grubbs, 1964) differs from the Grubbs-Pearson estimate insofar as it is based on the Patnaik two-moment central chi^2-approximation of the true cumulative distribution function of radial error.
 \item \code{GrubbsLiu}: The Grubbs-Liu estimate was not proposed by Grubbs but follows the same principle as his original estimates. It differs from them insofar as it is based on the Liu-Tang-Zhang four-moment non-central chi^2-approximation of the true cumulative distribution function of radial error. For \code{accuracy=FALSE}, it is identical to \code{GrubbsPearson}.
-\item \code{Rayleigh}: This estimate uses the Rayleigh quantile function with a bias-corrected estimate of its scale parameter (Singh, 1992). The Rayleigh distribution is valid for uncorrelated multivariate normal coordinates with equal variances.
+\item \code{Rayleigh}: For \code{accuracy=FALSE} and two-dimensional data, this estimate uses the Rayleigh distribution (see \code{\link[shotGroups]{getRayParam}}). It is valid for uncorrelated bivariate normal coordinates with equal variances. This estimate is available for all probability levels. For \code{accuracy=FALSE} and three-dimensional data, the Maxwell-Boltzmann distribution is used (see \code{\link[shotGroups]{getMaxParam}}). For \code{accuracy=TRUE} and two-dimensional data, the estimate uses the Rice distribution (see \code{\link[shotGroups]{getRiceParam}}). For \code{accuracy=TRUE} and three-dimensional data, it is based on the offset sphere probabilities for the multivariate normal distribution set to have equal variances (see \code{\link[shotGroups]{qmvnEll}}).
 }
 }
 \value{
@@ -51,13 +51,15 @@ Liu, H., Tang, Y., & Zhang, H. H. (2009). A new chi-square approximation to the 
 Singh, H. P. 1992. Estimation of Circular Probable Error. The Indian Journal of Statistics, Series B 5(3), 289-305.
 }
 \seealso{
+\code{\link[shotGroups]{Rayleigh}},
+\code{\link[shotGroups]{Maxwell}},
 \code{\link[shotGroups]{Hoyt}},
 \code{\link[shotGroups]{mvnEll}},
 \code{\link[shotGroups]{getHoytParam}},
 \code{\link[shotGroups]{getRayParam}},
 \code{\link[shotGroups]{getCEP}},
-\code{\link[robustbase]{covMcd}},
-\code{\link[shotGroups]{getConfEll}}
+\code{\link[shotGroups]{getConfEll}},
+\code{\link[robustbase]{covMcd}}
 }
 \examples{
 # coordinates given by a suitable data frame

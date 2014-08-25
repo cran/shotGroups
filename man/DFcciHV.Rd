@@ -8,15 +8,15 @@ Example of a data frame from one file with two groups of bullet holes.}
 \format{
   A data frame with 40 observations on the following 9 variables.
   \describe{
-    \item{\code{Group}}{a factor with levels \code{1} \code{2}.}
-    \item{\code{Distance}}{a numerical vector giving the distance to the target.}
-    \item{\code{Aim.X}}{a numerical vector of x-coordinates giving the point of aim.}
-    \item{\code{Aim.Y}}{a numerical vector of y-coordinates giving the of point of aim.}
-    \item{\code{Point.X}}{a numerical vector of absolute x-coordinates of bullet holes.}
-    \item{\code{Point.Y}}{a numerical vector of absolute y-coordinates of bullet holes.}
-    \item{\code{Origin}}{a factor with levels \code{1}. This factor codes from which original output file the data is.}
-    \item{\code{orgSer}}{a factor with levels \code{1.1} \code{1.2}. This factor results from \code{\link{droplevels}(\link{interaction}(Origin, Group))}, and codes each separate group across original files. The order of the factor levels is alphabetical.}
-    \item{\code{Series}}{a factor with levels \code{1} \code{2}. This factor codes each separate group as defined by \code{orgSer}, but more conveniently as a number that runs consecutively across original files.}
+    \item{\code{group}}{a factor with levels \code{1} \code{2}.}
+    \item{\code{distance}}{a numerical vector giving the distance to the target.}
+    \item{\code{aim.x}}{a numerical vector of x-coordinates giving the point of aim.}
+    \item{\code{aim.y}}{a numerical vector of y-coordinates giving the of point of aim.}
+    \item{\code{point.x}}{a numerical vector of absolute x-coordinates of bullet holes.}
+    \item{\code{point.y}}{a numerical vector of absolute y-coordinates of bullet holes.}
+    \item{\code{origin}}{a factor with levels \code{1}. This factor codes from which original output file the data is.}
+    \item{\code{orgser}}{a factor with levels \code{1.1} \code{1.2}. This factor results from \code{\link{droplevels}(\link{interaction}(origin, group))}, and codes each separate group across original files. The order of the factor levels is alphabetical.}
+    \item{\code{series}}{a factor with levels \code{1} \code{2}. This factor codes each separate group as defined by \code{orgSer}, but more conveniently as a number that runs consecutively across original files.}
   }
 }
 \details{

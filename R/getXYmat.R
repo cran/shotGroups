@@ -2,21 +2,24 @@ getXYmat <-
 function(DF, xyTopLeft=TRUE, relPOA=TRUE) {
     if(!is.data.frame(DF)) { stop("DF must be a data frame") }
 
+    ## convert DF names to lower case
+    DF <- setNames(DF, tolower(names(DF)))
+
     ## make sure DF has the required variable names
     ## coordinates need to be called either X, Y order Point.X, Point.Y
     dfNames  <- names(DF)                # what variables are present
-    needsXY1 <- c("Point.X", "Point.Y")  # coordinates must have this name
-    needsXY2 <- c("X", "Y")              # or this
-    wantsAIM <- c("Aim.X", "Aim.Y")      # useful
+    needsXY1 <- c("point.x", "point.y")  # coordinates must have this name
+    needsXY2 <- c("x", "y")              # or this
+    wantsAIM <- c("aim.x", "aim.y")      # useful
     hasXY1   <- needsXY1 %in% dfNames
-    hasXY2   <- needsXY2 %in% toupper(dfNames)
-    hasAIM   <- wantsAIM %in% dfNames   # useful ones we have
+    hasXY2   <- needsXY2 %in% dfNames
+    hasAIM   <- wantsAIM %in% dfNames    # useful ones we have
 
     if(!xor(all(hasXY1), all(hasXY2))) {
        stop("Coordinates must be named either X, Y or Point.X, Point.Y")
     }
 
-    if(("Z" %in% toupper(dfNames)) && ("Point.Z" %in% dfNames)) {
+    if(("z" %in% dfNames) && ("point.z" %in% dfNames)) {
         stop("Coordinates must be named either Z or Point.Z")
     }
 
@@ -29,38 +32,38 @@ function(DF, xyTopLeft=TRUE, relPOA=TRUE) {
     }
 
     if(!relPOA) {                        # coords not relative to POA
-        DF$Aim.X <- 0                    # -> set POA to (0,0)
-        DF$Aim.Y <- 0
+        DF$aim.x <- 0                    # -> set POA to (0,0)
+        DF$aim.y <- 0
 
-        if(("Z" %in% toupper(dfNames)) || ("Point.Z" %in% dfNames)) {
-            DF$Aim.Z <- 0
+        if(("z" %in% dfNames) || ("point.z" %in% dfNames)) {
+            DF$aim.z <- 0
         }
     }
     
-    ## if names are X, Y rename to Point.X, Point.Y
+    ## if names are X, Y, Z rename to Point.X, Point.Y, Point.Z
     if(all(hasXY2)) {
         dfNames <- names(DF)
-        dfNames[dfNames %in% c("x", "X")] <- "Point.X"
-        dfNames[dfNames %in% c("y", "Y")] <- "Point.Y"
-        dfNames[dfNames %in% c("z", "Z")] <- "Point.Z"
-        names(DF) <- dfNames
+        dfNames[dfNames %in% "x"] <- "point.x"
+        dfNames[dfNames %in% "y"] <- "point.y"
+        dfNames[dfNames %in% "z"] <- "point.z"
         warning("Variables X, Y were renamed to Point.X, Point.Y")
+        names(DF) <- dfNames
     }
     
     ## coords relative to point of aim
     ## y-coords exported from OnTarget: (0,0) is top-left
-    X <- DF$Point.X - DF$Aim.X           # x-coords
+    x <- DF$point.x - DF$aim.x           # x-coords
     if(xyTopLeft) {
-        Y <- -(DF$Point.Y - DF$Aim.Y)
+        y <- -(DF$point.y - DF$aim.y)    # y-coords
     } else {
-        Y <-   DF$Point.Y - DF$Aim.Y
+        y <-   DF$point.y - DF$aim.y
     }
 
-    if(("Z" %in% toupper(dfNames)) || ("Point.Z" %in% dfNames)) {
-        Z <- DF$Point.Z - DF$Aim.Z       # x-coords
+    if(("z" %in% dfNames) || ("point.z" %in% dfNames)) {
+        z <- DF$point.z - DF$aim.z       # z-coords
     } else {
-        Z <- NULL
+        z <- NULL
     }
 
-    return(cbind(X, Y, Z))               # new (x,y)-coords as matrix
+    return(cbind(x, y, z))               # new (x,y)-coords as matrix
 }

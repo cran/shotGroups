@@ -132,3 +132,144 @@ function(x, shape, radius=1, nv=100, axes=FALSE,
         matlines(xMat, yMat, col=fg, lwd=lwd, lty=lty)
     }
 }
+
+drawEllSector <-
+function(x, shape=diag(2), radius=1, sect0=0, sect1=90, rot=0, nv=100,
+         fg=par("fg"), bg=NA, colCtr=NA,
+         lty=par("lty"), lwd=par("lwd"), pch=par("pch"), cex=par("cex")) {
+    if(!is.numeric(x))       { stop("x must be numeric") }
+    if(!is.vector(x))        { stop("x must be a vector") }
+    if(length(x) != 2)       { stop("x must have length two") }
+    if(!is.matrix(shape))    { stop("shape must be a matrix") }
+    if(!is.numeric(shape))   { stop("shape must be numeric") }
+    if(any(dim(shape) != 2)) { stop("shape must be a (2 x 2)-matrix") }
+    if(!isTRUE(all.equal(shape, t(shape)))) {
+        stop("shape must be symmetric")
+    }
+    if(sect0 >= sect1) { stop("sect0 must be smaller than sect 1") }
+
+    CF      <- chol(shape, pivot=TRUE)      # Cholesky-factor
+    CFord   <- order(attr(CF, "pivot"))
+    angles  <- seq(sect0*pi/180, sect1*pi/180, length.out=nv)  # angles in radians
+    sect    <- radius * cbind(cos(angles), sin(angles)) %*% CF[ , CFord]  # sector
+    sect    <- rbind(sect, c(0, 0))
+    
+    ang  <- -rot*pi/180
+    G    <- cbind(c(cos(ang), sin(ang)), c(-sin(ang), cos(ang)))
+    sect <- sect %*% G
+
+    sectCtr <- sweep(sect, 2, x, "+")       # move sector to center
+
+    ## draw center, ellipse
+    points(x[1], x[2], col=colCtr, pch=pch, lwd=lwd, cex=cex)  # center
+    polygon(sectCtr, border=fg, col=bg, lwd=lwd, lty=lty)      # ellipse   
+}
+
+drawTriSector <-
+function(x, radius=1, sect0=0, sect1=90, rot=0,
+         fg=par("fg"), bg=NA, colCtr=NA,
+         lty=par("lty"), lwd=par("lwd"), pch=par("pch"), cex=par("cex")) {
+    if(!is.numeric(x)) { stop("x must be numeric") }
+    if(!is.vector(x))  { stop("x must be a vector") }
+    if(length(x) != 2) { stop("x must have length two") }
+    if(sect0 >= sect1) { stop("sect0 must be smaller than sect 1") }
+
+    angles <- c(sect0*pi/180, sect1*pi/180)  # angles in radians
+    sect   <- rbind(c(0, 0),
+                    c(radius, radius*tan(angles[1])),
+                    c(radius, radius*tan(angles[2])),
+                    c(0, 0))
+    
+    ang  <- -rot*pi/180
+    G    <- cbind(c(cos(ang), sin(ang)), c(-sin(ang), cos(ang)))
+    sect <- sect %*% G
+
+    sectCtr <- sweep(sect, 2, x, "+")       # move sector to center
+
+    ## draw center, triangle
+    points(x[1], x[2], col=colCtr, pch=pch, lwd=lwd, cex=cex)  # center
+    polygon(sectCtr, border=fg, col=bg, lwd=lwd, lty=lty)      # triangle   
+}
+
+## draw oval shape from DSU targets
+drawDSUOval <-
+function(x, shape=diag(2), radius=1, angle, h=0, rot=0, nv=100,
+         fg=par("fg"), bg=NA, colCtr=NA,
+         lty=par("lty"), lwd=par("lwd"), pch=par("pch"), cex=par("cex"),
+         plot=TRUE) {
+    if(!is.numeric(x))       { stop("x must be numeric") }
+    if(!is.vector(x))        { stop("x must be a vector") }
+    if(length(x) != 2)       { stop("x must have length two") }
+    if(!is.matrix(shape))    { stop("shape must be a matrix") }
+    if(!is.numeric(shape))   { stop("shape must be numeric") }
+    if(any(dim(shape) != 2)) { stop("shape must be a (2 x 2)-matrix") }
+    if(!isTRUE(all.equal(shape, t(shape)))) {
+        stop("shape must be symmetric")
+    }
+    if(angle >= 90) { stop("angle must be < 90 degree") }
+    angle <- (pi/180)*angle     # convert angle to radians
+
+    ## ellipse sector - right upper quadrant
+    CF    <- chol(shape, pivot=TRUE)      # Cholesky-factor
+    CFord <- order(attr(CF, "pivot"))
+
+    ## correct opening angle for vertical offset h
+    angCorr <- atan(h/radius)
+    ellAng1 <- seq(angle-angCorr, (pi-angle+angCorr), length.out=nv)  # angles in radians
+    ellAng2 <- pi + ellAng1
+    ellSec1 <- radius * cbind(cos(ellAng1), sin(ellAng1)) %*% CF[ , CFord]  # sector
+    ellSec2 <- radius * cbind(cos(ellAng2), sin(ellAng2)) %*% CF[ , CFord]  # sector
+
+    ## move up to h
+    ellSec1 <- sweep(ellSec1, 2, c(0,  h), "+")
+    ellSec2 <- sweep(ellSec2, 2, c(0, -h), "+")
+
+    ## triangle sector
+    angTri  <- c(-angle, angle)
+    triSec1 <- rbind(c( radius, radius*tan(angTri[1])),
+                     c( radius, radius*tan(angTri[2])))
+    triSec2 <- rbind(c(-radius, radius*tan(angTri[2])),
+                     c(-radius, radius*tan(angTri[1])))
+
+    ## join triangle - ellipse - triangle - ellipse
+    oval <- rbind(triSec1,
+                  ellSec1,
+                  triSec2,
+                  ellSec2)
+
+    ## rotate and move to center
+    ang     <- -rot*pi/180
+    G       <- cbind(c(cos(ang), sin(ang)), c(-sin(ang), cos(ang)))
+    oval    <- oval %*% G
+    ovalCtr <- sweep(oval, 2, x, "+")       # move sector to center
+
+    ## draw center, triangle
+    if(plot) {
+        points(x[1], x[2], col=colCtr, pch=pch, lwd=lwd, cex=cex)  # center
+        polygon(ovalCtr, border=fg, col=bg, lwd=lwd, lty=lty)      # triangle
+    } else {
+        return(ovalCtr)
+    }
+}
+
+## draw a super ellipse
+drawSuperEll <-
+function(x, a, b, n, nv=100, rot=0,
+         col=par("fg"), colCtr=NA, lty=par("lty"), lwd=par("lwd"),
+         pch=par("pch"), cex=par("cex")) {
+    angles <- seq(0, pi/2, length.out=nv)
+    x0 <- a*cos(angles)^(2/n)
+    y0 <- b*sin(angles)^(2/n)
+    xy <- cbind(c(x0, rev(-x0), -x0, rev( x0)),
+                c(y0, rev( y0), -y0, rev(-y0)))
+
+    ang <- -rot*pi/180
+    G   <- cbind(c(cos(ang), sin(ang)), c(-sin(ang), cos(ang)))
+    xy  <- xy %*% G
+
+    xyCtr <- sweep(xy, 2, x, "+")       # move sector to center
+
+    lines(xyCtr, col=col, lwd=lwd, lty=lty)
+    ## draw center
+    points(x[1], x[2], col=colCtr, pch=pch, lwd=lwd, cex=cex)  # center
+}

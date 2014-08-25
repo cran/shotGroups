@@ -8,12 +8,13 @@
 }
 \details{Assumes that the data frames in the list have a non-empty set of shared variables. Among them at least either \code{Point.X}, \code{Point.Y} or \code{X}, \code{Y} defining the bullet holes. To be useful for functions \code{\link[shotGroups]{analyzeGroup}} or \code{\link[shotGroups]{compareGroups}}, the data frames should also have variables \code{Group}, \code{Distance}, \code{Aim.X}, \code{Aim.Y} defining point of aim. If \code{Group} is missing, it is set to 1.}
 \value{
-A data frame with the shared set of variables. In addition, it also contains factors identifying the original file (\code{Origin}), and a single consecutive numbering of all groups from different data frames (\code{Series}).
+A data frame with the shared set of variables. In addition, it also contains factors identifying the original file (\code{file}), and a factor identifying all groups from different data frames (\code{series}).
 \item{\ldots}{the shared set of variables from the the data frames in the list.}
-\item{Group}{a factor that is the original \code{Group} variable as defined by OnTarget PC/TDS.}
-\item{Origin}{a factor that codes from which original file the data is.}
-\item{orgSer}{a factor that results from \code{\link{droplevels}(\link{interaction}(Origin, Group))}, and codes each separate group across original files. The order of the factor levels is alphabetical.}
-\item{Series}{a factor that codes each separate group as defined by \code{orgSer}, but more conveniently as a number that runs consecutively across original files.}
+\item{group}{a factor that is the original \code{Group} variable as defined by OnTarget PC/TDS.}
+\item{groupVerb}{a factor that codes group with more descriptive levels taken from the original project title, file name and ammunition (if available).}
+\item{file}{a factor that codes from which original file the data is.}
+\item{series}{a factor that codes each separate group across original files.}
+\item{seriesNum}{a factor that codes each separate group as a number that runs consecutively across original files.}
 }
 \seealso{
 \code{\link[shotGroups]{readDataMisc}},

@@ -21,6 +21,6 @@ By default, OnTarget PC/TDS' 'Export Point Data' places the origin of the absolu
 data(DFcm)
 
 # select data from only first series
-DFsub <- subset(DFcm, Series == 1)
+DFsub <- subset(DFcm, series == 1)
 getXYmat(DFsub, xyTopLeft=TRUE, relPOA=TRUE)
 }

@@ -36,7 +36,7 @@ Toussaint, G. T. (1983). Solving geometric problems with the rotating calipers. 
 bb <- getMinBBox(DFsavage)               # minimum bounding box
 
 # plot points and minimum bounding box
-plot(Point.Y ~ Point.X, data=DFsavage, asp=1,
+plot(point.y ~ point.x, data=DFsavage, asp=1,
      xlim=range(bb$pts[ , 1]), ylim=range(bb$pts[ , 2]), pch=16)
 drawBox2(bb, fg='blue', colCtr='blue', pch=4, cex=2)
 

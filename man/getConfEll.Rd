@@ -43,7 +43,7 @@ A list with the confidence ellipse measures.
 
 # plot points, center, parametric confidence
 # ellipse, and its axes
-plot(Point.Y ~ Point.X, data=DFsavage, asp=1, pch=16)
+plot(point.y ~ point.x, data=DFsavage, asp=1, pch=16)
 drawEllipse(ce, axes=TRUE, fg='blue', colCtr='blue', lwd=2, pch=4, cex=2)
 
 # coordinates given by a matrix

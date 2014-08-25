@@ -26,11 +26,11 @@ In addition to the numerical results listed below, this function produces the fo
 \itemize{
 \item a combined plot for multivariate outlier identification as produced by \code{\link[mvoutlier]{aq.plot}}
 \item a chi-square Q-Q-plot for eyeballing multivariate normality as produced by \code{\link[mvoutlier]{chisq.plot}}, including a reference line with intercept 0 and slope 1
-\item a heatmap of a nonparametric 2D-kernel density estimate for the (x,y)-coordinates as produced by \code{\link[graphics]{smoothScatter}} together with group center and error ellipses (original and scaled by factor 2) based on a robust estimate for the covariance matrix (from \code{\link[robustbase]{covMcd}} using the MCD algorithm)
+\item a heatmap of a non-parametric 2D-kernel density estimate for the (x,y)-coordinates as produced by \code{\link[graphics]{smoothScatter}} together with group center and error ellipses (original and scaled by factor 2) based on a robust estimate for the covariance matrix (from \code{\link[robustbase]{covMcd}} using the MCD algorithm)
 \item a Q-Q-plot of x-coordinates for eyeballing normality
 \item a Q-Q-plot of y-coordinates for eyeballing normality
-\item a histogram of x-coordinates including a fitted normal distribution as well as a nonparametric kernel density estimate
-\item a histogram of y-coordinates including a fitted normal distribution as well as a nonparametric kernel density estimate
+\item a histogram of x-coordinates including a fitted normal distribution as well as a non-parametric kernel density estimate
+\item a histogram of y-coordinates including a fitted normal distribution as well as a non-parametric kernel density estimate
 }
 }
 \value{

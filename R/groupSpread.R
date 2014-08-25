@@ -1,31 +1,38 @@
 groupSpread <-
-function(xy, plots=TRUE, level=0.95, CEPtype="CorrNormal",
+function(xy, plots=TRUE, CEPlevel=0.5, CIlevel=0.95, CEPtype="CorrNormal",
          bootCI=c("basic", "bca"), dstTarget=100, conversion="m2cm") {
     UseMethod("groupSpread")
 }
 
 groupSpread.data.frame <-
-function(xy, plots=TRUE, level=0.95, CEPtype="CorrNormal",
+function(xy, plots=TRUE, CEPlevel=0.5, CIlevel=0.95, CEPtype="CorrNormal",
          bootCI=c("basic", "bca"), dstTarget=100, conversion="m2cm") {
     xy <- getXYmat(xy)
     NextMethod("groupSpread")
 }
 
 groupSpread.default <-
-function(xy, plots=TRUE, level=0.95, CEPtype="CorrNormal",
+function(xy, plots=TRUE, CEPlevel=0.5, CIlevel=0.95, CEPtype="CorrNormal",
          bootCI=c("basic", "bca"), dstTarget=100, conversion="m2cm") {
     if(!is.matrix(xy))     { stop("xy must be a matrix") }
     if(!is.numeric(xy))    { stop("xy must be numeric") }
     if(ncol(xy) != 2)      { stop("xy must have two columns") }
-    if(!is.numeric(level)) { stop("level must be numeric") }
-    if(level <= 0)         { stop("level must be > 0") }
+    if(!is.numeric(CEPlevel)) { stop("CEPlevel must be numeric") }
+    if(CEPlevel <= 0)         { stop("CEPlevel must be > 0") }
+    if(!is.numeric(CIlevel))  { stop("CIlevel must be numeric") }
+    if(CIlevel <= 0)          { stop("CIlevel must be > 0") }
 
     bootCI <- match.arg(bootCI, choices=c("none", "norm", "basic", "perc", "bca"), several.ok=TRUE)
 
-    ## check if CI level is given in percent
-    if(level >= 1) {
-        while(level >= 1) { level <- level / 100 }
-        warning(c("level must be in (0,1) and was set to ", level))
+    ## check if CEP / CI level is given in percent
+    if(CEPlevel >= 1) {
+        while(CEPlevel >= 1) { CEPlevel <- CEPlevel / 100 }
+        warning(c("CEPlevel must be in (0,1) and was set to ", CEPlevel))
+    }
+
+    if(CIlevel >= 1) {
+        while(CIlevel >= 1) { CIlevel <- CIlevel / 100 }
+        warning(c("CIlevel must be in (0,1) and was set to ", CIlevel))
     }
 
     #####-----------------------------------------------------------------------
@@ -46,7 +53,7 @@ function(xy, plots=TRUE, level=0.95, CEPtype="CorrNormal",
     axesCollY <- numeric(0)
 
     #####-----------------------------------------------------------------------
-    ## nonparametric bootstrap-CIs (basic and BCa)
+    ## non-parametric bootstrap-CIs (basic and BCa)
     ## for all parameters where a CI is later reported
     if(!("none" %in% bootCI)) {          # do bootstrap CIs
         NrplMin <- 1499                  # minimum number of replications
@@ -59,7 +66,7 @@ function(xy, plots=TRUE, level=0.95, CEPtype="CorrNormal",
         ## sdX, sdY, sigma, RSD, MR for one replication
         getSdSigRSDMR <- function(x, idx) {
             sdXY     <- sqrt(diag(cov(x[idx, ])))
-            rayParam <- getRayParam(x[idx, ], level=level, accuracy=FALSE)
+            rayParam <- getRayParam(x[idx, ], level=CIlevel, doRob=FALSE)
             sigmaHat <- rayParam$sigma["sigma"]
             RSDhat   <- rayParam$RSD["RSD"]
             MRhat    <- rayParam$MR["MR"]
@@ -69,11 +76,11 @@ function(xy, plots=TRUE, level=0.95, CEPtype="CorrNormal",
         bs <- boot::boot(xy, statistic=getSdSigRSDMR, R=Nrpl) # bootstrap
 
         ## extract CIs for all returned parameters
-        sdXciBoot <- boot::boot.ci(bs, conf=level, type=bootCI, index=1)
-        sdYciBoot <- boot::boot.ci(bs, conf=level, type=bootCI, index=2)
-        sigCIboot <- boot::boot.ci(bs, conf=level, type=bootCI, index=3)
-        RSDciBoot <- boot::boot.ci(bs, conf=level, type=bootCI, index=4)
-         MRciBoot <- boot::boot.ci(bs, conf=level, type=bootCI, index=5)
+        sdXciBoot <- boot::boot.ci(bs, conf=CIlevel, type=bootCI, index=1)
+        sdYciBoot <- boot::boot.ci(bs, conf=CIlevel, type=bootCI, index=2)
+        sigCIboot <- boot::boot.ci(bs, conf=CIlevel, type=bootCI, index=3)
+        RSDciBoot <- boot::boot.ci(bs, conf=CIlevel, type=bootCI, index=4)
+         MRciBoot <- boot::boot.ci(bs, conf=CIlevel, type=bootCI, index=5)
 
         ## CI type names in output structure of boot.ci()
         CInames <- c(basic="basic", norm="normal", perc="percent", bca="bca")
@@ -114,7 +121,7 @@ function(xy, plots=TRUE, level=0.95, CEPtype="CorrNormal",
     res$sdXY <- makeMOA(sdXY, dst=dstTarget, conversion=conversion)
 
     ## parametric CIs for true sd
-    alpha <- 1-level
+    alpha <- 1-CIlevel
     sdXci <- sqrt((Npts-1)*varXY[1] / qchisq(c(1-(alpha/2), alpha/2), Npts-1))
     sdYci <- sqrt((Npts-1)*varXY[2] / qchisq(c(1-(alpha/2), alpha/2), Npts-1))
     names(sdXci) <- c("sdX (", "sdX )")
@@ -150,10 +157,11 @@ function(xy, plots=TRUE, level=0.95, CEPtype="CorrNormal",
     dstCtr     <- getDistToCtr(xy)
     dstCtrMean <- mean(dstCtr)
     dstCtrMed  <- median(dstCtr)
+    dstCtrMax  <- max(dstCtr)
 
     ## radial standard deviation
     ## http://ballistipedia.com/index.php?title=Describing_Precision
-    rayParam <- getRayParam(xy, level=level, accuracy=FALSE)
+    rayParam <- getRayParam(xy, level=CIlevel, doRob=FALSE)
 
     ## sigma, RSD, MR estimates with parametric confidence intervals
     sigma <- rayParam$sigma
@@ -164,7 +172,7 @@ function(xy, plots=TRUE, level=0.95, CEPtype="CorrNormal",
     names(RSD)   <- c("RSD",   "RSD (",   "RSD )")
     names(MR)    <- c("MR",    "MR (",    "MR )")
 
-    mDTCsigRSDmr  <- c(mean=dstCtrMean, median=dstCtrMed,
+    mDTCsigRSDmr  <- c(mean=dstCtrMean, median=dstCtrMed, max=dstCtrMax,
                        sigma["sigma"], RSD["RSD"], MR["MR"])
     res$distToCtr <- makeMOA(mDTCsigRSDmr, dst=dstTarget, conversion=conversion)
 
@@ -210,7 +218,7 @@ function(xy, plots=TRUE, level=0.95, CEPtype="CorrNormal",
 
     #####-----------------------------------------------------------------------
     ## confidence ellipse measures
-    confEll <- getConfEll(xy, level, dstTarget, conversion, doRob=haveRob)
+    confEll <- getConfEll(xy, CEPlevel, dstTarget, conversion, doRob=haveRob)
     res$confEll <- confEll$size
 
     ## for axis limits
@@ -240,7 +248,8 @@ function(xy, plots=TRUE, level=0.95, CEPtype="CorrNormal",
 
     #####-----------------------------------------------------------------------
     ## circular error probable
-    CEP <- getCEP(xy, level=level, type=CEPtype, dstTarget=dstTarget, conversion=conversion, accuracy=FALSE)
+    CEP <- getCEP(xy, CEPlevel=CEPlevel, type=CEPtype, dstTarget=dstTarget,
+                  conversion=conversion, doRob=FALSE)
     res$CEP <- CEP$CEP
 
     #####-----------------------------------------------------------------------
@@ -298,8 +307,8 @@ function(xy, plots=TRUE, level=0.95, CEPtype="CorrNormal",
 
         ## add legend
         legend(x="bottomleft", legend=c("center", "center (robust)",
-               paste(100*level, "% confidence ellipse", sep=""),
-               paste(100*level, "% confidence ellipse (robust)", sep=""),
+               paste(100*CEPlevel, "% confidence ellipse", sep=""),
+               paste(100*CEPlevel, "% confidence ellipse (robust)", sep=""),
                "mean distance to center"),
                col=c("red", "blue", "red", "blue", "black"),
                pch=c(4, 4, NA, NA, NA),
@@ -339,20 +348,27 @@ function(xy, plots=TRUE, level=0.95, CEPtype="CorrNormal",
 }
 
 groupSpreadPlot <-
-function(xy, which=1, level=0.95, dstTarget=100, conversion="m2cm") {
-    if(!is.data.frame(xy)) { stop("xy must be a data.frame") }
+function(xy, which=1, CEPlevel=0.5, CIlevel=0.95, dstTarget=100, conversion="m2cm") {
+    if(!is.data.frame(xy))    { stop("xy must be a data.frame") }
     xy <- getXYmat(xy)
-    if(!is.numeric(xy))    { stop("xy must be numeric") }
-    if(ncol(xy) != 2)      { stop("xy must have two columns") }
-    if(!is.numeric(level)) { stop("level must be numeric") }
-    if(level <= 0)         { stop("level must be > 0") }
+    if(!is.numeric(xy))       { stop("xy must be numeric") }
+    if(ncol(xy) != 2)         { stop("xy must have two columns") }
+    if(!is.numeric(CEPlevel)) { stop("CEPlevel must be numeric") }
+    if(CEPlevel <= 0)         { stop("CEPlevel must be > 0") }
+    if(!is.numeric(CIlevel))  { stop("CIlevel must be numeric") }
+    if(CIlevel <= 0)          { stop("CIlevel must be > 0") }
 
     which <- match.arg(as.character(which), choices=1:3)
 
-    ## check if CI level is given in percent
-    if(level >= 1) {
-        while(level >= 1) { level <- level / 100 }
-        warning(c("level must be in (0,1) and was set to ", level))
+    ## check if CEP / CI level is given in percent
+    if(CIlevel >= 1) {
+        while(CIlevel >= 1) { CIlevel <- CIlevel / 100 }
+        warning(c("CIlevel must be in (0,1) and was set to ", CIlevel))
+    }
+
+    if(CEPlevel >= 1) {
+        while(CEPlevel >= 1) { CEPlevel <- CEPlevel / 100 }
+        warning(c("CEPlevel must be in (0,1) and was set to ", CEPlevel))
     }
 
     #####-----------------------------------------------------------------------
@@ -401,7 +417,7 @@ function(xy, which=1, level=0.95, dstTarget=100, conversion="m2cm") {
 
     ## radial standard deviation
     ## http://ballistipedia.com/index.php?title=Describing_Precision
-    rayParam <- getRayParam(xy, level=level, accuracy=FALSE)
+    rayParam <- getRayParam(xy, level=CIlevel, doRob=FALSE)
 
     ## sigma, RSD, MR estimates with parametric confidence intervals
     sigma <- rayParam$sigma
@@ -433,7 +449,7 @@ function(xy, which=1, level=0.95, dstTarget=100, conversion="m2cm") {
 
     #####-----------------------------------------------------------------------
     ## confidence ellipse measures
-    confEll <- getConfEll(xy, level, dstTarget, conversion, doRob=haveRob)
+    confEll <- getConfEll(xy, CEPlevel, dstTarget, conversion, doRob=haveRob)
 
     ## for axis limits
     axesCollX <- c(axesCollX, confEll$ctr[1] + confEll$size["unit", "semi-major"],
@@ -505,8 +521,8 @@ function(xy, which=1, level=0.95, dstTarget=100, conversion="m2cm") {
 
         ## add legend
         legend(x="bottomleft", legend=c("center", "center (robust)",
-               paste(100*level, "% confidence ellipse", sep=""),
-               paste(100*level, "% confidence ellipse (robust)", sep=""),
+               paste(100*CEPlevel, "% confidence ellipse", sep=""),
+               paste(100*CEPlevel, "% confidence ellipse (robust)", sep=""),
                "mean distance to center"),
                col=c("red", "blue", "red", "blue", "black"),
                pch=c(4, 4, NA, NA, NA),

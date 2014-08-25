@@ -6,7 +6,7 @@
 \alias{rHoyt}
 \title{The Hoyt Distribution}
 \description{
-Density, distribution function, quantile function, and random deviate generation for the Hoyt distribution. The radius around the true mean in a bivariate normal random variable re-written in polar coordinates (radius and angle) follows a Hoyt distribution. Equivalently, the modulus of a complex normal random variable does.
+Density, distribution function, quantile function, and random deviate generation for the Hoyt distribution. The radius around the true mean in a bivariate normal random variable, re-written in polar coordinates (radius and angle), follows a Hoyt distribution. Equivalently, the modulus of a complex normal random variable does.
 }
 \usage{
 dHoyt(x, qpar, omega)
@@ -27,9 +27,9 @@ rHoyt(n, qpar, omega, method = c('eigen', 'chol', 'cdf'), loUp = NULL)
 \value{
 \code{dHoyt} gives the density, \code{pHoyt} gives the cumulative distribution function, \code{qHoyt} gives the quantile function, \code{rHoyt} generates random deviates.
 
-The length of the result is determined by \code{n} for \code{rHoyt}, and  is the maximum of the lengths of the numerical parameters for the other functions.  
+The length of the result is determined by \code{n} for \code{rHoyt}, and is the maximum of the lengths of the numerical parameters for the other functions.  
   
-In \code{dHoyt}, \code{pHoyt} and \code{qHoyt}, the numerical parameters other than \code{n} are recycled to the length of the result. Only the first elements of the logical parameters are used. In \code{rHoyt}, only the first element of \code{qpar} and \code{omega} is used.
+In \code{dHoyt}, \code{pHoyt} and \code{qHoyt}, the numerical parameters are recycled to the length of the result. Only the first element of the logical parameters is used. In \code{rHoyt}, only the first element of \code{qpar} and \code{omega} is used.
 }
 \details{
 The parameters \code{qpar} and \code{omega} may be determined with \code{\link[shotGroups]{getHoytParam}}.
@@ -40,7 +40,7 @@ The parameters \code{qpar} and \code{omega} may be determined with \code{\link[s
 
 \code{rHoyt} with \code{method='eigen'} or with \code{method='chol'} simulates 2D normal deviates based on the covariance matrix corresponding to parameters \code{qpar} and \code{omega}, and then determines the radius. \code{rHoyt} with \code{method='cdf'} is much slower as it performs numerical root finding of \code{pHoyt} given simulated quantiles from a uniform random variable in (0,1). If no search interval for \code{\link[stats]{uniroot}} is provided, the quantiles of an approximating central chi^2 distribution are used to determine the search intervals.
 
-See \code{\link[shotGroups]{mvnEll}} for the distribution of radial error around and offset center.
+See \code{\link[shotGroups]{Rice}} for the distribution of radial error around an offset center for uncorrelated bivariate normal variables with equal variances. See \code{\link[shotGroups]{Rayleigh}} for the distribution of radial error around the true center of uncorrelated bivariate normal variables with equal variances. See \code{\link[shotGroups]{mvnEll}} for the distribution of radial error around an offset center for correlated normal variables with unequal variances.
 }
 \references{
 Chew, V. & Boyce, R. (1962). Distribution of radial error in bivariate elliptical normal distributions. Technometrics, 4(1), 138-140.
@@ -54,10 +54,12 @@ IEEE Transactions on Information Theory, 21 (1), 95-96
 Paris, JF. 2009. Nakagami-q (Hoyt) distribution function with applications.
 Electronics Letters, 45(4). 210-211. Erratum: doi:10.1049/el.2009.0828
 
-\url{http://reference.wolfram.com/mathematica/ref/HoytDistribution.html}
+\url{http://reference.wolfram.com/language/ref/HoytDistribution.html}
 }
 \seealso{
 \code{\link[shotGroups]{getHoytParam}},
+\code{\link[shotGroups]{Rayleigh}},
+\code{\link[shotGroups]{Rice}},
 \code{\link[shotGroups]{mvnEll}},
 \code{\link[base]{Bessel}},
 \code{\link[stats]{Chisquare}},

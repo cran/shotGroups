@@ -9,8 +9,8 @@ function(r=1, sigma=diag(2), mu, e, x0, lower.tail=TRUE) {
     if(missing(mu)) { mu <- numeric(ncol(sigma)) }
     if(missing(x0)) { x0 <- numeric(ncol(sigma)) }
     if(missing(e))  { e  <- diag(ncol(sigma)) }
-    if(!isTRUE(all.equal(sigma, t(sigma)))) { stop("sigma must be symmetric") }
-    if(!isTRUE(all.equal(e, t(e))))         { stop("e must be symmetric") }
+    if(!isTRUE(all.equal(as.matrix(sigma), t(sigma)))) { stop("sigma must be symmetric") }
+    if(!isTRUE(all.equal(as.matrix(e), t(e))))         { stop("e must be symmetric") }
 
     ## check e, sigma positive definite
     eEV <- eigen(e)$values
@@ -29,13 +29,7 @@ function(r=1, sigma=diag(2), mu, e, x0, lower.tail=TRUE) {
               length(x0) == ncol(sigma))
 
     pp   <- numeric(length(r))               # initialize probabilities to 0
-    keep <- which((r > 0) & is.finite(r))    # keep positive x
-    if(length(keep) < 1) {                   # nothing to do
-        pp[!is.finite(r)]    <- NA
-        pp[which(r == -Inf)] <- 0
-        pp[which(r ==  Inf)] <- 1
-        return(pp)
-    }
+    keep <- which((r > 0) & is.finite(r))    # keep positive r
 
     ## 1: Mahalanobis transform wrt e -> integrate over unit disc
     L      <- chol(e, pivot=TRUE)
@@ -49,16 +43,24 @@ function(r=1, sigma=diag(2), mu, e, x0, lower.tail=TRUE) {
 
     ## non-centrality parameters
     ncp <- xmu2^2 / S1eig$values
-    cqf <- sapply(r[keep], function(x) {
-        CompQuadForm::farebrother(x^2, lambda=S1eig$values, delta=ncp)$res })
+    cqf <- vapply(r[keep], function(x) {
+        CompQuadForm::farebrother(x^2, lambda=S1eig$values, delta=ncp)$res }, 1)
+
+    ## NA, NaN, -Inf, Inf (-Inf, Inf will be changed hereafter)
+    pp[!is.finite(r)] <- NA
 
     ## CompQuadForm returns survival probabilities (1-F)
-    pp[keep] <- if(lower.tail) { 1-cqf } else { cqf }
-
-    ## special cases not caught so far
-    pp[!is.finite(r)]    <- NA
-    pp[which(r == -Inf)] <- 0
-    pp[which(r ==  Inf)] <- 1
+    if(lower.tail) {
+        pp[keep] <- 1-cqf
+        ## special cases not caught so far
+        pp[which(r == -Inf)] <- 0
+        pp[which(r ==  Inf)] <- 1
+    } else {
+        pp[keep] <- cqf
+        ## special cases not caught so far
+        pp[which(r < 0)]     <- 1
+        pp[which(r ==  Inf)] <- 0
+    }
 
     return(pp)
 }
@@ -69,6 +71,8 @@ function(p, sigma=diag(2), mu, e, x0, lower.tail=TRUE, loUp=NULL) {
     if(missing(mu)) { mu <- numeric(ncol(sigma)) }
     if(missing(x0)) { x0 <- numeric(ncol(sigma)) }
     if(missing(e))  { e  <- diag(ncol(sigma)) }
+    if(!isTRUE(all.equal(as.matrix(sigma), t(sigma)))) { stop("sigma must be symmetric") }
+    if(!isTRUE(all.equal(as.matrix(e), t(e))))         { stop("e must be symmetric") }
 
     ## checks on mu, sigma, e are done in getGrubbsParam(), pmvnEll()
     ## initialize quantiles to NA
@@ -78,17 +82,17 @@ function(p, sigma=diag(2), mu, e, x0, lower.tail=TRUE, loUp=NULL) {
 
     ## determine search interval(s) for uniroot()
     if(is.null(loUp)) {                  # no search interval given
-        ## use Grubbs-Liu chi^2 quantile +- 50% for root finding
-        ## Grubbs-Liu chi^2 and correlated normal can diverge for p <= 0.25
+        ## use Grubbs chi^2 quantile for root finding
+        ## Grubbs-Liu chi^2 and Rice can diverge
         GP <- getGrubbsParam(sigma=sigma, ctr=(x0-mu), accuracy=TRUE)
         qGrubbs   <- qChisqGrubbs(p[keep], m=GP$m, v=GP$v, muX=GP$muX,
                                   varX=GP$varX, l=GP$l, delta=GP$delta,
                                   lower.tail=lower.tail, type="Liu")
-        qGrubbs.4 <- qChisqGrubbs(0.4, m=GP$m, v=GP$v, muX=GP$muX,
+        qGrubbs.6 <- qChisqGrubbs(0.6, m=GP$m, v=GP$v, muX=GP$muX,
                                   varX=GP$varX, l=GP$l, delta=GP$delta,
                                   lower.tail=lower.tail, type="Liu")
-        qLo  <- ifelse(p[keep] <= 0.25, 0,         0.5*qGrubbs)
-        qUp  <- ifelse(p[keep] <= 0.25, qGrubbs.4, 1.5*qGrubbs)
+        qLo  <- ifelse(p[keep] <= 0.5, 0,         0.25*qGrubbs)
+        qUp  <- ifelse(p[keep] <= 0.5, qGrubbs.6, 1.75*qGrubbs)
         loUp <- split(cbind(qLo, qUp), seq_along(p))
     } else {
         if(is.matrix(loUp)) {
@@ -112,7 +116,7 @@ function(p, sigma=diag(2), mu, e, x0, lower.tail=TRUE, loUp=NULL) {
 
     qq[keep] <- unlist(Map(getQ, p=p[keep], x0=list(x0), e=list(e),
                            mu=list(mu), sigma=list(sigma), loUp=loUp[keep],
-						   lower.tail=lower.tail[1]))
+                           lower.tail=lower.tail[1]))
 
     return(qq)
 }
@@ -123,6 +127,9 @@ function(n, sigma=diag(2), mu, e, x0, method=c("eigen", "chol", "cdf"), loUp=NUL
     if(missing(mu)) { mu <- numeric(ncol(sigma)) }
     if(missing(x0)) { x0 <- numeric(ncol(sigma)) }
     if(missing(e))  { e  <- diag(ncol(sigma)) }
+    if(!isTRUE(all.equal(as.matrix(sigma), t(sigma)))) { stop("sigma must be symmetric") }
+    if(!isTRUE(all.equal(as.matrix(e), t(e))))         { stop("e must be symmetric") }
+
     method <- match.arg(method)
     
     ## checks on mu, sigma, e are done in getGrubbsParam(), pmvnEll()
@@ -167,15 +174,15 @@ function(n, sigma=diag(2), mu, e, x0, method=c("eigen", "chol", "cdf"), loUp=NUL
 
         ## determine search interval(s) for uniroot()
         if(is.null(loUp)) {                  # no search interval given
-            ## use Grubbs chi^2 quantile +- 50% for root finding
-            ## Grubbs-Liu chi^2 and correlated normal can diverge for p <= 0.25
+            ## use Grubbs chi^2 quantile for root finding
+            ## Grubbs-Liu chi^2 and Rice can diverge
             GP <- getGrubbsParam(sigma=sigma, ctr=(x0-mu), accuracy=TRUE)
             qGrubbs   <- qChisqGrubbs(u, m=GP$m, v=GP$v, muX=GP$muX,
                                       varX=GP$varX, l=GP$l, delta=GP$delta, type="Liu")
-            qGrubbs.4 <- qChisqGrubbs(0.4, m=GP$m, v=GP$v, muX=GP$muX,
+            qGrubbs.6 <- qChisqGrubbs(0.6, m=GP$m, v=GP$v, muX=GP$muX,
                                       varX=GP$varX, l=GP$l, delta=GP$delta, type="Liu")
-            qLo  <- ifelse(u <= 0.25, 0,         0.5*qGrubbs)
-            qUp  <- ifelse(u <= 0.25, qGrubbs.4, 1.5*qGrubbs)
+            qLo  <- ifelse(u <= 0.5, 0,         0.25*qGrubbs)
+            qUp  <- ifelse(u <= 0.5, qGrubbs.6, 1.75*qGrubbs)
             loUp <- split(cbind(qLo, qUp), seq_along(u))
         } else {
             if(is.matrix(loUp)) {

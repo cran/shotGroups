@@ -3,13 +3,13 @@
 \alias{shotGroups}
 \docType{package}
 \title{Analyze shot group data}
-\description{The \code{shotGroups} package provides functions to read in, plot, statistically describe, analyze, and compare shooting data with respect to group shape, precision, and accuracy. This includes graphical methods, descriptive statistics, and inference tests using standard, but also nonparametric and robust statistical methods. The data can be imported from files produced by OnTarget PC and OnTarget TDS or from custom data files in text format with a similar structure.}
+\description{The \code{shotGroups} package provides functions to read in, plot, statistically describe, analyze, and compare shooting data with respect to group shape, precision, and accuracy. This includes graphical methods, descriptive statistics, and inference tests using standard, but also non-parametric and robust statistical methods. The data can be imported from files produced by OnTarget PC and OnTarget TDS or from custom data files in text format with a similar structure.}
 \details{
 \tabular{ll}{
 Package: \tab shotGroups\cr
 Type: \tab Package\cr
-Version: \tab 0.5\cr
-Date: \tab 2014-03-03\cr
+Version: \tab 0.6\cr
+Date: \tab 2014-08-25\cr
 Depends: \tab R (>= 2.15.2)\cr
 Imports: \tab boot, coin, CompQuadForm, energy, graphics, grDevices, mvoutlier, robustbase, stats, KernSmooth\cr
 License: \tab GPL (>= 2)\cr
@@ -25,5 +25,5 @@ Maintainer: Daniel Wollschlaeger \email{dwoll@kuci.org}
 package
 }
 \examples{
-groupSpread(DFcciHV, dstTarget=100, conversion='yd2in', bootCI='basic')
+groupSpread(DFcciHV, dstTarget=100, conversion='yd2in', bootCI='none')
 }

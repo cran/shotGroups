@@ -31,7 +31,8 @@ function(xy, xyTopLeft=TRUE, bb=FALSE, bbMin=FALSE, bbDiag=FALSE, minCirc=FALSE,
     if(!is.numeric(alpha))   { stop("alpha must be numeric") }
     if((alpha < 0) || (alpha > 1)) { stop("alpha must be in [0,1]") }
 
-    unit <- match.arg(unit, choices=c("unit", "m", "cm", "mm", "yd", "ft", "in", "MOA", "SMOA", "milrad"))
+    unit <- match.arg(unit, choices=c("unit", "m", "cm", "mm", "yd", "ft", "in",
+                                      "MOA", "SMOA", "mrad", "mil"))
     CEP  <- as.character(CEP)
     if(CEP != "FALSE") {
         ## set CEP type to given estimator or to default
@@ -44,7 +45,7 @@ function(xy, xyTopLeft=TRUE, bb=FALSE, bbMin=FALSE, bbDiag=FALSE, minCirc=FALSE,
             while(level >= 1) { level <- level / 100 }
             warning(c("level must be in (0,1) and was set to ", level))
         }
-		level
+        level
     }
     level <- sapply(level, levelTo01)
 
@@ -73,43 +74,29 @@ function(xy, xyTopLeft=TRUE, bb=FALSE, bbMin=FALSE, bbDiag=FALSE, minCirc=FALSE,
     if(xyTopLeft) { xy[ , 2] <- -xy[ , 2] }
 
     ## convert coords to different unit if requested
-	xyNew <- if(unit == "unit") {        # keep unit
-	    unitXYnew <- unitXY              # new unit = old unit
+    xyNew <- if(unit == "unit") {        # keep unit
+        unitXYnew <- unitXY              # new unit = old unit
         ## convert caliber given in mm to new unit of xy-coords
         convFac <- getConvFac(paste0("mm2", unitXYnew))
         calSize <- convFac * caliber/2
-	    xy                               # new xy-coords = old xy-coords
-	} else if(unit == "MOA") {
-	    unitXYnew <- unit
-        ## convert caliber given in mm to angular size
-        calSize <- getMOA(caliber/2, dst=dstTarget, conversion=paste0(unitDst, "2mm"), type="MOA")
-
-        ## new xy-coords - make positive, get angular size and add sign back
-	    sign(xy) * getMOA(abs(xy), dst=dstTarget, conversion=conversion, type="MOA")
-    } else if(unit == "SMOA") {
+        xy                               # new xy-coords = old xy-coords
+    } else if(unit %in% c("MOA", "SMOA", "mrad", "mil")) {
         unitXYnew <- unit
         ## convert caliber given in mm to angular size
-        calSize <- getMOA(caliber/2, dst=dstTarget, conversion=paste0(unitDst, "2mm"), type="SMOA")
+        calSize <- getMOA(caliber/2, dst=dstTarget, conversion=paste0(unitDst, "2mm"), type=unit)
 
         ## new xy-coords - make positive, get angular size and add sign back
-        sign(xy) * getMOA(abs(xy), dst=dstTarget, conversion=conversion, type="SMOA")
-	} else if(unit == "milrad") {
-	    unitXYnew <- unit
-        ## convert caliber given in mm to angular size
-        calSize <- getMOA(caliber/2, dst=dstTarget, conversion=paste0(unitDst, "2mm"), type="milrad")
-
-        ## new xy-coords - make positive, get angular size and add sign back
-	    sign(xy) * getMOA(abs(xy), dst=dstTarget, conversion=conversion, type="milrad")
-	} else {                                # absolute size unit
+        sign(xy) * getMOA(abs(xy), dst=dstTarget, conversion=conversion, type=unit)
+    } else {                                # absolute size unit
         unitXYnew <- unit
         ## convert caliber given in mm to new unit of xy-coords
         convFac <- getConvFac(paste0("mm2", unitXYnew))
         calSize <- convFac * caliber/2
 
         ## new xy-coords by unit conversion
-        xy2xyNew  <- getConvFac(paste0(unitXY, "2", unitXYnew))
+        xy2xyNew <- getConvFac(paste0(unitXY, "2", unitXYnew))
         xy2xyNew * xy
-	}
+    }
 
     res$xy <- xyNew                      # save converted xy-coords
 
@@ -209,13 +196,13 @@ function(xy, xyTopLeft=TRUE, bb=FALSE, bbMin=FALSE, bbDiag=FALSE, minCirc=FALSE,
                                       x$ctr[1] - x$size["semi-major"])
             axisLimsY <- c(axisLimsY, x$ctr[2] + x$size["semi-major"],
                                       x$ctr[2] - x$size["semi-major"])
-            x })                         # drop MOA, SMOA, milrad
+            x })                         # drop MOA, SMOA, mrad
         res$confEll <- cEllCopy
     }
 
     if(CEP != "FALSE") {                 # circular error probable
         CEPres <- lapply(level, function(x) {
-            getCEP(xyNew, level=x, dstTarget=dstTarget,
+            getCEP(xyNew, CEPlevel=x, dstTarget=dstTarget,
                    conversion=conversion, type=CEPtype, accuracy=FALSE) })
 
         res$CEP <- sapply(CEPres, function(x) x$CEP["unit", CEPtype])
@@ -257,9 +244,14 @@ function(xy, xyTopLeft=TRUE, bb=FALSE, bbMin=FALSE, bbDiag=FALSE, minCirc=FALSE,
                CEP=rgb(202, 178, 214, maxColorValue=255))
 
     ## color for bullet holes -> white with target, black otherwise
-    pointCol <- if(!is.na(target)) {
+    pointCol <- if(!any(is.na(target))) {
         cols <- cols1
-        rgb(1, 1, 1, alpha)
+        trgt <- getTarget(target)
+        if(!is.null(trgt$colPt)) {
+            adjustcolor(trgt$colPt, alpha.f=alpha)
+        } else {
+            rgb(1, 1, 1, alpha)
+        }
     } else {
         cols <- cols2
         rgb(0, 0, 0, alpha)

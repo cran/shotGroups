@@ -22,11 +22,11 @@ A list with the following components
 (maxPD <- getMaxPairDist(DFsavage))
 
 # plot points and point pair with maximum distance
-plot(Point.Y ~ Point.X, data=DFsavage, asp=1, pch=16)
-x0 <- DFsavage$Point.X[maxPD$idx[1]]     # 1st point x
-y0 <- DFsavage$Point.Y[maxPD$idx[1]]     # 1st point y
-x1 <- DFsavage$Point.X[maxPD$idx[2]]     # 2nd point x
-y1 <- DFsavage$Point.Y[maxPD$idx[2]]     # 2nd point y
+plot(point.y ~ point.x, data=DFsavage, asp=1, pch=16)
+x0 <- DFsavage$point.x[maxPD$idx[1]]     # 1st point x
+y0 <- DFsavage$point.y[maxPD$idx[1]]     # 1st point y
+x1 <- DFsavage$point.x[maxPD$idx[2]]     # 2nd point x
+y1 <- DFsavage$point.y[maxPD$idx[2]]     # 2nd point y
 segments(x0, y0, x1, y1, col="green3", lwd=2)
 
 # coordinates given by a matrix

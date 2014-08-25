@@ -29,9 +29,9 @@ In addition to the numerical results listed below, this function produces the fo
 \item a heatmap of a 2D-kernel density estimate for the (x,y)-coordinates as produced by \code{\link[graphics]{smoothScatter}} together with group center and error ellipse based on a robust estimate for the covariance matrix
 \item a Q-Q-plot of x-coordinates for eyeballing normality
 \item a Q-Q-plot of y-coordinates for eyeballing normality
-\item a histogram of x-coordinates including a fitted normal distribution as well as a nonparametric kernel density estimate
-\item a histogram of y-coordinates including a fitted normal distribution as well as a nonparametric kernel density estimate
-\item a histogram of distances to group center including a fitted Rayleigh distribution as well as a nonparametric kernel density estimate
+\item a histogram of x-coordinates including a fitted normal distribution as well as a non-parametric kernel density estimate
+\item a histogram of y-coordinates including a fitted normal distribution as well as a non-parametric kernel density estimate
+\item a histogram of distances to group center including a fitted Rayleigh distribution as well as a non-parametric kernel density estimate
 }
 }
 \value{
@@ -50,21 +50,21 @@ A list with the results from the numerical analyses and statistical tests.
 \item{covXY}{covariance matrix of (x,y)-coordinates.}
 \item{covXYrob}{robust estimate of covariance matrix of (x,y)-coordinates.}
 \item{distToCtr}{mean and median distance from points to their center as well as estimated Rayleigh parameters sigma (precision), radial standard deviation RSD, and mean radius MR (in original measurement units, MOA, SMOA, milliradian).}
-\item{sigmaCI}{parametric and bootstrap confidence intervals for sigma (in original measurement units, MOA, SMOA, milliradian).}
-\item{RSDci}{parametric and bootstrap confidence intervals for radial standard deviation RSD (in original measurement units, MOA, SMOA, milliradian).}
-\item{MRci}{parametric and bootstrap confidence intervals for mean radius MR (in original measurement units, MOA, SMOA, milliradian).}
+\item{sigmaCI}{95\%-parametric and bootstrap confidence intervals for sigma (in original measurement units, MOA, SMOA, milliradian).}
+\item{RSDci}{95\%-parametric and bootstrap confidence intervals for radial standard deviation RSD (in original measurement units, MOA, SMOA, milliradian).}
+\item{MRci}{95\%-parametric and bootstrap confidence intervals for mean radius MR (in original measurement units, MOA, SMOA, milliradian).}
 \item{maxPairDist}{maximum pairwise distance between points (center-to-center, = maximum spread, in original measurement units, MOA, SMOA, milliradian).}
 \item{groupRect}{width and height of bounding box with diagonal and figure of merit FoM (average side length, in original measurement units, MOA, SMOA, milliradian).}
 \item{groupRectMin}{width and height of minimum-area bounding box with diagonal and figure of merit FoM (average side length, in original measurement units, MOA, SMOA, milliradian).}
 \item{minCircleRad}{radius for the minimum enclosing circle (in original measurement units, MOA, SMOA, milliradian).}
-\item{confEll}{length of semi-major and semi-minor axis of the confidence ellipse (in original measurement units, MOA, SMOA, milliradian).}
-\item{confEllRob}{length of semi-major and semi-minor axis of the confidence ellipse based on a robust estimate for the covariance matrix (in original measurement units, MOA, SMOA, milliradian).}
-\item{confEllShape}{aspect ratio and flattening of the confidence ellipse.}
-\item{confEllShapeRob}{aspect ratio and flattening of the confidence ellipse based on a robust estimate for the covariance matrix.}
-\item{CEP}{estimate(s) for the circular error probable (CEP, in original measurement units, MOA, SMOA, milliradian).}
+\item{confEll}{length of semi-major and semi-minor axis of the 50\%-confidence ellipse (in original measurement units, MOA, SMOA, milliradian).}
+\item{confEllRob}{length of semi-major and semi-minor axis of the 50\%-confidence ellipse based on a robust estimate for the covariance matrix (in original measurement units, MOA, SMOA, milliradian).}
+\item{confEllShape}{aspect ratio and flattening of the 50\%-confidence ellipse.}
+\item{confEllShapeRob}{aspect ratio and flattening of the 50\%-confidence ellipse based on a robust estimate for the covariance matrix.}
+\item{CEP}{estimate(s) for the 50\%-circular error probable (CEP, in original measurement units, MOA, SMOA, milliradian).}
 \item{ctr}{(x,y)-offset of group center relative to point of aim.}
-\item{ctrXci}{parametric and bootstrap confidence intervals for center x-coordinate.}
-\item{ctrYci}{parametric and bootstrap confidence intervals for center y-coordinate.}
+\item{ctrXci}{95\%-parametric and bootstrap confidence intervals for center x-coordinate.}
+\item{ctrYci}{95\%-parametric and bootstrap confidence intervals for center y-coordinate.}
 \item{ctrRob}{robust estimate of group center offset relative to point of aim (MCD algorithm).}
 \item{distPOA}{distance from group center to point of aim (in original measurement units, MOA, SMOA, milliradian).}
 \item{distPOArob}{distance from robust estimate of group center to point of aim (in original measurement units, MOA, SMOA, milliradian).}
@@ -102,8 +102,8 @@ A list with the results from the numerical analyses and statistical tests.
 data(DFinch)
 
 # select combined data from only first 2 series
-DF  <- subset(DFinch, Series \%in\% 1:2)
-res <- analyzeGroup(DF, conversion='yd2in', bootCI='basic')
+DF  <- subset(DFinch, series \%in\% 1:2)
+res <- analyzeGroup(DF, conversion='yd2in', bootCI='none')
 names(res)
 res$multNorm
 res$corXY

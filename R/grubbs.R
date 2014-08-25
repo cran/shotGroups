@@ -4,6 +4,7 @@
 
 ## determine Grubbs parameters from eigenvalues of covariance matrix
 ## variance of decorrelated data = eigenvalues
+## for all dimensionalities
 ## not vectorized
 getGrubbsParam <-
 function(sigma, ctr, accuracy=FALSE) {
@@ -23,17 +24,21 @@ function(sigma, ctr, accuracy=FALSE) {
     ## take systematic location bias into account?
     ## if so -> rotate ctr with eigenvectors (decorrelated data)
     ## non-centrality parameters delta = ai^2
-    deltaI <- if(accuracy) { (t(eVec) %*% ctr)^2 / lambda } else { 0 }
+    deltaI <- if(accuracy) {
+        (t(eVec) %*% ctr)^2 / lambda
+    } else {
+        0
+    }
 
     ## distribution parameters
-    m <- sum(lambda) + sum(lambda*deltaI)    # mean
+    m <- sum(lambda) + sum(lambda*deltaI)          # mean
     v <- 2*sum(lambda^2) + 4*sum(lambda^2*deltaI)  # variance
-    n <- 2*m^2 / v                       # df chi-square Patnaik
+    n <- 2*m^2 / v                                 # df chi-square Patnaik
 
     ## for Pearson approximation
-    mu3 <- 8*sum(lambda^3 + 3*lambda^3*deltaI) # 3rd moment = skewness
+    mu3    <- 8*sum(lambda^3 + 3*lambda^3*deltaI)  # 3rd moment = skewness
     beta1  <- mu3^2 / v^3
-    nPrime <- 8/beta1                    # df chi-square Pearson
+    nPrime <- 8/beta1                              # df chi-square Pearson
 
     ## for Liu, Tang & Zhang approximation
     c1 <- m
@@ -42,23 +47,27 @@ function(sigma, ctr, accuracy=FALSE) {
     c4 <- sum(lambda^4) + 4*sum(lambda^4*deltaI)
     s1 <- c3/sqrt(c2^3)
     s2 <- c4/c2^2
-    if(s1^2 > s2) {
-        a     <- 1 / (s1-sqrt(s1^2 - s2))
-        delta <- s1*a^3 - a^2
-        l     <- a^2 - 2*delta
-    }  else {
-        a     <- 1/s1
-        delta <- 0
-        l     <- c2^3/c3^2
-    }
 
-    muX  <- l + delta
-    varX <- 2*a^2
+    ## if(s1^2 > s2)
+    a1     <- suppressWarnings(1 / (s1 - sqrt(s1^2 - s2))) # NaN if s1^2 < s2
+    delta1 <- s1*a1^3 - a1^2
+    l1     <- a1^2 - 2*delta1
+
+    ## if(s1^2 < s2)
+    a2     <- 1/s1
+    delta2 <- 0
+    l2     <- c2^3/c3^2
+
+    a     <- ifelse(s1^2 > s2, a1,     a2)
+    delta <- ifelse(s1^2 > s2, delta1, delta2)
+    l     <- ifelse(s1^2 > s2, l1    , l2)
+    muX   <- l + delta
+    varX  <- 2*a^2
 
     return(list(m=m, v=v, n=n, nPrime=nPrime, muX=muX, varX=varX, l=l, delta=delta))
 }
 
-## determine Grubbs parameters (accuracy=FALSE) from Hoyt parameters
+## determine Grubbs parameters (accuracy=FALSE) from Hoyt parameters - just 2D
 ## vectorized
 getGPfromHP <-
 function(qpar, omega) {
@@ -87,18 +96,78 @@ function(qpar, omega) {
     c4 <- ev1^4 + ev2^4
     s1 <- c3/sqrt(c2^3)
     s2 <- c4/c2^2
-    if(s1^2 > s2) {
-        a     <- 1 / (s1-sqrt(s1^2 - s2))
-        delta <- s1*a^3 - a^2
-        l     <- a^2 - 2*delta
-    }  else {
-        a     <- 1/s1
-        delta <- 0
-        l     <- c2^3/c3^2
-    }
 
-    muX  <- l + delta
-    varX <- 2*a^2
+    ## if(s1^2 > s2)
+    a1     <- suppressWarnings(1 / (s1 - sqrt(s1^2 - s2))) # NaN if s1^2 < s2
+    delta1 <- s1*a1^3 - a1^2
+    l1     <- a1^2 - 2*delta1
+
+    ## if(s1^2 < s2)
+    a2     <- 1/s1
+    delta2 <- 0
+    l2     <- c2^3/c3^2
+
+    a     <- ifelse(s1^2 > s2, a1,     a2)
+    delta <- ifelse(s1^2 > s2, delta1, delta2)
+    l     <- ifelse(s1^2 > s2, l1    , l2)
+    muX   <- l + delta
+    varX  <- 2*a^2
+
+    return(list(m=m, v=v, n=n, nPrime=nPrime, muX=muX, varX=varX, l=l, delta=delta))
+}
+
+## determine Grubbs parameters (accuracy=TRUE) from Rice parameters - just 2D
+## vectorized
+getGPfromRP <-
+function(nu, sigma) {
+    nnaN <- which(!is.na(nu))
+    nnaS <- which(!is.na(sigma))
+    stopifnot(all(nu[nnaN] >= 0), all(sigma[nnaS] > 0))
+
+    ## eigenvalues from sigma
+    ev1 <- sigma^2
+    ev2 <- sigma^2
+
+    ## take systematic location bias into account
+    ## non-centrality parameters delta = ai^2
+    ## distribution is circular -> offset in only 1 direction
+    deltaI1 <- nu^2/ev1
+    deltaI2 <- rep(0, max(c(length(nu), length(sigma))))
+
+    ## distribution parameters
+    m <- ev1+ev2 + ev1*deltaI1 + ev2*deltaI2       # mean
+    v <- 2*(ev1^2 + ev2^2) + 4*(ev1^2*deltaI1 + ev2^2*deltaI2) # variance
+    n <- 2*m^2 / v                                 # df chi-square Patnaik
+
+    ## for Pearson approximation
+    ## 3rd moment = skewness
+    mu3    <- 8*(ev1^3+ev2^3 + 3*ev1^3*deltaI1 + 3*ev2^3*deltaI2)
+    beta1  <- mu3^2 / v^3
+    nPrime <- 8/beta1                              # df chi-square Pearson
+
+    ## for Liu, Tang & Zhang approximation
+    c1 <- m
+    c2 <- v/2
+    c3 <- ev1^3+ev2^3 + 3*ev1^3*deltaI1 + 3*ev2^3*deltaI2
+    c4 <- ev1^4+ev2^4 + 4*ev1^4*deltaI1 + 4*ev2^4*deltaI2
+    s1 <- c3/sqrt(c2^3)
+    s2 <- c4/c2^2
+
+    ## if(s1^2 > s2)
+    a1     <- suppressWarnings(1 / (s1 - sqrt(s1^2 - s2))) # NaN if s1^2 < s2
+    delta1 <- s1*a1^3 - a1^2
+    l1     <- a1^2 - 2*delta1
+
+    ## if(s1^2 < s2)
+    a2     <- 1/s1
+    delta2 <- 0
+    l2     <- c2^3/c3^2
+
+    a     <- ifelse(s1^2 > s2, a1,     a2)
+    delta <- ifelse(s1^2 > s2, delta1, delta2)
+    l     <- ifelse(s1^2 > s2, l1    , l2)
+    muX   <- l + delta
+    varX  <- 2*a^2
 
     return(list(m=m, v=v, n=n, nPrime=nPrime, muX=muX, varX=varX, l=l, delta=delta))
 }

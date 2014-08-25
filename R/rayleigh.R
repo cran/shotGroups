@@ -1,20 +1,35 @@
-## bias correction factor for estimate of Rayleigh sigma parameter
+#####---------------------------------------------------------------------------
+## c4(n) correction factor for taking the square root of the variance of a
+## normally distributed random variable with n observations -> E(s) = c4*sigma
+## http://en.wikipedia.org/wiki/Unbiased_estimation_of_standard_deviation
 ## http://ballistipedia.com/index.php?title=Measuring_Precision#Estimating_.CF.83
+## always <= 1
+c4 <-
+function(n) {
+    stopifnot(n >= 2)
+
+    ## use exp(lgamma()) because gamma() will be infinite for large N
+    fac <- sqrt(2/(n-1)) * exp(lgamma(n/2) - lgamma((n-1)/2))
+    ifelse((fac > 1) | is.infinite(fac), 1, fac)
+}
+
+## estimate of Rayleigh sigma parameter
 getRayParam <-
-function(xy, level=0.95, accuracy=FALSE) {
+function(xy, level=0.95, mu, doRob=FALSE) {
     UseMethod("getRayParam")
 }
 
 getRayParam.data.frame <-
-function(xy, level=0.95, accuracy=FALSE) {
+function(xy, level=0.95, mu, doRob=FALSE) {
     xy <- getXYmat(xy)
     NextMethod("getRayParam")
 }
 
 getRayParam.default <-
-function(xy, level=0.95, accuracy=FALSE) {
+function(xy, level=0.95, mu, doRob=FALSE) {
     if(!is.matrix(xy))     { stop("xy must be a matrix") }
     if(!is.numeric(xy))    { stop("xy must be numeric") }
+    if(ncol(xy) != 2)      { stop("x must be (n x 2)-matrix") }
     if(!is.numeric(level)) { stop("level must be numeric") }
     if(level <= 0)         { stop("level must be > 0") }
 
@@ -24,33 +39,55 @@ function(xy, level=0.95, accuracy=FALSE) {
         warning(c("level must be in (0,1) and was set to ", level))
     }
 
+    ## check if we can do robust estimation if so required
+    if(nrow(xy) < 4) {
+        haveRob <- FALSE
+        if(doRob) {
+            warning("We need >= 4 points for robust estimations")
+        }
+    } else {
+        haveRob <- TRUE
+        rob     <- robustbase::covMcd(xy, cor=FALSE)
+    }                                    # if(nrow(xy) < 4)
+
     N     <- nrow(xy)
     alpha <- 1-level
 
-    if(accuracy) {                       # Singh C2
-        rSqSum <- sum(rowSums(xy^2))     # sum squared radii
+    if(!missing(mu)) {                   # Singh C1 - true mean is known
+        xyCtr  <- sweep(xy, 2, mu, "-")  # center with true mean
+        rSqSum <- if(doRob && haveRob) { # sum squared radii centered data
+            ## = N*trace of uncorrected covariance matrix -> N*trace((N-1)/N)*cov(xy)
+            (nrow(xy)-1)*sum(diag(rob$cov))
+        } else {
+            sum(xyCtr^2)                 # sum squared radii
+        }                                # if(doRob && haveRob)
 
-        ## bias correction factor
-        ## use exp(lgamma()) because gamma() will be infinite for large N
-        corrFac <- sqrt(N) * exp(lgamma(N-1) - lgamma((2*N - 1)/2))
-    } else {                             # Singh C1
-        xyCtr   <- scale(xy, scale=FALSE, center=TRUE)  # centered data
-        rSqSum  <- sum(rowSums(xyCtr^2)) # sum squared radii
-        corrFac <- sqrt(N) * exp(lgamma(N)   - lgamma((2*N + 1)/2))
-        ## same: http://ballistipedia.com/index.php?title=Measuring_Precision
-        ## exp(log(sqrt(N/pi)) + N*log(4) + lgamma(N+1) + lgamma(N) - lgamma(2*N+1))
-    }                                    # if(accuracy)
+        varHat  <- rSqSum/(2*N)          # unbiased variance estimate - no Bessel correction
+        corrFac <- 1/c4(2*N + 1)         # c4 correction with n = 2*N + 1
+        chisqDF <- 2*N                   # chi^2 degrees of freedom
+    } else {                             # Singh C2 - true center is estimated
+        rSqSum <- if(doRob && haveRob) { # sum squared radii centered data
+            ## = N*trace of uncorrected covariance matrix -> N*trace((N-1)/N)*cov(xy)
+            (nrow(xy)-1)*sum(diag(rob$cov))
+        } else {
+            xyCtr <- scale(xy, scale=FALSE, center=TRUE)  # centered data
+            sum(xyCtr^2)                 # sum squared radii
+        }                                # if(doRob && haveRob)
 
-    sigBias <- sqrt((1/(2*N))*rSqSum)    # biased sigma estimate
-    corrR   <- ifelse(is.finite(corrFac), corrFac, 1)
-    sigHat  <- corrR * sigBias
-    sigCIlo <- corrR * sqrt(rSqSum / qchisq(1-(alpha/2), 2*(N-1)))
-    sigCIup <- corrR * sqrt(rSqSum / qchisq(   alpha/2,  2*(N-1)))
+        ## unbiased variance estimate including Bessel correction
+        varHat  <- rSqSum/(2*(N-1))
+        corrFac <- 1/c4(2*N - 1)         # c4 correction with n = 2*N - 1
+        chisqDF <- 2*(N-1)               # chi^2 degrees of freedom
+    }                                    # if(!missing(mu))
 
-    RSD   <- sigHat * sqrt((4-pi)/2)     # radial standard deviation
-    MR    <- sigHat * sqrt(pi/2)         # means
-    RSDci <- c(sigCIlo, sigCIup) * sqrt((4-pi)/2)
+    sigHat  <- corrFac * sqrt(varHat)    # bias-corrected sigma estimate
+    sigCIlo <- corrFac * sqrt(rSqSum / qchisq(1-(alpha/2), chisqDF))
+    sigCIup <- corrFac * sqrt(rSqSum / qchisq(   alpha/2,  chisqDF))
+
+    MR    <- sigHat * sqrt(pi/2)         # radial error mean
+    RSD   <- sigHat * sqrt((4-pi)/2)     # radial error standard deviation
     MRci  <- c(sigCIlo, sigCIup) * sqrt(pi/2)
+    RSDci <- c(sigCIlo, sigCIup) * sqrt((4-pi)/2)
 
     return(list(sigma=c(sigma=sigHat, sigCIlo=sigCIlo, sigCIup=sigCIup),
                   RSD=c(RSD=RSD, RSDciLo=RSDci[1], RSDciUp=RSDci[2]),
@@ -101,7 +138,7 @@ function(x, scaleSq=1) {
 
 ## Rayleigh cdf
 pRayleigh <-
-function(q, scale=1) {
+function(q, scale=1, lower.tail=TRUE) {
     is.na(scale) <- (scale <= 0) | !is.finite(scale)
 
     args  <- recycle(q, scale)
@@ -110,19 +147,25 @@ function(q, scale=1) {
 
     pp   <- numeric(length(q))
     keep <- which((q >= 0) | !is.finite(q))
-    if(length(keep) < 1) { return(pp) }
 
-    pp[keep] <- -expm1(-0.5 * (q[keep]/scale[keep])^2)
+    if(lower.tail) {
+        pp[keep] <- -expm1(-0.5 * (q[keep]/scale[keep])^2)
+        ## some special values not caught before
+        pp[which(q == -Inf)] <- 0
+        pp[which(q ==  Inf)] <- 1
+    } else {
+        pp[keep] <- exp(-0.5 * (q[keep]/scale[keep])^2)
+        ## some special values not caught before
+        pp[which(q < 0)]    <- 1
+        pp[which(q == Inf)] <- 0
+    }
 
-    ## some special values not caught before
-    pp[which(q == -Inf)] <- 0
-    pp[which(q ==  Inf)] <- 1
     return(pp)
 }
 
 ## Rayleigh quantile function
 qRayleigh <-
-function(p, scale=1) {
+function(p, scale=1, lower.tail=TRUE) {
     is.na(scale) <- (scale <= 0) | !is.finite(scale)
 
     args  <- recycle(p, scale)
@@ -133,7 +176,12 @@ function(p, scale=1) {
     qq   <- as.numeric(rep(NA, length(p)))
     if(length(keep) < 1) { return(qq) }
 
-    qq[keep] <- scale[keep] * sqrt(-2 * log1p(-p[keep]))
+    qq[keep] <- if(lower.tail) {
+        scale[keep] * sqrt(-2 * log1p(-p[keep]))
+    } else {
+        scale[keep] * sqrt(-2 * log(p[keep]))
+    }
+
     return(qq)
 }
 
