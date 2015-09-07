@@ -28,14 +28,14 @@ function(xy, level=0.95, doRob=FALSE, type=c("LiZhangDai", "MOM")) {
     type <- match.arg(type)
 
     ## check if we can do robust estimation if so required
-    if(nrow(xy) < 4) {
-        haveRob <- FALSE
+    haveRob <- if(nrow(xy) < 4) {
         if(doRob) {
             warning("We need >= 4 points for robust estimations")
         }
+        FALSE
     } else {
-        haveRob <- TRUE
-        rob     <- robustbase::covMcd(xy, cor=FALSE)
+        rob <- robustbase::covMcd(xy, cor=FALSE)
+        TRUE
     }                                    # if(nrow(xy) < 4)
 
     ctr <- if(doRob && haveRob) {        # estimated center
@@ -56,7 +56,7 @@ function(xy, level=0.95, doRob=FALSE, type=c("LiZhangDai", "MOM")) {
 
     nuSqHat <- if(type == "MOM") {
         ## set xBar'xBar - (2/N)*sigmaHat^2 to 0 when (2/N)*sigmaHat^2 > xBar'xBar
-        ifelse(ce >= 0, ce, 0)
+        max(ce, 0)
     } else if(type == "LiZhangDai") {
         ## ML -> bad for low SNR -> instead: Li, Zhang & Dai, 2009
         max(ce, (1/(bias+1)) * sum(ctr^2))
@@ -141,7 +141,7 @@ function(x, nu, sigma) {
     dens[keep] <- ifelse(is.nan(res), 0, res)  # if so, set to 0
 
     ## for large signal-to-noise ratios, use normal approximation
-    s2nr <- nu/sigma                           # signal to noise ratio 
+    s2nr <- nu/sigma                           # signal to noise ratio
     rMSD <- getMSDfromRice(nu, sigma)          # M, SD of radial error
 
     keepS2NR24 <- keep[keep %in% which(s2nr > 24)]
@@ -167,24 +167,21 @@ function(q, nu, sigma, lower.tail=TRUE) {
     pp   <- numeric(length(q))               # initialize probabilities to 0
     keep <- which((q >= 0) | !is.finite(q))  # keep non-negative q, NA, NaN, -Inf, Inf
 
-    aQ  <- nu/sigma
-    b0Q <- 0
-    b1Q <- q/sigma
+    aQ <- nu/sigma
+    bQ <-  q/sigma
+    pp[keep] <- marcumQ(aQ[keep], bQ[keep], nu=1, lower.tail=lower.tail)
 
+    ## special cases not caught so far
     if(lower.tail) {
-        pp[keep] <-      marcumQ(aQ[keep], b0Q[keep], nu=1) - marcumQ(aQ[keep], b1Q[keep], nu=1)
-        ## special cases not caught so far
         pp[which(q == -Inf)] <- 0
         pp[which(q ==  Inf)] <- 1
     } else {
-        pp[keep] <- 1 - (marcumQ(aQ[keep], b0Q[keep], nu=1) - marcumQ(aQ[keep], b1Q[keep], nu=1))
-        ## special cases not caught so far
         pp[which(q < 0)]    <- 1
         pp[which(q == Inf)] <- 0
     }
 
     ## for large signal-to-noise ratios, use normal approximation
-    s2nr <- nu/sigma                         # signal to noise ratio 
+    s2nr <- nu/sigma                         # signal to noise ratio
     rMSD <- getMSDfromRice(nu, sigma)        # M, SD of radial error
 
     keepS2NR24 <- keep[keep %in% which(s2nr > 24)]
@@ -196,59 +193,22 @@ function(q, nu, sigma, lower.tail=TRUE) {
 }
 
 #####---------------------------------------------------------------------------
-## Rice quantile function through root finding of cdf
+## Rice quantile function
 qRice <-
-function(p, nu, sigma, lower.tail=TRUE, loUp=NULL) {
+function(p, nu, sigma, lower.tail=TRUE) {
     is.na(nu)    <- (nu < 0)     | !is.finite(nu)
     is.na(sigma) <- (sigma <= 0) | !is.finite(sigma)
 
-    argL  <- recycle(p, nu, sigma)
-    p     <- argL[[1]]
-    nu    <- argL[[2]]
-    sigma <- argL[[3]]
+    args  <- recycle(p, nu, sigma)
+    p     <- args[[1]]
+    nu    <- args[[2]]
+    sigma <- args[[3]]
 
-    qq   <- as.numeric(rep(NA, length(p)))
     keep <- which((p >= 0) & (p < 1))
-    if(length(keep) < 1) { return(qq) }
-
-    if(is.null(loUp)) {                  # no search interval given
-        ## use Grubbs chi^2 quantile for root finding
-        ## Grubbs-Liu chi^2 and Rice can diverge
-        GP <- getGPfromRP(nu, sigma)     # Grubbs parameters
-        qGrubbs   <- qChisqGrubbs(p[keep], m=GP$m, v=GP$v, muX=GP$muX,
-                                  varX=GP$varX, l=GP$l, delta=GP$delta,
-                                  lower.tail=lower.tail, type="Liu")
-        qGrubbs.6 <- qChisqGrubbs(0.6, m=GP$m, v=GP$v, muX=GP$muX,
-                                  varX=GP$varX, l=GP$l, delta=GP$delta,
-                                  lower.tail=lower.tail, type="Liu")
-        qLo  <- ifelse(p[keep] <= 0.5, 0,         0.25*qGrubbs)
-        qUp  <- ifelse(p[keep] <= 0.5, qGrubbs.6, 1.75*qGrubbs)
-        loUp <- split(cbind(qLo, qUp), seq_along(p))
-    } else {
-        if(is.matrix(loUp)) {
-            loUp <- split(loUp, 1:nrow(loUp))
-        } else if(is.vector(loUp)) {
-            loUp <- list(loUp)
-        } else if(!is.list(loUp)) {
-            stop("loUp must be a list, a matrix, a vector, or missing entirely")
-        }
-    }
-
-    cdf <- function(x, p, nu, sigma, lower.tail) {
-        pRice(x, nu=nu, sigma=sigma, lower.tail=lower.tail) - p
-    }
-
-    getQ <- function(p, nu, sigma, loUp, lower.tail) {
-        tryCatch(uniroot(cdf, interval=loUp, p=p, nu=nu, sigma=sigma,
-                         lower.tail=lower.tail)$root,
-                 error=function(e) return(NA))
-    }
-
-    qq[keep] <- unlist(Map(getQ, p=p[keep], nu=nu[keep], sigma=sigma[keep],
-                       loUp=loUp[keep], lower.tail=lower.tail[1]))
+    qq   <- sqrt(qchisq(p, df=2, ncp=(nu/sigma)^2)) * sigma # Marcum Q-function
 
     ## for large signal-to-noise ratios, use normal approximation
-    s2nr <- nu/sigma                         # signal to noise ratio 
+    s2nr <- nu/sigma                         # signal to noise ratio
     rMSD <- getMSDfromRice(nu, sigma)        # M, SD of radial error
 
     keepS2NR24 <- keep[keep %in% which(s2nr > 24)]
@@ -262,7 +222,7 @@ function(p, nu, sigma, lower.tail=TRUE, loUp=NULL) {
 #####---------------------------------------------------------------------------
 ## random numbers from Rice distribution
 rRice <-
-function(n, nu, sigma, method=c("eigen", "chol", "cdf"), loUp=NULL) {
+function(n, nu, sigma, method=c("eigen", "chol", "cdf")) {
     is.na(nu)    <- (nu < 0)     | !is.finite(nu)
     is.na(sigma) <- (sigma <= 0) | !is.finite(sigma)
     method <- match.arg(method)
@@ -293,43 +253,8 @@ function(n, nu, sigma, method=c("eigen", "chol", "cdf"), loUp=NULL) {
         xyMove <- sweep(xy, 2, nu, FUN="+")
         sqrt(rowSums(xyMove^2))          # distances to center
     } else if(method == "cdf") {
-        ## root finding of pRice() given uniform random probabilities:
-        ## find x such that F(x) - U = 0
-        cdf <- function(x, u, nu, sigma) {
-            pRice(x, nu=nu, sigma=sigma) - u
-        }
-
-        ## find quantile via uniroot() with error handling
-        getQ <- function(u, nu, sigma, loUp) {
-            tryCatch(uniroot(cdf, interval=loUp, u=u, nu=nu, sigma=sigma)$root,
-                     error=function(e) return(NA))
-        }
-
-        u <- runif(n)                        # uniform random numbers
-
-        ## determine search interval(s) for uniroot()
-        if(is.null(loUp)) {                  # no search interval given
-            ## use Grubbs chi^2 quantile for root finding
-            ## Grubbs-Liu chi^2 and Rice can diverge
-            GP <- getGPfromRP(nu, sigma)   # Grubbs parameters and quantiles
-            qGrubbs   <- qChisqGrubbs(u, m=GP$m, v=GP$v, muX=GP$muX,
-                                      varX=GP$varX, l=GP$l, delta=GP$delta, type="Liu")
-            qGrubbs.6 <- qChisqGrubbs(0.6, m=GP$m, v=GP$v, muX=GP$muX,
-                                      varX=GP$varX, l=GP$l, delta=GP$delta, type="Liu")
-            qLo  <- ifelse(u <= 0.5, 0,         0.25*qGrubbs)
-            qUp  <- ifelse(u <= 0.5, qGrubbs.6, 1.75*qGrubbs)
-            loUp <- split(cbind(qLo, qUp), seq_along(u))
-        } else {
-            if(is.matrix(loUp)) {
-                loUp <- split(loUp, 1:nrow(loUp))
-            } else if(is.vector(loUp)) {
-                loUp <- list(loUp)
-            } else if(!is.list(loUp)) {
-                stop("loUp must be a list, a matrix, a vector, or missing entirely")
-            }
-        }
-
-        unlist(Map(getQ, u=u, nu=nu, sigma=sigma, loUp=loUp))
+        u <- runif(n)                    # uniform random numbers
+        sqrt(qchisq(u, df=2, ncp=(nu/sigma)^2)) * sigma
     }
 
     return(rn)

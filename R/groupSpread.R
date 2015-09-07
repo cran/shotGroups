@@ -42,10 +42,11 @@ function(xy, plots=TRUE, CEPlevel=0.5, CIlevel=0.95, CEPtype="CorrNormal",
     Npts <- nrow(xy)                     # number of observations
     res  <- vector("list", 0)            # empty list to later collect the results
 
-    haveRob <- TRUE                      # can we do robust estimation?
-    if(Npts < 4) {
+    haveRob <- if(Npts < 4) {            # can we do robust estimation?
         warning("We need >= 4 points for robust estimations")
-        haveRob <- FALSE
+        FALSE
+    } else {
+        TRUE
     }                                    # if(haveRob)
 
     ## to determine axis limits later, collect all results in a vector
@@ -132,24 +133,27 @@ function(xy, plots=TRUE, CEPlevel=0.5, CIlevel=0.95, CEPtype="CorrNormal",
     res$sdYci <- makeMOA(c(sdYci, sdYciBoot), dst=dstTarget, conversion=conversion)
 
     ## robust standard deviations of x- and y-coords
-    if(haveRob) {
-        rob <- robustbase::covMcd(xy, cor=FALSE)
+    res$sdXYrob <- if(haveRob) {
+        rob     <- robustbase::covMcd(xy, cor=FALSE)
         sdXYrob <- sqrt(diag(rob$cov))
-        res$sdXYrob <- makeMOA(sdXYrob, dst=dstTarget, conversion=conversion)
+        makeMOA(sdXYrob, dst=dstTarget, conversion=conversion)
     } else {
-        res$sdXYrob <- NULL
+        NULL
     }                                    # if(haveRob)
 
     ## (robust) center and covariance-matrix
     ctr <- colMeans(xy)                  # group center
-    if(haveRob) {
-        ctrRob <- rob$center
-    }                                    # if(haveRob)
-    res$covXY <- cov(xy)                 # covariance matrix
-    if(haveRob) {
-        res$covXYrob <- rob$cov
+    ctrRob <- if(haveRob) {
+        rob$center
     } else {
-        res$covXYrob <- NULL
+        NULL
+    }                                    # if(haveRob)
+
+    res$covXY <- cov(xy)                 # covariance matrix
+    res$covXYrob <- if(haveRob) {
+        rob$cov
+    } else {
+        NULL
     }                                    # if(haveRob)
 
     #####-----------------------------------------------------------------------
@@ -218,7 +222,7 @@ function(xy, plots=TRUE, CEPlevel=0.5, CIlevel=0.95, CEPtype="CorrNormal",
 
     #####-----------------------------------------------------------------------
     ## confidence ellipse measures
-    confEll <- getConfEll(xy, CEPlevel, dstTarget, conversion, doRob=haveRob)
+    confEll     <- getConfEll(xy, CEPlevel, dstTarget, conversion, doRob=haveRob)
     res$confEll <- confEll$size
 
     ## for axis limits
@@ -239,11 +243,11 @@ function(xy, plots=TRUE, CEPlevel=0.5, CIlevel=0.95, CEPtype="CorrNormal",
         res$confEllRob <- NULL
     }                                    # if(haveRob)
 
-    res$confEllShape <- confEll$shape
-    if(haveRob) {
-        res$confEllShapeRob <- confEll$shapeRob
+    res$confEllShape    <- confEll$shape
+    res$confEllShapeRob <- if(haveRob) {
+        confEll$shapeRob
     } else {
-        res$confEllShapeRob <- NULL
+        NULL
     }                                    # if(haveRob)
 
     #####-----------------------------------------------------------------------

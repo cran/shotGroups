@@ -23,13 +23,11 @@ function(xy, r=1, unit="unit", dstTarget=100, conversion="m2cm",
     type <- match.arg(type, choices=c("CorrNormal", "GrubbsPearson", "GrubbsPatnaik", "GrubbsLiu", "Rayleigh"), several.ok=TRUE)
 
     ## check if we can do robust estimation if so required
-    if(nrow(xy) < 4) {
-        haveRob <- FALSE
-        if(doRob) {
-            warning("We need >= 4 points for robust estimations")
-        }
+    haveRob <- if(nrow(xy) < 4) {
+        if(doRob) { warning("We need >= 4 points for robust estimations") }
+        FALSE
     } else {
-        haveRob <- TRUE
+        TRUE
     }                                    # if(nrow(xy) < 4)
 
     #####-----------------------------------------------------------------------

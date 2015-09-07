@@ -78,7 +78,7 @@ options(replace.assign=TRUE, width=75, digits=4, useFancyQuotes=FALSE, show.sign
 \label{sec:introduction}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-The \texttt{shotGroups} package adds functionality to the open source statistical environment \textsf{R} \cite{RDevelopmentCoreTeam2008c}.\footnote{For an introduction to \textsf{R}, see \citeA{Dalgaard2008}, Try\textsf{R} (\url{http://tryr.codeschool.com/}) or Quick-\textsf{R} (\url{http://www.statmethods.net/}).} It provides functions to read in, plot, statistically describe, analyze, and compare shooting data with respect to group shape, precision, and accuracy. This includes graphical methods, descriptive statistics, and inference tests using standard, but also non-parametric and robust statistical techniques. The data can be imported from files produced by OnTarget PC and OnTarget TDS \cite{Block2014}, or from custom data files in text format with a similar structure.
+The \texttt{shotGroups} package adds functionality to the open source statistical environment \textsf{R} \cite{RDevelopmentCoreTeam2008c}.\footnote{For an introduction to \textsf{R}, see \citeA{Dalgaard2008}, Try\textsf{R} (\url{http://tryr.codeschool.com/}) or Quick-\textsf{R} (\url{http://www.statmethods.net/}).} It provides functions to read in, plot, statistically describe, analyze, and compare shooting data with respect to group shape, precision, and accuracy. This includes graphical methods, descriptive statistics, and inference tests using standard, but also non-parametric and robust statistical techniques. The data can be imported from files produced by OnTarget PC and OnTarget TDS \cite{Block2014}, Taran \cite{Trofimov2015}, or from custom data files in text format with a similar structure.
 
 The package includes limited support for the analysis of three-dimensional data (see sections \ref{sec:CEP}, \ref{sec:CEPinv}),
 
@@ -166,9 +166,9 @@ Plots:
 
 \begin{itemize}
 \item Combined plot for multivariate outlier identification using squared robust Mahalanobis distances and adjusted quantiles from the $\chi^{2}$-distribution (from package \texttt{mvoutlier})
-\item $\chi^{2}$ Q-Q-plot for eyeballing multivariate normality of $(x,y)$-coordinates
+\item $\chi^{2}$ $QQ$-plot of squared robust Mahalanobis distances to group center for eyeballing multivariate normality of $(x,y)$-coordinates
 \item Heatmap of a non-parametric 2D-kernel density estimate for the $(x,y)$-coordinates  (from package \texttt{KernSmooth}; \citeNP{Wand2013}) together with robust group center and robust error ellipse
-\item Q-Q-plots for eyeballing normality of $x$- and $y$-coordinates
+\item $QQ$-plots of $x$- and $y$-coordinates for eyeballing normality
 \item Histogram of $x$- and $y$-coordinates including a fitted normal distribution as well as a non-parametric kernel density estimate
 \end{itemize}
 
@@ -192,7 +192,7 @@ Reported statistical parameters and tests:
 \item (Robust) Covariance matrix of $(x,y)$-coordinates
 \item Empirical mean and median radius as well as estimated Rayleigh precision parameter $\sigma$, estimated Rayleigh radial standard deviation RSD $=\sigma \sqrt{\frac{4-\pi}{2}}$, and estimated Rayleigh mean radius MR $=\sigma \sqrt{\frac{\pi}{2}}$ together with parametric and bootstrap confidence intervals for $\sigma$, RSD, and MR (in original measurement units, MOA, SMOA, mrad)
 \item Maximum pairwise distance (center-to-center, = maximum spread, in original measurement units, MOA, SMOA, mrad)
-\item Width and height of bounding box with diagonal and figure of merit as well as of the (oriented) minimum-area bounding box (in original measurement units, MOA, SMOA, mrad)
+\item Width and height of bounding box with length of diagonal and figure of merit as well as of the (oriented) minimum-area bounding box (in original measurement units, MOA, SMOA, mrad)
 \item Radius for the minimum enclosing circle (in original measurement units, MOA, SMOA, mrad)
 \item Length of semi-major and semi-minor axis of the (robust) confidence ellipse (in original measurement units, MOA, SMOA, mrad)
 \item Aspect ratio $\sqrt{\kappa}$ (with condition index $\kappa$) and flattening $1-\frac{1}{\sqrt{\kappa}}$ of the (robust) confidence ellipse as well as the trace and determinant of the covariance matrix
@@ -501,7 +501,7 @@ The following distributions are available, illustrated in figure \ref{fig:distri
 \begin{itemize}
 \item Rayleigh: The radius around the true mean in a bivariate uncorrelated normal random variable with equal variances, re-written in polar coordinates (radius and angle), follows a Rayleigh distribution. Fully defined in closed form.
 \item Maxwell-Boltzmann: The radius around the true mean in a trivariate uncorrelated normal random variable with equal variances, re-written in polar coordinates (radius, azimuth, elevation), follows a Maxwell-Boltzmann distribution. Fully defined in closed form (using the cdf of the normal distribution).
-\item Rice: The radius around the origin in a bivariate uncorrelated normal random variable with equal variances and an offset mean, re-written in polar coordinates (radius and angle), follows a Rice distribution. The pdf and cdf are defined in closed form, numerical root finding is used to find $\mathrm{cdf}^{-1}$. Reduces to the Rayleigh distribution if the mean has no offset.
+\item Rice: The radius around the origin in a bivariate uncorrelated normal random variable with equal variances and an offset mean, re-written in polar coordinates (radius and angle), follows a Rice distribution. The pdf, cdf, and inverse cdf are defined in closed form with the Marcum $Q$-function. Reduces to the Rayleigh distribution if the mean has no offset.
 \item Hoyt: The radius around the true mean in a bivariate correlated normal random variable with unequal variances, re-written in polar coordinates (radius and angle), follows a Hoyt distribution. The pdf and cdf are defined in closed form, numerical root finding is used to find $\mathrm{cdf}^{-1}$. Reduces to the Rayleigh distribution if the correlation is 0 and the variances are equal.
 \item General case: The distribution of the radius around the origin in a bivariate correlated normal variable with unequal variances and an offset mean. The cdf of radial error is equal to the integral of the bivariate normal distribution over an offset disc. Not defined in closed form. Numerical methods for quadratic forms provided by package \texttt{CompQuadForm} are used to find the pdf and cdf. Numerical root finding is used to find $\mathrm{cdf}^{-1}$. Reduces to the Rice distribution if the correlation is 0 and the variances are equal. Reduces to the Hoyt distribution if the mean has no offset.
 \end{itemize}

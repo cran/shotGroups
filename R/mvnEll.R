@@ -82,8 +82,8 @@ function(p, sigma=diag(2), mu, e, x0, lower.tail=TRUE, loUp=NULL) {
 
     ## determine search interval(s) for uniroot()
     if(is.null(loUp)) {                  # no search interval given
-        ## use Grubbs chi^2 quantile for root finding
-        ## Grubbs-Liu chi^2 and Rice can diverge
+        ## use Grubbs chi^2 quantile for setting root finding interval
+        ## Grubbs-Liu chi^2 and actual distribution can diverge
         GP <- getGrubbsParam(sigma=sigma, ctr=(x0-mu), accuracy=TRUE)
         qGrubbs   <- qChisqGrubbs(p[keep], m=GP$m, v=GP$v, muX=GP$muX,
                                   varX=GP$varX, l=GP$l, delta=GP$delta,
@@ -131,7 +131,7 @@ function(n, sigma=diag(2), mu, e, x0, method=c("eigen", "chol", "cdf"), loUp=NUL
     if(!isTRUE(all.equal(as.matrix(e), t(e))))         { stop("e must be symmetric") }
 
     method <- match.arg(method)
-    
+
     ## checks on mu, sigma, e are done in getGrubbsParam(), pmvnEll()
     ## if n is a vector, its length determines number of random variates
     n <- if(length(n) > 1) { length(n) } else { n }
@@ -174,8 +174,8 @@ function(n, sigma=diag(2), mu, e, x0, method=c("eigen", "chol", "cdf"), loUp=NUL
 
         ## determine search interval(s) for uniroot()
         if(is.null(loUp)) {                  # no search interval given
-            ## use Grubbs chi^2 quantile for root finding
-            ## Grubbs-Liu chi^2 and Rice can diverge
+            ## use Grubbs chi^2 quantile for setting root finding interval
+            ## Grubbs-Liu chi^2 and actual distribution can diverge
             GP <- getGrubbsParam(sigma=sigma, ctr=(x0-mu), accuracy=TRUE)
             qGrubbs   <- qChisqGrubbs(u, m=GP$m, v=GP$v, muX=GP$muX,
                                       varX=GP$varX, l=GP$l, delta=GP$delta, type="Liu")

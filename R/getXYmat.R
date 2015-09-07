@@ -53,16 +53,16 @@ function(DF, xyTopLeft=TRUE, relPOA=TRUE) {
     ## coords relative to point of aim
     ## y-coords exported from OnTarget: (0,0) is top-left
     x <- DF$point.x - DF$aim.x           # x-coords
-    if(xyTopLeft) {
-        y <- -(DF$point.y - DF$aim.y)    # y-coords
+    y <- if(xyTopLeft) {
+        -(DF$point.y - DF$aim.y)         # y-coords
     } else {
-        y <-   DF$point.y - DF$aim.y
+          DF$point.y - DF$aim.y
     }
 
-    if(("z" %in% dfNames) || ("point.z" %in% dfNames)) {
-        z <- DF$point.z - DF$aim.z       # z-coords
+    z <- if(("z" %in% dfNames) || ("point.z" %in% dfNames)) {
+        DF$point.z - DF$aim.z            # z-coords
     } else {
-        z <- NULL
+        NULL
     }
 
     return(cbind(x, y, z))               # new (x,y)-coords as matrix

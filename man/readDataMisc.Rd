@@ -1,7 +1,7 @@
 \name{readDataMisc}
 \alias{readDataMisc}
 \title{Read data from text files}
-\description{Reads data from text files that have a similar structure to OnTarget PC/TDS output files. Several files can be read with one call.}
+\description{Reads data from text files that have a similar structure to OnTarget PC/TDS output files, specifically from Taran. Several files can be read with one call.}
 \usage{readDataMisc(fPath = ".", fNames, fPat, combine = TRUE)}
 \arguments{
   \item{fPath}{a character string containing the path to the folder with the data files, e.g. \code{'c:/folder/otFiles'}.}
@@ -16,7 +16,7 @@ If neither \code{fNames} nor \code{fPat} is provided, and we are in interactive 
 
 This function is basically a wrapper for \code{\link[utils]{read.table}} and \code{\link[utils]{read.csv}}.
 
-The files need to be either comma-separated or whitespace-delimited, and have a header with the variable names. Variable names must not contain spaces. In order to be later used by functions \code{\link[shotGroups]{analyzeGroup}} or \code{\link[shotGroups]{compareGroups}}, coordinates for points of impact must be given either with \code{Point.X}, \code{Point.Y} or \code{X}, \code{Y}. Point of aim can be given with \code{Aim.X}, \code{Aim.Y}, otherwise (0,0) will be assumed in analysis functions. Distance to target can be given with \code{Distance}, otherwise 100m will be assumed in analysis functions. Files should to contain the variable \code{Group} if \code{\link[shotGroups]{combineData}} should be later used to combine them into one big data frame. There can only be exactly as many variable names as there are non-empty data-columns.
+The files need to be either comma-separated or whitespace-delimited, and have a header with the variable names. Variable names must not contain spaces. In order to be later used by functions \code{\link[shotGroups]{analyzeGroup}} or \code{\link[shotGroups]{compareGroups}}, coordinates for points of impact must be given with \code{Point.X}, \code{Point.Y}, \code{X}, \code{Y}, or \code{ShotX}, \code{ShotY}. Point of aim can be given with \code{Aim.X}, \code{Aim.Y}, otherwise (0,0) will be assumed in analysis functions. Distance to target can be given with \code{Distance}, otherwise 100m will be assumed in analysis functions. Files should to contain the variable \code{Group} if \code{\link[shotGroups]{combineData}} should be later used to combine them into one big data frame. There can only be exactly as many variable names as there are non-empty data-columns.
 
 For reading in files exported from OnTarget PC 1.*, see \code{\link[shotGroups]{readDataOT1}}. \cr
 For reading in files exported from OnTarget PC 2.* or OnTarget TDS v3.*, see \code{\link[shotGroups]{readDataOT2}}.

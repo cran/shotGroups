@@ -11,8 +11,8 @@ Density, distribution function, quantile function, and random deviate generation
 \usage{
 dRice(x, nu, sigma)
 pRice(q, nu, sigma, lower.tail = TRUE)
-qRice(p, nu, sigma, lower.tail = TRUE, loUp = NULL)
-rRice(n, nu, sigma, method = c('eigen', 'chol', 'cdf'), loUp = NULL)
+qRice(p, nu, sigma, lower.tail = TRUE)
+rRice(n, nu, sigma, method = c('eigen', 'chol', 'cdf'))
 }
 \arguments{
   \item{x, q}{vector of quantiles.}
@@ -21,7 +21,6 @@ rRice(n, nu, sigma, method = c('eigen', 'chol', 'cdf'), loUp = NULL)
   \item{nu}{vector of Rice shape parameters nu. See details.}
   \item{sigma}{vector of Rice scale parameter sigma. See details.}
   \item{method}{string indicating which method to use for generating random deviates. See details.}
-  \item{loUp}{search interval for numerical root finding. Either a vector with the lower and upper interval boundary, a list of such vectors, or an (n x 2)-matrix. See details.}
   \item{lower.tail}{logical. If \code{TRUE} (default), probabilities are \eqn{P[X \le x]} otherwise, \eqn{P[X > x]}.}
 }
 \value{
@@ -32,11 +31,9 @@ The length of the result is determined by \code{n} for \code{rRice}, and is the 
 In \code{dRice}, \code{pRice} and \code{qRice}, the numerical parameters are recycled to the length of the result. Only the first element of the logical parameters is used. In \code{rRice}, only the first element of \code{nu} and \code{sigma} is used.
 }
 \details{
-\code{dRice} involves the modified Bessel function of the first kind and order 0. \code{pRice} is implemented as the difference between two Marcum Q-functions. The Marcum Q-function is the cdf of a non-central chi^2 variable (Nuttall, 1975).
+\code{dRice} involves the modified Bessel function of the first kind and order 0. \code{pRice} and \code{qRice} are implemented using the Marcum Q-function. The Marcum Q-function is the cdf of a non-central chi^2 variable (Nuttall, 1975).
 
-\code{qRice} is implemented through numerical root finding of \code{pRice}. If no search interval for \code{\link[stats]{uniroot}} is provided, the quantiles of an approximating central chi^2 distribution are used to determine the search intervals.
-
-\code{rRice} with \code{method='eigen'} or with \code{method='chol'} simulates 2D normal deviates based on the covariance matrix corresponding to parameter \code{sigma}, and then determines the radius. \code{rRice} with \code{method='cdf'} is much slower as it performs numerical root finding of \code{pRice} given simulated quantiles from a uniform random variable in (0,1). If no search interval for \code{\link[stats]{uniroot}} is provided, the quantiles of an approximating central chi^2 distribution are used to determine the search intervals.
+\code{rRice} with \code{method='eigen'} or with \code{method='chol'} simulates 2D normal deviates based on the covariance matrix corresponding to parameter \code{sigma}, and then determines the radius. \code{rRice} with \code{method='cdf'} uses \code{qRice} with simulated quantiles from a uniform random variable in (0,1).
 
 See \code{\link[shotGroups]{Hoyt}} for the distribution of radial error around the true center of correlated bivariate normal variables with unequal variances. See \code{\link[shotGroups]{Rayleigh}} for the distribution of radial error around the true center of uncorrelated bivariate normal variables with equal variances. See \code{\link[shotGroups]{mvnEll}} for the distribution of radial error around an offset center for correlated normal variables with unequal variances.
 

@@ -41,7 +41,7 @@ A list with the (chosen) CEP/SEP estimates and supplementary information on the 
 }
 \references{
 DiDonato, A. R. (1988). Integration of the trivariate normal distribution over an offset spehere and an inverse problem (NSWC TR 87-27). Dahlgren, VA: U.S. Naval Surface Weapons Center Dahlgren Division.
-  
+
 DiDonato, A. R., & Jarnagin, M. P. (1961). Integration of the general bivariate Gaussian distribution over an offset circle. Mathematics of Computation, 15 (76), 375-382.
 
 Grubbs, F. E. (1964). Approximate circular and noncircular offset probabilities of hitting. Operations Research, 12(1), 51-62.
@@ -62,9 +62,11 @@ Singh, H. P. 1992. Estimation of Circular Probable Error. The Indian Journal of 
 \code{\link[shotGroups]{Rayleigh}},
 \code{\link[shotGroups]{Maxwell}},
 \code{\link[shotGroups]{Hoyt}},
+\code{\link[shotGroups]{Rice}},
 \code{\link[shotGroups]{mvnEll}},
 \code{\link[shotGroups]{getHoytParam}},
 \code{\link[shotGroups]{getRayParam}},
+\code{\link[shotGroups]{getRiceParam}},
 \code{\link[shotGroups]{getConfEll}},
 \code{\link[shotGroups]{getHitProb}},
 \code{\link[robustbase]{covMcd}}

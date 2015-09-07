@@ -22,18 +22,19 @@ function(xy, plots=TRUE, bandW=0.5, outlier=c("mcd", "pca"),
 
     #####-----------------------------------------------------------------------
     ## prepare data
-    X    <- xy[ , 1]                     # x-coords
-    Y    <- xy[ , 2]                     # y-coords
-    Npts <- nrow(xy)                     # number of points
-    res  <- vector("list", 0)            # empty list to later collect the results
+    X      <- xy[ , 1]                   # x-coords
+    Y      <- xy[ , 2]                   # y-coords
+    Npts   <- nrow(xy)                   # number of points
+    res    <- vector("list", 0)          # empty list to later collect the results
     devNew <- getDevice()                # platform-dependent window open
 
-    haveRob <- TRUE                      # can we do robust estimation?
-    if(Npts < 4) {
+    haveRob <- if(Npts < 4) {
         warning(c("We need >= 4 points for robust estimations,\n",
                   "outlier analysis, and chi^2 plot for multivariate normality"))
-        haveRob <- FALSE
-    }                                    # if(Npts < 4)
+        FALSE                           # can we do robust estimation?
+    }  else {
+        TRUE
+    }                                   # if(Npts < 4)
 
     #####-----------------------------------------------------------------------
     ## correlation matrix of (x,y)-coords
@@ -41,7 +42,7 @@ function(xy, plots=TRUE, bandW=0.5, outlier=c("mcd", "pca"),
 
     if(haveRob) {
         rob <- robustbase::covMcd(xy, cor=TRUE)
-        res$corXYrob <- rob$cor          # robust estimate correlation-matrix
+        res$corXYrob <- rob$cor         # robust estimate correlation-matrix
 
         #####-------------------------------------------------------------------
         ## outlier-analysis for joint distribution of (x,y)-coords

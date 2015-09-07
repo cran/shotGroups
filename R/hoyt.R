@@ -48,10 +48,9 @@ function(x) {
         lambda
     }
 
-    ev  <- lapply(x, getEV)              # eigenvalues for all matrices
-    ev1 <- sapply(ev, head, n=1)         # all first eigenvalues
-    ev2 <- sapply(ev, tail, n=1)         # all second eigenvalues
-
+    ev    <- lapply(x, getEV)            # eigenvalues for all matrices
+    ev1   <- sapply(ev, head, n=1)       # all first eigenvalues
+    ev2   <- sapply(ev, tail, n=1)       # all second eigenvalues
     qpar  <- 1/sqrt(((ev1+ev2)/ev2) - 1) # Hoyt q
     omega <- ev1+ev2                     # Hoyt omega
 
@@ -79,7 +78,7 @@ function(x) {
         stop("x is numerically not positive definite")
     }
 
-    x   <- sort(x, decreasing=TRUE)      # largest eigenvalue first
+    x   <- sort(x, decreasing=TRUE)          # largest eigenvalue first
     ev1 <- x[1]
     ev2 <- x[2]
 
@@ -173,8 +172,8 @@ function(x, qpar, omega) {
 ## Nuttall, AH. (1975). Some integrals involving the Q-M function.
 ## IEEE Transactions on Information Theory, 21 (1), 95-96
 marcumQ <-
-function(a, b, nu) {
-    pchisq(b^2, df=2*nu, ncp=a^2, lower.tail=FALSE)
+function(a, b, nu, lower.tail=TRUE) {
+    pchisq(b^2, df=2*nu, ncp=a^2, lower.tail=lower.tail)
 }
 
 #####---------------------------------------------------------------------------
@@ -199,12 +198,16 @@ function(q, qpar, omega, lower.tail=TRUE) {
 
     y <- q[keep] / sqrt(omega[keep])
     if(lower.tail) {
-        pp[keep] <-     marcumQ(alphaQ*y, betaQ*y,  nu=1) - marcumQ(betaQ*y,  alphaQ*y, nu=1)
+        pp[keep] <- marcumQ( betaQ*y, alphaQ*y, nu=1, lower.tail=lower.tail) -
+                    marcumQ(alphaQ*y,  betaQ*y, nu=1, lower.tail=lower.tail)
+
         ## special cases not caught so far
         pp[which(q == -Inf)] <- 0
         pp[which(q ==  Inf)] <- 1
     } else {
-        pp[keep] <- 1 + marcumQ(betaQ*y,  alphaQ*y, nu=1) - marcumQ(alphaQ*y, betaQ*y,  nu=1)
+        pp[keep] <- 1 + marcumQ( betaQ*y, alphaQ*y, nu=1, lower.tail=lower.tail) -
+                        marcumQ(alphaQ*y,  betaQ*y, nu=1, lower.tail=lower.tail)
+
         ## special cases not caught so far
         pp[which(q < 0)]    <- 1
         pp[which(q == Inf)] <- 0
@@ -292,7 +295,7 @@ function(p, qpar, omega, lower.tail=TRUE, loUp=NULL) {
     if(length(keep) < 1) { return(qq) }
 
     if(is.null(loUp)) {                  # no search interval given
-        ## use Grubbs chi^2 quantile for root finding
+        ## use Grubbs chi^2 quantile for setting root finding interval
         ## Grubbs-Liu chi^2 and Hoyt can diverge
         GP <- getGPfromHP(qpar, omega)   # Grubbs parameters
         qGrubbs   <- qChisqGrubbs(p[keep], m=GP$m, v=GP$v, muX=GP$muX,
@@ -376,7 +379,7 @@ function(n, qpar, omega, method=c("eigen", "chol", "cdf"), loUp=NULL) {
 
         ## determine search interval(s) for uniroot()
         if(is.null(loUp)) {                  # no search interval given
-            ## use Grubbs chi^2 quantile for root finding
+            ## use Grubbs chi^2 quantile for setting root finding interval
             ## Grubbs-Liu chi^2 and Hoyt can diverge
             GP <- getGPfromHP(qpar, omega)   # Grubbs parameters and quantiles
             qGrubbs   <- qChisqGrubbs(u, m=GP$m, v=GP$v, muX=GP$muX,

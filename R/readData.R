@@ -45,8 +45,10 @@ function(fPath=".", fNames, fPat, combine=TRUE) {
     varNames <- Reduce(intersect, varNameL)  # intersection of all var names
 
     ## make sure that the data frames all have the correct variables
-    wants <- c("distance", "group", "aim.x", "aim.y")  # useful
-    has   <- wants %in% varNames
+    ## remove dots from variable names
+    wants   <- c("distance", "group", "aimx", "aimy")  # useful
+    vnNoDot <- vapply(strsplit(varNames, "\\."), function(y) { paste0(y, collapse="") }, character(1))
+    has     <- wants %in% vnNoDot
 
     if(!all(has)) {
         warning(c("At least one file is missing variable(s)\n",
@@ -59,25 +61,38 @@ function(fPath=".", fNames, fPat, combine=TRUE) {
         dfNames  <- names(x)
         needsXY1 <- c("point.x", "point.y")  # coordinates must have this name
         needsXY2 <- c("x", "y")              # or this
+        needsXY3 <- c("shotx", "shoty")      # or this (Taran)
         hasXY1   <- needsXY1 %in% dfNames
         hasXY2   <- needsXY2 %in% dfNames
+        hasXY3   <- needsXY3 %in% dfNames
 
-        if(!xor(all(hasXY1), all(hasXY2))) { # not (either X, Y or Point.X, Point.Y)
-            stop("Coordinates must be named either X, Y or Point.X, Point.Y")
+        ## exactly one of X, Y - Point.X, Point.Y - ShotX, ShotY
+        if(sum(c(all(hasXY1), all(hasXY2), all(hasXY3))) != 1) {
+            stop("Coordinates must be named X, Y - Point.X, Point.Y - or ShotX, ShotY")
         }
 
-        if(("z" %in% dfNames) && ("point.z" %in% dfNames)) {
-            stop("Coordinates must be named either Z or Point.Z")
+        if(sum(c("z" %in% dfNames), "point.z" %in% dfNames, "shotz" %in% dfNames) > 1) {
+            stop("Coordinates must be named Z, Point.Z, or ShotZ")
         }
 
-        ## if X, Y, Z -> rename to Point.X, Point.Y, Point.Z
-        if(all(hasXY2)) {
-            dfNames[dfNames %in% "x"] <- "point.x"
-            dfNames[dfNames %in% "y"] <- "point.y"
-            dfNames[dfNames %in% "z"] <- "point.z"
-            warning("Variables X, Y were renamed to Point.X, Point.Y")
+        ## if X, Y, Z or ShotX, ShotY, ShotZ -> rename to Point.X, Point.Y, Point.Z
+        if(all(hasXY2) | all(hasXY3)) {
+            dfNames[dfNames %in% c("x", "shotx")] <- "point.x"
+            dfNames[dfNames %in% c("y", "shoty")] <- "point.y"
+            dfNames[dfNames %in% c("z", "shotz")] <- "point.z"
+            warning("Variables (Shot)X, (Shot)Y were renamed to point.x, point.y")
             names(x) <- dfNames
         }
+
+        ## if AimX, AimY, AimZ -> rename to Aim.X, Aim.Y, Aim.Z
+        if(all(c("aimx", "aimy") %in% dfNames)) {
+            dfNames[dfNames %in% "aimx"] <- "aim.x"
+            dfNames[dfNames %in% "aimy"] <- "aim.y"
+            dfNames[dfNames %in% "aimz"] <- "aim.z"
+            warning("Variables AimX, AimY were renamed to aim.x, aim.y")
+            names(x) <- dfNames
+        }
+        
         x
     }
 

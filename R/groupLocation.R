@@ -35,10 +35,11 @@ function(xy, level=0.95, plots=TRUE, bootCI=c("basic", "bca"),
     Npts <- nrow(xy)                     # number of observations
     res  <- vector("list", 0)            # empty list to later collect the results
 
-    haveRob <- TRUE                      # can we do robust estimation?
-    if(Npts < 4) {
+    haveRob <- if(Npts < 4) {            # can we do robust estimation?
         warning("We need >= 4 points for robust estimations")
         haveRob <- FALSE
+    } else {
+        TRUE        
     }                                    # if(nrow(xy) < 4)
 
     #####-----------------------------------------------------------------------
@@ -46,28 +47,28 @@ function(xy, level=0.95, plots=TRUE, bootCI=c("basic", "bca"),
     res$ctr <- colMeans(xy)              # center of joint (x,y)-distribution
 
     ## robust estimation of center
-    if(haveRob) {
-        res$ctrRob <- robustbase::covMcd(xy)$center
+    res$ctrRob <- if(haveRob) {
+        robustbase::covMcd(xy)$center
     } else {
-        res$ctrRob <- NULL
+        NULL
     }                                    # if(haveRob)
 
     distPOA     <- sqrt(sum(res$ctr^2))  # distance to point of aim
     res$distPOA <- makeMOA(distPOA, dst=dstTarget, conversion=conversion)
 
-    if(haveRob) {                        # rob distance to point of aim
-        distPOArob     <- sqrt(sum(res$ctrRob^2))
-        res$distPOArob <- makeMOA(distPOArob, dst=dstTarget, conversion=conversion)
+    res$distPOArob <- if(haveRob) {      # rob distance to point of aim
+        distPOArob <- sqrt(sum(res$ctrRob^2))
+        makeMOA(distPOArob, dst=dstTarget, conversion=conversion)
     } else {
-        res$distPOArob <- NULL
+        NULL
     }                                    # if(haveRob)
 
     ## Hotelling's T^2 test for equality of (x,y)-center with point of aim (0,0)
-    if(Npts > 2) {
-        res$Hotelling <- anova(lm(cbind(X, Y) ~ 1), test="Hotelling-Lawley")
+    res$Hotelling <- if(Npts > 2) {
+        anova(lm(cbind(X, Y) ~ 1), test="Hotelling-Lawley")
     } else {
-        res$Hotelling <- NULL
         warning("We need >= 3 points for Hotelling's T^2 test")
+        NULL
     }                                    # if(Npts > 2)
 
     #####-----------------------------------------------------------------------

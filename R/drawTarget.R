@@ -6,11 +6,11 @@ function(x, unit="cm", dstTarget=100, conversion="m2cm") {
 
 getTarget.character <-
 function(x, unit="cm", dstTarget=100, conversion="m2cm") {
-    if(!(x %in% names(targetDef))) {
+    if(!(x %in% names(shotGroups::targets))) {
         stop("Target unknown, see help(targets) for a list")
     }
 
-    x <- targetDef[[x]]
+    x <- shotGroups::targets[[x]]
     NextMethod("getTarget")
 }
 

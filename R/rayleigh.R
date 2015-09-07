@@ -6,7 +6,7 @@
 ## always <= 1
 c4 <-
 function(n) {
-    stopifnot(n >= 2)
+    stopifnot(all(n >= 2))
 
     ## use exp(lgamma()) because gamma() will be infinite for large N
     fac <- sqrt(2/(n-1)) * exp(lgamma(n/2) - lgamma((n-1)/2))
@@ -40,14 +40,14 @@ function(xy, level=0.95, mu, doRob=FALSE) {
     }
 
     ## check if we can do robust estimation if so required
-    if(nrow(xy) < 4) {
-        haveRob <- FALSE
+    haveRob <- if(nrow(xy) < 4) {
         if(doRob) {
             warning("We need >= 4 points for robust estimations")
         }
+        FALSE
     } else {
-        haveRob <- TRUE
-        rob     <- robustbase::covMcd(xy, cor=FALSE)
+        rob <- robustbase::covMcd(xy, cor=FALSE)
+        TRUE
     }                                    # if(nrow(xy) < 4)
 
     N     <- nrow(xy)

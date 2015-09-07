@@ -27,14 +27,14 @@ function(xyz, level=0.95, mu, doRob=FALSE) {
     }
 
     ## check if we can do robust estimation if so required
-    if(nrow(xyz) < 4) {
-        haveRob <- FALSE
+    haveRob <- if(nrow(xyz) < 4) {
         if(doRob) {
             warning("We need >= 4 points for robust estimations")
         }
+        FALSE
     } else {
-        haveRob <- TRUE
-        rob     <- robustbase::covMcd(xyz, cor=FALSE)
+        rob <- robustbase::covMcd(xyz, cor=FALSE)
+        TRUE
     }                                    # if(nrow(xyz) < 4)
 
     N     <- nrow(xyz)
@@ -143,12 +143,8 @@ function(p, sigma=1, lower.tail=TRUE) {
     qq   <- as.numeric(rep(NA, length(p)))
     if(length(keep) < 1) { return(qq) }
 
-    # qmvnEll(p, sigma=diag(rep(sigma^2, 3)), mu=rep(0, 3), e=diag(3), x0=rep(0, 3))
-    qq[keep] <- if(lower.tail) {
-        sqrt(qgamma(p[keep],   shape=3/2, scale=2*sigma[keep]^2))
-    } else {
-        sqrt(qgamma(1-p[keep], shape=3/2, scale=2*sigma[keep]^2))
-    }
+    qq[keep] <- sqrt(qgamma(p[keep], shape=3/2, scale=2*sigma[keep]^2,
+                            lower.tail=lower.tail))
     
     return(qq)
 }
