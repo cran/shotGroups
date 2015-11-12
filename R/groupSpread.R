@@ -14,9 +14,9 @@ function(xy, plots=TRUE, CEPlevel=0.5, CIlevel=0.95, CEPtype="CorrNormal",
 groupSpread.default <-
 function(xy, plots=TRUE, CEPlevel=0.5, CIlevel=0.95, CEPtype="CorrNormal",
          bootCI=c("basic", "bca"), dstTarget=100, conversion="m2cm") {
-    if(!is.matrix(xy))     { stop("xy must be a matrix") }
-    if(!is.numeric(xy))    { stop("xy must be numeric") }
-    if(ncol(xy) != 2)      { stop("xy must have two columns") }
+    if(!is.matrix(xy))        { stop("xy must be a matrix") }
+    if(!is.numeric(xy))       { stop("xy must be numeric") }
+    if(ncol(xy) != 2)         { stop("xy must have two columns") }
     if(!is.numeric(CEPlevel)) { stop("CEPlevel must be numeric") }
     if(CEPlevel <= 0)         { stop("CEPlevel must be > 0") }
     if(!is.numeric(CIlevel))  { stop("CIlevel must be numeric") }
@@ -266,17 +266,25 @@ function(xy, plots=TRUE, CEPlevel=0.5, CIlevel=0.95, CEPtype="CorrNormal",
 
         #####-------------------------------------------------------------------
         ## diagram: histogram for distances to group center
+        ## Rayleigh fit and kernel density estimate
+        xRange    <- range(dstCtr)
+        xPts      <- seq(xRange[1], xRange[2], length.out=200)
+        yRayleigh <- dRayleigh(xPts, sigma["sigma"])
+        yKDE      <- density(dstCtr)
+
         devNew()                         # open new diagram
-        hist(dstCtr, breaks="FD", freq=FALSE,
+        h <- hist(dstCtr, breaks="FD", plot=FALSE)
+        plot(h, freq=FALSE,
              main="Histogram distances to center w/ kernel density estimate",
              sub=paste("distance:", dstTarget, unitDst),
-             xlab=paste0("distance [", unitXY, " ]"))
+             xlab=paste0("distance [", unitXY, "]"),
+             ylim=c(0, max(c(h$density, yRayleigh, yKDE$y))))
+
         rug(jitter(dstCtr))              # show single values
 
         ## add Rayleigh fit and kernel density estimate
-        dRaySigma <- function(x) { dRayleigh(x, sigma["sigma"]) }
-        curve(dRaySigma, lwd=2, col="blue", add=TRUE)
-        lines(density(dstCtr), lwd=2, col="red")  # kernel density estimate
+        lines(xPts,   yRayleigh, lwd=2, col="blue")
+        lines(yKDE$x, yKDE$y,    lwd=2, col="red")
         legend(x="topright",
                legend=c("Rayleigh distribution", "kernel density estimate"),
                col=c("blue", "red"), lty=1, lwd=2, bg=rgb(1, 1, 1, 0.7))
@@ -484,16 +492,23 @@ function(xy, which=1, CEPlevel=0.5, CIlevel=0.95, dstTarget=100, conversion="m2c
     if(which == 1) {
         #####-------------------------------------------------------------------
         ## diagram: histogram for distances to group center
-        hist(dstCtr, breaks="FD", freq=FALSE,
+        xRange    <- range(dstCtr)
+        xPts      <- seq(xRange[1], xRange[2], length.out=200)
+        yRayleigh <- dRayleigh(xPts, sigma["sigma"])
+        yKDE      <- density(dstCtr)
+
+        h <- hist(dstCtr, breaks="FD", plot=FALSE)
+        plot(h, freq=FALSE,
              main="Histogram distances to center w/ kernel density estimate",
              sub=paste("distance:", dstTarget, unitDst),
-             xlab=paste0("distance [", unitXY, " ]"))
+             xlab=paste0("distance [", unitXY, "]"),
+             ylim=c(0, max(c(h$density, yRayleigh, yKDE$y))))
+
         rug(jitter(dstCtr))              # show single values
 
         ## add Rayleigh fit and kernel density estimate
-        dRaySigma <- function(x) { dRayleigh(x, sigma["sigma"]) }
-        curve(dRaySigma, lwd=2, col="blue", add=TRUE)
-        lines(density(dstCtr), lwd=2, col="red")  # kernel density estimate
+        lines(xPts,   yRayleigh, lwd=2, col="blue")
+        lines(yKDE$x, yKDE$y,    lwd=2, col="red")
         legend(x="topright",
                legend=c("Rayleigh distribution", "kernel density estimate"),
                col=c("blue", "red"), lty=1, lwd=2, bg=rgb(1, 1, 1, 0.7))

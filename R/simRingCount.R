@@ -111,7 +111,7 @@ function(xy, target, calSize) {
 
 #    return(list(count=ringCount, max=ringMax, rings=rings))
     warning("Simulated ring count not yet available for oval targets")
-    return(list(count=NA, max=ringMax, rings=rep(NA, length(rings))))
+    return(list(count=NA, max=ringMax, rings=rep(NA_real_, length(rings))))
 }
 
 ## TODO

@@ -47,7 +47,7 @@ function(r=1, sigma=diag(2), mu, e, x0, lower.tail=TRUE) {
         CompQuadForm::farebrother(x^2, lambda=S1eig$values, delta=ncp)$res }, 1)
 
     ## NA, NaN, -Inf, Inf (-Inf, Inf will be changed hereafter)
-    pp[!is.finite(r)] <- NA
+    pp[!is.finite(r)] <- NA_real_
 
     ## CompQuadForm returns survival probabilities (1-F)
     if(lower.tail) {
@@ -76,7 +76,7 @@ function(p, sigma=diag(2), mu, e, x0, lower.tail=TRUE, loUp=NULL) {
 
     ## checks on mu, sigma, e are done in getGrubbsParam(), pmvnEll()
     ## initialize quantiles to NA
-    qq   <- as.numeric(rep(NA, length(p)))
+    qq   <- rep(NA_real_, length(p))
     keep <- which((p >= 0) & (p < 1))
     if(length(keep) < 1) { return(qq) }
 
@@ -111,7 +111,7 @@ function(p, sigma=diag(2), mu, e, x0, lower.tail=TRUE, loUp=NULL) {
     getQ <- function(p, x0, e, mu, sigma, loUp, lower.tail) {
         tryCatch(uniroot(cdf, interval=loUp, p=p, x0=x0, e=e, mu=mu,
                          sigma=sigma, lower.tail=lower.tail)$root,
-                 error=function(e) return(NA))
+                 error=function(e) return(NA_real_))
     }
 
     qq[keep] <- unlist(Map(getQ, p=p[keep], x0=list(x0), e=list(e),
@@ -167,7 +167,7 @@ function(n, sigma=diag(2), mu, e, x0, method=c("eigen", "chol", "cdf"), loUp=NUL
         ## find quantile via uniroot() with error handling
         getQ <- function(u, sigma, mu, e, x0, loUp) {
             tryCatch(uniroot(cdf, interval=loUp, u=u, sigma=sigma, mu=mu, e=e, x0=x0)$root,
-                     error=function(e) return(NA))
+                     error=function(e) return(NA_real_))
         }
 
         u <- runif(n)                        # uniform random numbers

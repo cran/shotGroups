@@ -8,9 +8,10 @@ function(DF, plots=TRUE, xyTopLeft=TRUE, ABalt=c("two.sided", "less", "greater")
     if(!is.numeric(CIlevel))  { stop("CIlevel must be numeric") }
     if(CIlevel <= 0)          { stop("CIlevel must be > 0") }
 
-    CEPtype <- match.arg(CEPtype, choices=c("CorrNormal", "GrubbsPearson",
-                         "GrubbsLiu", "GrubbsPatnaik", "Rayleigh", "Ethridge",
-                         "RAND"), several.ok=FALSE)
+    CEPtype <- match.arg(CEPtype,
+                         choices=c("CorrNormal", "GrubbsPearson", "GrubbsLiu",
+                                   "GrubbsPatnaik", "Rayleigh", "Krempasky",
+                                   "Ethridge", "RAND"), several.ok=FALSE)
 
     ## check if CEP / CI level is given in percent
     if(CEPlevel >= 1) {

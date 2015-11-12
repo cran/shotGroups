@@ -140,7 +140,7 @@ function(p, sigma=1, lower.tail=TRUE) {
     sigma <- args[[2]]
 
     keep <- which((p >= 0) & (p < 1))
-    qq   <- as.numeric(rep(NA, length(p)))
+    qq   <- rep(NA_real_, length(p))
     if(length(keep) < 1) { return(qq) }
 
     qq[keep] <- sqrt(qgamma(p[keep], shape=3/2, scale=2*sigma[keep]^2,

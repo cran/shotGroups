@@ -173,7 +173,7 @@ function(p, scale=1, lower.tail=TRUE) {
     scale <- args[[2]]
 
     keep <- which((p >= 0) & (p < 1))
-    qq   <- as.numeric(rep(NA, length(p)))
+    qq   <- rep(NA_real_, length(p))
     if(length(keep) < 1) { return(qq) }
 
     qq[keep] <- if(lower.tail) {

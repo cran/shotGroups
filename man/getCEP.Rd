@@ -29,6 +29,7 @@ For \code{accuracy=FALSE} (default), the reported CEP/SEP estimates do not take 
 \item \code{GrubbsPatnaik}: The Grubbs-Patnaik estimate (Grubbs, 1964) differs from the Grubbs-Pearson estimate insofar as it is based on the Patnaik two-moment central chi^2-approximation of the true cumulative distribution function of radial error.
 \item \code{GrubbsLiu}: The Grubbs-Liu estimate was not proposed by Grubbs but follows the same principle as his original estimates. It differs from them insofar as it is based on the Liu-Tang-Zhang four-moment non-central chi^2-approximation of the true cumulative distribution function of radial error. For \code{accuracy=FALSE}, it is identical to \code{GrubbsPearson}.
 \item \code{Rayleigh}: For \code{accuracy=FALSE} and two-dimensional data, this estimate uses the Rayleigh distribution (see \code{\link[shotGroups]{getRayParam}}). It is valid for uncorrelated bivariate normal coordinates with equal variances. This estimate is available for all probability levels. For \code{accuracy=FALSE} and three-dimensional data, the Maxwell-Boltzmann distribution is used (see \code{\link[shotGroups]{getMaxParam}}). For \code{accuracy=TRUE} and two-dimensional data, the estimate uses the Rice distribution (see \code{\link[shotGroups]{getRiceParam}}). For \code{accuracy=TRUE} and three-dimensional data, it is based on the offset sphere probabilities for the multivariate normal distribution set to have equal variances (see \code{\link[shotGroups]{qmvnEll}}).
+\item \code{Krempasky}: The Krempasky estimate (Krempasky, 2003) is based on a closed-form solution for the 50\% quantile of the radial error for the correlated bivariate normal distribution with 0 mean. It requires estimating the covariance matrix and can only be reported for probability 0.5 with \code{accuracy=FALSE}. It does not generalize to three dimensions.
 \item \code{Ethridge}: The Ethridge estimate (Ethridge, 1983; Puhek, 1992) is not based on the assumption of multivariate normality of coordinates but uses a robust unbiased estimator for the median radius (Hogg, 1967). It can only be reported for probability 0.5 but generalizes to three dimensions.
 \item \code{RAND}: The modified RAND R-234 estimate (RAND, 1952; Pesapane & Irvine, 1977; Puhek 1992) is a weighted sum of the square root of the eigenvalues of the covariance matrix, that is of the standard deviations of the two principal components. It can only be reported for probability 0.5 and does not generalize to three dimensions.
 }
@@ -47,6 +48,8 @@ DiDonato, A. R., & Jarnagin, M. P. (1961). Integration of the general bivariate 
 Grubbs, F. E. (1964). Approximate circular and noncircular offset probabilities of hitting. Operations Research, 12(1), 51-62.
 
 Hogg, R. V. (1967). Some observations on robust estimation. Journal of the American Statistical Association, 62 (320), 1179-1186.
+
+Krempasky, J. J. (2003). CEP equation exact to the fourth order. Navigation: Journal of The Institute of Navigation, 50 (3), 143-149.
 
 Liu, H., Tang, Y., & Zhang, H. H. (2009). A new chi-square approximation to the distribution of non-negative definite quadratic forms in non-central normal variables. Computational Statistics & Data Analysis, 53(4), 853-856.
 

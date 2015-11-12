@@ -19,8 +19,13 @@ function(xy, r=1, unit="unit", dstTarget=100, conversion="m2cm",
     if(!is.numeric(r))  { stop("r must be numeric") }
     if(r <= 0)          { stop("r must be > 0") }
 
-    unit <- match.arg(unit, choices=c("unit", "m", "cm", "mm", "yd", "ft", "in", "MOA", "SMOA", "mrad", "mil"))
-    type <- match.arg(type, choices=c("CorrNormal", "GrubbsPearson", "GrubbsPatnaik", "GrubbsLiu", "Rayleigh"), several.ok=TRUE)
+    unit <- match.arg(unit,
+                      choices=c("unit", "m", "cm", "mm", "yd", "ft", "in",
+                                "MOA", "SMOA", "mrad", "mil"))
+
+    type <- match.arg(type,
+                      choices=c("CorrNormal", "GrubbsPearson", "GrubbsPatnaik",
+                                "GrubbsLiu", "Rayleigh"), several.ok=TRUE)
 
     ## check if we can do robust estimation if so required
     haveRob <- if(nrow(xy) < 4) {

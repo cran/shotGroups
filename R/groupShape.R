@@ -137,11 +137,11 @@ function(xy, plots=TRUE, bandW=0.5, outlier=c("mcd", "pca"),
         ## x-coords
         ## choose y-axis limits
         maxNormX <- getMaxNorm(X, 2)[2]
-        densX    <- hist(X, breaks="FD", plot=FALSE)$density
-        yLims    <- c(0, max(c(densX, maxNormX)))
+        hX       <- hist(X, breaks="FD", plot=FALSE)
+        yLims    <- c(0, max(c(hX$density, maxNormX)))
 
         devNew()                         # open new diagram
-        hist(X, ylim=yLims, breaks="FD", freq=FALSE,
+        plot(hX, ylim=yLims, freq=FALSE,
              main="Histogram x-coordinates w/ kernel density estimate",
              sub=paste("distance:", dstTarget, unitDst),
              xlab=paste0("X [", unitXY, "]"))
@@ -159,11 +159,11 @@ function(xy, plots=TRUE, bandW=0.5, outlier=c("mcd", "pca"),
         ## histogram y-coords
         ## choose y-axis limits
         maxNormY <- getMaxNorm(Y, 2)[2]
-        densY    <- hist(Y, breaks="FD", plot=FALSE)$density
-        yLims    <- c(0, max(c(densY, maxNormY)))
+        hY       <- hist(Y, breaks="FD", plot=FALSE)
+        yLims    <- c(0, max(c(hY$density, maxNormY)))
 
         devNew()                         # open new diagram
-        hist(Y, ylim=yLims, breaks="FD", freq=FALSE,
+        plot(hY, ylim=yLims, freq=FALSE,
              main="Histogram y-coordinates w/ kernel density estimate",
              sub=paste("distance:", dstTarget, unitDst),
              xlab=paste0("Y [", unitXY, "]"))
@@ -312,10 +312,10 @@ function(xy, which=1, bandW=0.5, outlier=c("mcd", "pca"),
         ## x-coords
         ## choose y-axis limits
         maxNormX <- getMaxNorm(X, 2)[2]
-        densX    <- hist(X, breaks="FD", plot=FALSE)$density
-        yLims    <- c(0, max(c(densX, maxNormX)))
+        hX       <- hist(X, breaks="FD", plot=FALSE)
+        yLims    <- c(0, max(c(hX$density, maxNormX)))
 
-        hist(X, ylim=yLims, breaks="FD", freq=FALSE,
+        plot(hX, ylim=yLims, freq=FALSE,
              main="Histogram x-coordinates w/ kernel density estimate",
              sub=paste("distance:", dstTarget, unitDst),
              xlab=paste0("X [", unitXY, "]"))
@@ -335,10 +335,10 @@ function(xy, which=1, bandW=0.5, outlier=c("mcd", "pca"),
         ## histogram y-coords
         ## choose y-axis limits
         maxNormY <- getMaxNorm(Y, 2)[2]
-        densY    <- hist(Y, breaks="FD", plot=FALSE)$density
-        yLims    <- c(0, max(c(densY, maxNormY)))
+        hY       <- hist(Y, breaks="FD", plot=FALSE)
+        yLims    <- c(0, max(c(hY$density, maxNormY)))
 
-        hist(Y, ylim=yLims, breaks="FD", freq=FALSE,
+        plot(hY, ylim=yLims, freq=FALSE,
              main="Histogram y-coordinates w/ kernel density estimate",
              sub=paste("distance:", dstTarget, unitDst),
              xlab=paste0("Y [", unitXY, "]"))

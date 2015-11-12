@@ -290,7 +290,7 @@ function(p, qpar, omega, lower.tail=TRUE, loUp=NULL) {
     qpar  <- argL[[2]]
     omega <- argL[[3]]
 
-    qq   <- as.numeric(rep(NA, length(p)))
+    qq   <- rep(NA_real_, length(p))
     keep <- which((p >= 0) & (p < 1))
     if(length(keep) < 1) { return(qq) }
 
@@ -324,7 +324,7 @@ function(p, qpar, omega, lower.tail=TRUE, loUp=NULL) {
     getQ <- function(p, qpar, omega, loUp, lower.tail) {
         tryCatch(uniroot(cdf, interval=loUp, p=p, qpar=qpar, omega=omega,
                          lower.tail=lower.tail)$root,
-                 error=function(e) return(NA))
+                 error=function(e) return(NA_real_))
     }
 
     qq[keep] <- unlist(Map(getQ, p=p[keep], qpar=qpar[keep], omega=omega[keep],
@@ -372,7 +372,7 @@ function(n, qpar, omega, method=c("eigen", "chol", "cdf"), loUp=NULL) {
         ## find quantile via uniroot() with error handling
         getQ <- function(u, qpar, omega, loUp) {
             tryCatch(uniroot(cdf, interval=loUp, u=u, qpar=qpar, omega=omega)$root,
-                     error=function(e) return(NA))
+                     error=function(e) return(NA_real_))
         }
 
         u <- runif(n)                        # uniform random numbers

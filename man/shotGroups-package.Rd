@@ -8,9 +8,9 @@
 \tabular{ll}{
 Package: \tab shotGroups\cr
 Type: \tab Package\cr
-Version: \tab 0.6.1\cr
-Date: \tab 2015-09-07\cr
-Depends: \tab R (>= 2.15.2)\cr
+Version: \tab 0.6.2\cr
+Date: \tab 2015-12-09\cr
+Depends: \tab R (>= 3.1.1)\cr
 Imports: \tab boot, coin, CompQuadForm, energy, graphics, grDevices, KernSmooth, mvoutlier, robustbase, stats, tools, utils\cr
 License: \tab GPL (>= 2)\cr
 }

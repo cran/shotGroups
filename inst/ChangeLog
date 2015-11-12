@@ -1,6 +1,13 @@
-$Date: 2015-09-07 09:51:29 +0000 (Mon, 07 Sep 2015) $
+$Date: 2015-11-09 10:51:29 +0000 (Thu, 12 Nov 2015) $
 
 SHOTGROUPS RELEASE VERSIONS at http://cran.r-project.org/
+
+Version 0.6.2 (November 12, 2015)
+    * getCEP()
+      - add Krempasky estimate from Krempasky (2003)
+    * groupSpread()
+      - change y-axis limits to ensure that density estimate and Rayleigh
+        fit are visible everywhere
 
 Version 0.6.1 (September 07, 2015)
     * DESCRIPTION, NAMESPACE

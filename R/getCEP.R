@@ -14,13 +14,15 @@ function(xy, CEPlevel=0.5, dstTarget=100, conversion="m2cm", accuracy=FALSE,
 getCEP.default <-
 function(xy, CEPlevel=0.5, dstTarget=100, conversion="m2cm", accuracy=FALSE,
          type="CorrNormal", doRob=FALSE) {
-    if(!is.matrix(xy))       { stop("xy must be a matrix") }
-    if(!is.numeric(xy))      { stop("xy must be numeric") }
+    if(!is.matrix(xy))        { stop("xy must be a matrix") }
+    if(!is.numeric(xy))       { stop("xy must be numeric") }
     if(!is.numeric(CEPlevel)) { stop("CEPlevel must be numeric") }
     if(CEPlevel <= 0)         { stop("CEPlevel must be > 0") }
 
-    type <- match.arg(type, choices=c("CorrNormal", "GrubbsPearson", "GrubbsLiu",
-                      "GrubbsPatnaik", "Rayleigh", "Ethridge", "RAND"), several.ok=TRUE)
+    type <- match.arg(type,
+                      choices=c("CorrNormal", "GrubbsPearson", "GrubbsLiu",
+                                "GrubbsPatnaik", "Rayleigh", "Krempasky",
+                                "Ethridge", "RAND"), several.ok=TRUE)
 
     ## check if CEPlevel is given in percent
     if(CEPlevel >= 1) {
@@ -60,14 +62,15 @@ function(xy, CEPlevel=0.5, dstTarget=100, conversion="m2cm", accuracy=FALSE,
     ## CEP estimate based on correlated bivariate normal distribution
     CorrNorm <- if(accuracy) {
         ## quantile from offset circle probability -> mvnEll.R
-        qmvnEll(CEPlevel, mu=numeric(ncol(xy)), sigma=sigma, e=diag(ncol(xy)), x0=ctr)
+        qmvnEll(CEPlevel, mu=numeric(ncol(xy)), sigma=sigma,
+                e=diag(ncol(xy)), x0=ctr)
     } else {
-        if(ncol(xy) == 2) {              # exact Hoyt distribution -> hoyt.R
+        if(ncol(xy) == 2) {              # exact Hoyt distribution -> 1.R
             HP <- getHoytParam(sigma)
             qHoyt(CEPlevel, qpar=HP$q, omega=HP$omega)
         } else {                         # 1D/3D case -> mvnEll.R
-            qmvnEll(CEPlevel, mu=numeric(ncol(xy)), sigma=sigma, e=diag(ncol(xy)),
-                    x0=numeric(ncol(xy)))
+            qmvnEll(CEPlevel, mu=numeric(ncol(xy)), sigma=sigma,
+                    e=diag(ncol(xy)), x0=numeric(ncol(xy)))
         }
     }
 
@@ -108,7 +111,8 @@ function(xy, CEPlevel=0.5, dstTarget=100, conversion="m2cm", accuracy=FALSE,
         if(accuracy) {                   # offset circle probability
             ## circular covariance matrix with estimated M-B param sigma
             sigMat <- diag(rep(MaxParam$sigma["sigma"]^2, ncol(xy)))
-            qmvnEll(CEPlevel, sigma=sigMat, mu=numeric(ncol(xy)), x0=ctr, e=diag(ncol(xy)))
+            qmvnEll(CEPlevel, sigma=sigMat, mu=numeric(ncol(xy)),
+                    x0=ctr, e=diag(ncol(xy)))
         } else {                         # no offset
             qMaxwell(CEPlevel, sigma=MaxParam$sigma["sigma"])
         }
@@ -119,6 +123,52 @@ function(xy, CEPlevel=0.5, dstTarget=100, conversion="m2cm", accuracy=FALSE,
         warning(c("Aspect ratio of error ellipse is ",
                  round(aspRat, 2) , " (> 4),\n",
                  "probably more than what Rayleigh CEP should be considered for"))
+    }
+
+    #####-----------------------------------------------------------------------
+    ## Krempasky CEP estimate from Krempasky, 2003
+    Krempasky50 <- if(ncol(xy) == 2) {   # 2D
+        if(accuracy) {
+            warning("Krempasky CEP estimate is only available for accuracy=FALSE")
+            NA_real_
+        } else {                         # POA = POI -> Rayleigh
+            ## estimated correlation, covariance and standard deviations
+            rho    <- cov2cor(sigma)[1, 2]
+            covXY  <- sigma[1, 2]
+            sigmaX <- sqrt(sigma[1, 1])
+            sigmaY <- sqrt(sigma[2, 2])
+
+            ## rotation angle gamma and rotation matrix
+            gamma <- atan((-2*covXY + sqrt(4*covXY^2 + (sigmaY^2 - sigmaX^2)^2)) /
+                          (sigmaY^2 - sigmaX^2))
+            
+            A <- cbind(c(cos(gamma), sin(gamma)), c(-sin(gamma), cos(gamma)))
+            
+            ## covariance matrix, correlation and standard deviations of rotated data
+            sigmaRot  <- t(A) %*% sigma %*% A     # covariance matrix
+            rhoDash   <- cov2cor(sigmaRot)[1, 2]  # correlation
+            sigmaDash <- sqrt(sigmaRot[1, 1])
+            stopifnot(isTRUE(all.equal(sigmaRot[1, 1], sigmaRot[2, 2]))) # supposed to be equal
+
+            CEP00 <- sqrt(2*log(2))*sigmaDash
+            C2    <- 0.5*(1 - log(2)/2)
+            C4    <- C2*(log(2) - log(2)^2/4 - 0.5) + 3/8 - (9/16)*log(2) + (3/16)*log(2)^2 - (1/64)*log(2)^3 - C2^2*log(2)/2
+            CEP00*(1 - 0.5*C2*rhoDash^2 - 0.5*(C4 + 0.25*C2^2)*rhoDash^4)
+        }
+    } else {
+        if("Krempasky" %in% type) {
+            warning("Krempasky CEP estimate is only available for 2D-data")
+        }
+        NA_real_
+    }
+
+    Krempasky <- if(CEPlevel != 0.5) {
+        if("Krempasky" %in% type) {
+            warning("Krempasky CEP estimate is only available for CEPlevel 0.5")
+        }
+        NA_real_
+    } else {
+        Krempasky50
     }
 
     #####-----------------------------------------------------------------------
@@ -145,7 +195,7 @@ function(xy, CEPlevel=0.5, dstTarget=100, conversion="m2cm", accuracy=FALSE,
         if("Ethridge" %in% type) {
             warning("Ethridge CEP estimate is only available for CEPlevel 0.5")
         }
-        NA
+        NA_real_
     } else {
         Ethridge50
     }
@@ -180,7 +230,7 @@ function(xy, CEPlevel=0.5, dstTarget=100, conversion="m2cm", accuracy=FALSE,
             if("RAND" %in% type) {
                 warning("RAND CEP estimate is only available for CEPlevel 0.5")
             }
-            NA
+            NA_real_
         } else {
             RAND50
         }   ## else if(CEPlevel %in% c(0.9, 0.95)) {
@@ -200,7 +250,7 @@ function(xy, CEPlevel=0.5, dstTarget=100, conversion="m2cm", accuracy=FALSE,
         if("RAND" %in% type) {
             warning("RAND CEP estimate is only available for 2D-data")
         }
-        NA
+        NA_real_
     }
 
     names(RAND) <- NULL
@@ -226,7 +276,7 @@ function(xy, CEPlevel=0.5, dstTarget=100, conversion="m2cm", accuracy=FALSE,
 #             if("Valstar" %in% type) {
 #                 warning("Valstar CEP estimate is only available for CEPlevel 0.5")
 #             }
-#             NA
+#             NA_real_
 #         } else {
 #             Valstar50
 #         }
@@ -234,16 +284,21 @@ function(xy, CEPlevel=0.5, dstTarget=100, conversion="m2cm", accuracy=FALSE,
 #         if("Valstar" %in% type) {
 #             warning("Valstar CEP estimate is only available for 2D-data")
 #         }
-#         NA
+#         NA_real_
 #     }
 #
 #     names(Valstar) <- NULL
 
     #####-----------------------------------------------------------------------
     ## only report the chosen estimates
-    CEP <- c(CorrNormal=CorrNorm, GrubbsPearson=GrubbsPearson,
-             GrubbsPatnaik=GrubbsPatnaik, GrubbsLiu=GrubbsLiu, Rayleigh=Rayleigh,
-             Ethridge=Ethridge, RAND=RAND)[type]
+    CEP <- c(CorrNormal=CorrNorm,
+             GrubbsPearson=GrubbsPearson,
+             GrubbsPatnaik=GrubbsPatnaik,
+             GrubbsLiu=GrubbsLiu,
+             Rayleigh=Rayleigh,
+             Krempasky=Krempasky,
+             Ethridge=Ethridge,
+             RAND=RAND)[type]
 
     CEPmat <- sapply(CEP, makeMOA, dst=dstTarget, conversion=conversion)
 
