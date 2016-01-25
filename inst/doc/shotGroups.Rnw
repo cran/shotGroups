@@ -78,13 +78,25 @@ options(replace.assign=TRUE, width=75, digits=4, useFancyQuotes=FALSE, show.sign
 \label{sec:introduction}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-The \texttt{shotGroups} package adds functionality to the open source statistical environment \textsf{R} \cite{RDevelopmentCoreTeam2008c}.\footnote{For an introduction to \textsf{R}, see \citeA{Dalgaard2008}, Try\textsf{R} (\url{http://tryr.codeschool.com/}) or Quick-\textsf{R} (\url{http://www.statmethods.net/}).} It provides functions to read in, plot, statistically describe, analyze, and compare shooting data with respect to group shape, precision, and accuracy. This includes graphical methods, descriptive statistics, and inference tests using standard, but also non-parametric and robust statistical techniques. The data can be imported from files produced by OnTarget PC and OnTarget TDS \cite{Block2014}, Taran \cite{Trofimov2015}, or from custom data files in text format with a similar structure.
+The \texttt{shotGroups} package adds functionality to the open source statistical environment \textsf{R} \cite{RDevelopmentCoreTeam2008c}.\footnote{For an introduction to \textsf{R}, see \citeA{Dalgaard2008}, Try\textsf{R} (\url{http://tryr.codeschool.com/}) or Quick-\textsf{R} (\url{http://www.statmethods.net/}).} It provides functions to read in, plot, statistically describe, analyze, and compare shooting data with respect to group shape, precision, and accuracy.
 
-The package includes limited support for the analysis of three-dimensional data (see sections \ref{sec:CEP}, \ref{sec:CEPinv}),
+\begin{itemize}
+\item The functionality includes graphical methods, descriptive statistics, and inference tests using standard, but also non-parametric and robust statistical techniques (section \ref{sec:analysisSteps}).
+\item The package includes limited support for the analysis of three-dimensional data (see sections \ref{sec:CEP}, \ref{sec:CEPinv}).
+\item Inference from range statistics like extreme spread is also supported (section \ref{sec:rangeStat}).
+\item The data can be imported from files produced by OnTarget PC and OnTarget TDS \cite{Block2014}, Taran \cite{Trofimov2015}, or from custom data files in text format with a similar structure.
+\end{itemize}
 
 Use \verb+help(package="shotGroups")+ for a list of all functions and links to the detailed help pages with information on options, usage and output.
 
-For a \texttt{shiny}-based \cite{RStudioShiny2014} web application that implements most of the functionality of \texttt{shotGroups}, see \url{http://dwoll.shinyapps.io/shotGroupsApp/}.
+For users who are unfamiliar with \textsf{R}, \texttt{shotGroups} includes a set of \texttt{shiny}-based web applications \cite{RStudioShiny2014} running locally that eliminate the need to use \textsf{R} syntax. The applications implement different aspects of the functionality of \texttt{shotGroups}:
+
+\begin{itemize}
+\item \texttt{runGUI("analyze")} -- Comprehensive shot group analysis and visualization (sections \ref{sec:groupShape}, \ref{sec:groupSpread}, \ref{sec:groupLocation}, \ref{sec:drawGroup})\footnote{\url{http://dwoll.shinyapps.io/shotGroupsApp/}}
+\item \texttt{runGUI("hitprob")} -- Region $\leftrightarrow$ hit probability calculations (sections \ref{sec:CEPinv}, \ref{sec:CEPinv})\footnote{\url{http://dwoll.shinyapps.io/shotGroupsHitProb/}}
+\item \texttt{runGUI("range")} -- Estimate Rayleigh $\sigma$ from range statistics and do efficiency calculations for group statistics (section \ref{sec:rangeStat})\footnote{\url{http://dwoll.shinyapps.io/shotGroupsRange/}}
+\item \texttt{runGUI("angular")} -- Absolute $\leftrightarrow$ angular size conversions (section \ref{sec:unitConversion})\footnote{\url{http://dwoll.shinyapps.io/shotGroupsAngular/}}
+\end{itemize}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Analyzing bullet hole data}
@@ -111,11 +123,11 @@ Analyzing shot groups usually takes the following steps:
 To import data into R, it should be saved as a text file with the following format:
 \begin{itemize}
 \item The file should have one row for each shot, and one column for each coordinate as well as for any other variable such as distance to target, point-of-aim coordinates.
-\item Columns should be separated by commas, tabs or other whitespace. This type of text file can be exported from OnTarget PC/TDS, or from a spreadsheet application like Excel or Calc.
+\item Columns should be separated by commas, tabs or other whitespace. This type of text file can be exported from OnTarget PC/TDS, Taran, or from a spreadsheet application like Excel or Calc.
 \item The file needs a header in the first line giving the variable names, and should contain at least the coordinates of points of impact, either with variable names \texttt{Point.X}, \texttt{Point.Y} or just \texttt{X}, \texttt{Y}.
 \item For several analysis functions, the following additional variables are useful: \texttt{Group} (group number), \texttt{Distance} (distance to target), and \texttt{Aim.X}, \texttt{Aim.Y} (point of aim). If these variables are missing, default values are assumed with a warning.
 \item If you have output files from OnTarget PC/TDS, you can read multiple files with \texttt{readDataOT1()} (for OnTarget PC v1.*), or with \texttt{readDataOT2()} (for OnTarget PC v2.* and OnTarget TDS v3.*).
-\item If you have other whitespace or comma-separated text files with the structure outlined above, you can read multiple files with \texttt{readDataMisc()}. For three-dimensional data, this function also recognizes variables \texttt{Point.Z} or \texttt{Z} and \texttt{Aim.Z}.
+\item If you have other whitespace or comma-separated text files with the structure outlined above (e.\,g.\ from Taran), you can read multiple files with \texttt{readDataMisc()}. For three-dimensional data, this function also recognizes variables \texttt{Point.Z} or \texttt{Z} and \texttt{Aim.Z}.
 \item If your data is saved in some other text file format, consult the help for \texttt{read.table()} or the \textsf{R} import/export manual \cite{RDevelopmentCoreTeam2008b}.
 \end{itemize}
 
@@ -156,16 +168,16 @@ analyzeGroup(DFtalon, conversion="m2mm")
 Reported statistical parameters and tests:
 
 \begin{itemize}
-\item Correlation matrix including a robust estimate using the MCD method (from package \texttt{robustbase}; \citeNP{Rousseeuw2009})
-\item Outlier identification: Either using squared robust Mahalanobis distances and adjusted quantiles from the $\chi^{2}$-distribution, or using robust principal components analysis (PCA) with options to tune the sensitivity (from package \texttt{mvoutlier}; \citeNP{Filzmoser2011b})
+\item Correlation matrix including a robust estimate using the MCD method (from package \texttt{robustbase}; \citeNP{Rousseeuw2009}).
+\item Outlier identification requires installing package \texttt{mvoutlier}: Either using squared robust Mahalanobis distances and adjusted quantiles from the $\chi^{2}$-distribution, or using robust principal components analysis (PCA) with options to tune the sensitivity.
 \item Shapiro-Wilk normality tests for the distribution of $x$- and $y$-coordinates. For more than 5000 observations, the drop-in Kolmogorov-Smirnov-test is reported instead.
-\item Energy test for bivariate normality of $(x,y)$-coordinates (from package \texttt{energy}; \citeNP{Rizzo2013})
+\item Energy test for bivariate normality of $(x,y)$-coordinates requires installing package \texttt{energy} \cite{Rizzo2013}.
 \end{itemize}
 
 Plots:
 
 \begin{itemize}
-\item Combined plot for multivariate outlier identification using squared robust Mahalanobis distances and adjusted quantiles from the $\chi^{2}$-distribution (from package \texttt{mvoutlier})
+\item Combined plot for multivariate outlier identification using squared robust Mahalanobis distances and adjusted quantiles from the $\chi^{2}$-distribution -- requires installing \texttt{mvoutlier}
 \item $\chi^{2}$ $QQ$-plot of squared robust Mahalanobis distances to group center for eyeballing multivariate normality of $(x,y)$-coordinates
 \item Heatmap of a non-parametric 2D-kernel density estimate for the $(x,y)$-coordinates  (from package \texttt{KernSmooth}; \citeNP{Wand2013}) together with robust group center and robust error ellipse
 \item $QQ$-plots of $x$- and $y$-coordinates for eyeballing normality
@@ -269,7 +281,7 @@ Reported statistical parameters and tests:
 \item Maximum pairwise distance between points for each group (center-to-center, = maximum spread, in original measurement units, MOA, SMOA, mrad)
 \item Figure of merit FoM and diagonal of the (oriented) minimum-area bounding box for each group (in original measurement units, MOA, SMOA, mrad)
 \item Radius of the minimum enclosing circle for each group (in original measurement units, MOA, SMOA, mrad)
-\item Eestimated Rayleigh parameter $\sigma$ (precision) for each group (in original measurement units, MOA, SMOA, milliradian)
+\item Estimated Rayleigh parameter $\sigma$ (precision) for each group (in original measurement units, MOA, SMOA, milliradian)
 \item Estimated Rayleigh mean radius MR for each group (in original measurement units, MOA, SMOA, milliradian)
 \item Parametric $\chi^{2}$ confidence intervals for Rayleigh $\sigma$ and MR (in original measurement units, MOA, SMOA, milliradian)
 \item Estimate for the 50\% circular error probable (CEP) in each group (see section \ref{sec:CEP}; in original measurement units, MOA, SMOA, mrad)
@@ -308,6 +320,7 @@ The \texttt{shotGroups} package also provides a number of utility functions that
 \begin{itemize}
 \item calculate individual descriptive precision measures (section \ref{sec:descPrecMeas})
 \item estimate hit probabilities: either get the region that is expected to contain a certain fraction of shots, or get the estimated fraction of shots expected to be within a given region (section \ref{sec:hitProbability})
+\item estimate Rayleigh parameter $\sigma$ from range statistics like extreme spread, and do efficiency calculations for several group statistics (section \ref{sec:rangeStat})
 \item plot a group to scale on a target background and add precision indicators (section \ref{sec:drawGroup})
 \item simulate the ring count for a given group, bullet diameter, and target type (section \ref{sec:simRingCount})
 \item convert between absolute and angular size units MOA, SMOA, and mrad (section \ref{sec:unitConversion})
@@ -315,18 +328,18 @@ The \texttt{shotGroups} package also provides a number of utility functions that
 \end{itemize}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Descriptive precision measures}
+\subsection{Descriptive precision measures -- range statistics}
 \label{sec:descPrecMeas}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-The following functions can be used to calculate precision measures that summarize some feature of the group's geometry. Section \ref{sec:drawGroup} illustrates how to add these precision indicators to a plot of the group.
+The following functions can be used to calculate so-called range statistics. These are precision measures that summarize a specific feature of the group's geometry that is related to the groups overall size. On average, range statistics grow with the number of shots per group, and therefore must be considered in relation to the number of shots they summarize. Section \ref{sec:rangeStat} discusses the distribution of range statistics, possibilities to use them for inference on true spread, and their statistical efficiency. Section \ref{sec:drawGroup} illustrates how to add these precision indicators to a plot of the group.
 
 \begin{itemize}
-\item \texttt{getBoundingBox()}: Calculates the vertices, length of diagonal, and figure of merit (FoM) of the axis-aligned bounding box. This is the smallest rectangle that contains all points (bullet hole centers), and has edges parallel to the $x$- and $y$-axes.
+\item \texttt{getBoundingBox()}: Calculates the vertices, length of diagonal, and figure of merit (FoM) of the axis-aligned bounding box. This is the smallest rectangle that contains all points (bullet hole centers), and has edges parallel to the $x$- and $y$-axis.
 \item \texttt{getMinBBox()}: Calculates the vertices, length of diagonal, and figure of merit (FoM) of the minimum-area bounding box. This is the smallest, possibly oriented rectangle that contains all points (bullet hole centers). Uses the rotating calipers algorithm \cite{Toussaint1983}.
 \item \texttt{getMinCircle()}: Calculates center and radius of the minimum enclosing circle. This is the smallest circle that contains all points (bullet hole centers). Uses the Skyum algorithm \cite{Skyum1991}.
-\item \texttt{getDistToCtr()}: Calculates the distances of a set of points to their center. The mean or median can then be taken as a precision measure.
-\item \texttt{getMaxPairDist()}: Calculates the maximum of all pairwise distances between points.
+\item \texttt{getMaxPairDist()}: Calculates the maximum of all pairwise distances between points -- also called extreme spread, or group size.
+\item \texttt{getDistToCtr()}: Calculates the distances of a set of points to their center. The mean or median can then be taken as a precision measure. The mean distance to group center is not a range statistic as it includes information from all shots.
 \end{itemize}
 
 <<cDescPrecMeas, out.width='3in'>>=
@@ -334,7 +347,7 @@ library(shotGroups, verbose=FALSE)       # load shotGroups package
 getBoundingBox(DFtalon)                  # axis-aligned bounding box
 getMinBBox(DFtalon)                      # minimum-area bounding box
 getMinCircle(DFtalon)                    # minimum enclosing circle
-getMaxPairDist(DFtalon)                  # maximum pairwise distance
+getMaxPairDist(DFtalon)                  # extreme spread / group size
 @
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -360,17 +373,21 @@ The following functions estimate the region that is expected to contain a given 
 See section \ref{sec:litCEP} for more references to relevant literature, and section \ref{sec:distributions} for a discussion of the different distributions of radial error mentioned below.
 
 \begin{itemize}
-\item \texttt{getCEP()}: Calculates estimates for the Circular Error Probable CEP. For three-dimensional data, the Spherical Error Probable SEP is returned. The CEP/SEP estimate is the radius of the circle/sphere around the point of aim (POA) that is expected to cover a certain fraction of points. If systematic accuracy bias is ignored, the POA is is assumed to coincide with the true group center. If systematic accuracy bias is taken into account, the POA is in the origin $0$, possibly offset from the true group center. The following estimates are available:
+\item \texttt{getCEP()}: Calculates estimates for the Circular Error Probable CEP. For three-dimensional data, the Spherical Error Probable SEP is returned. The CEP/SEP estimate is the radius of the circle/sphere around the point of aim (POA) that is expected to cover a certain fraction of points. If systematic accuracy bias is ignored, the POA is assumed to coincide with the true group center. If systematic accuracy bias is taken into account, the POA is in the origin $0$, possibly offset from the true group center. The following estimates are available:
 \begin{itemize}
-\item \texttt{CorrNormal}: If systematic accuracy bias is ignored, and for two-dimensional data, this estimate is based on the Hoyt distribution for radial error in correlated bivariate normal variables re-written in polar coordinates (radius and angle; \citeNP{Hoyt1947,Paris2009a,Paris2009b}). If systematic accuracy bias is taken into account, package \texttt{CompQuadForm} \cite{Duchesne2010} is used to calculate the cdf of radial error using numerical integration of the multivariate normal distribution over an offset disc \cite{DiDonato1961a,Evans1985} or sphere \cite{DiDonato1988}. The \texttt{CorrNormal} estimate is available for all probability levels
+\item \texttt{CorrNormal}: If systematic accuracy bias is ignored, and for two-dimensional data, this estimate is based on the Hoyt distribution for radial error in correlated bivariate normal variables re-written in polar coordinates (radius and angle; \citeNP{Hoyt1947,Paris2009a,Paris2009b}). If systematic accuracy bias is taken into account, package \texttt{CompQuadForm} \cite{Duchesne2010} is used to calculate the cdf of radial error using numerical integration of the multivariate normal distribution over an offset disc \cite{DiDonato1961a,Evans1985} or sphere \cite{DiDonato1988}. The \texttt{CorrNormal} estimate is available for all probability levels.
+\begin{itemize}
+\item \texttt{Krempasky}: The \citeA{Krempasky2003} estimate is based on a nearly exact closed-form solution for the 50\% quantile of the Hoyt distribution. It is only available for \texttt{accuracy=FALSE} and does not generalize to three dimensions.
+\item \texttt{Ignani}: The Ignani estimate \cite{Ignani2010} is based on a polynomial approximation for the 50\%, 90\%, 95\%, and 99\% quantiles of the Hoyt distribution. It is only available for \texttt{accuracy=FALSE} and generalizes to three dimensions.
+\item \texttt{RAND}: The modified RAND R-234 estimate \cite{RAND1952} is based on lookup tables for the 50\% quantile of the Hoyt distribution. The tables were later cast into an algebraic form that is essentially the Rayleigh estimator (see below) with a weighted average of the variances of the de-correlated data to estimate the true standard deviation. The bias correction with \texttt{accuracy=TRUE} is based on a cubic regression fit to tabulated data \cite{Pesapane1977,Puhek1992}. This estimate does not generalize to three dimensions.
+\item \texttt{Valstar}: The Valstar estimate \cite{Puhek1992} for the 50\% quantile of the Hoyt distribution differs from the RAND-estimate only for highly elliptical distributions and in its method of correcting for systematic accuracy bias. This estimate does not generalize to three dimensions.
+\end{itemize}
 \item \texttt{GrubbsPearson}: The Grubbs-Pearson estimate \cite{Grubbs1964a} is based on the Pearson three-moment central $\chi^{2}$-approximation \cite{Imhof1961,Pearson1959} of the cumulative distribution function of radial error in bivariate normal variables. Shot coordinates may be correlated and have unequal variances. The eigenvalues of the covariance matrix of coordinates are used as variance estimates since they are the variances of the principal components (the PCA-rotated = decorrelated data). For probabilities $\geq 0.25$, the approximation is very close to the true cumulative distribution function (cdf) used in \texttt{CorrNormal} -- but easier to calculate. For probabilities $< 0.25$ and some distribution shapes, the approximation can diverge from the true cdf. The Grubbs-Pearson estimate is available for all probability levels, and generalizes to three dimensions.
 \item \texttt{GrubbsPatnaik}: The Grubbs-Patnaik estimate \cite{Grubbs1964a} differs from the Grubbs-Pearson estimate insofar as it is based on the \citeA{Patnaik1949} two-moment central $\chi^{2}$-approximation of the true cumulative distribution function of radial error. For probabilities $< 0.5$ and some distribution shapes, the approximation can diverge from the true cdf.
 \item \texttt{GrubbsLiu}: The Grubbs-Liu estimate was not proposed by Grubbs but follows the same principle as his original estimates. It differs from them insofar as it is based on the \citeA{Liu2009} four-moment non-central $\chi^{2}$-approximation of the true cumulative distribution function of radial error. For \texttt{accuracy=FALSE}, it is identical to \texttt{GrubbsPearson}.
-\item \texttt{Rayleigh}: If systematic accuracy bias is ignored, and for two-dimensional data, this estimate uses the Rayleigh distribution \cite{Singh1992}. It is valid for uncorrelated bivariate normal coordinates with equal variances. For \texttt{accuracy=FALSE} and three-dimensional data, the Maxwell-Boltzmann distribution is used. For \texttt{accuracy=TRUE} and two-dimensional data, the estimate uses the Rice distribution. For \texttt{accuracy=TRUE} and three-dimensional data, it is based on the offset sphere probabilities for the multivariate normal distribution set to have equal variances. This estimate is available for all probability levels.
-\item \texttt{Krempasky}: The Krempasky estimate \cite{Krempasky2003} is based on a closed-form solution for the 50\% quantile of the radial error for the correlated bivariate normal distribution. It requires estimating the covariance matrix and can only be reported for probability 0.5 with \texttt{accuracy=FALSE}. It does not generalize to three dimensions.
+\item \texttt{Rayleigh}: If systematic accuracy bias is ignored, and for two-dimensional data, this estimate uses the Rayleigh distribution \cite{Singh1992}. It is valid for uncorrelated bivariate normal coordinates with equal variances and zero mean. For \texttt{accuracy=FALSE} and three-dimensional data, the Maxwell-Boltzmann distribution is used. For \texttt{accuracy=TRUE} and two-dimensional data, the estimate uses the Rice distribution. For \texttt{accuracy=TRUE} and three-dimensional data, it is based on the offset sphere probabilities for the multivariate normal distribution set to have equal variances. This estimate is available for all probability levels.
+\item \texttt{RMSE}: For \texttt{accuracy=FALSE}, this estimator is essentially the same as the RMSE estimator often described in the GPS literature \cite{vanDiggelen2007} when using centered data for calculating RMSE (square root of the mean squared error). It is very similar to the \texttt{Rayleigh} estimator. For \texttt{accuracy=TRUE}, this is essentially the same as the RMSE estimator often described in the GPS literature when using the original, non-centered data for calculating RMSE. It is similar to the \texttt{Rayleigh} estimator only when bias is small, but becomes seriously wrong otherwise. The \texttt{RMSE} estimate is available for all probability levels, and generalizes to three dimensions.
 \item \texttt{Ethridge}: The Ethridge estimate \cite{Ethridge1983} is not based on the assumption of multivariate normality of shot coordinates but uses a robust unbiased estimator for the median radius \cite{Hogg1967}. The Ethridge estimate is also documented in Puhek \citeyear{Puhek1992}.\footnote{Note that the formula for the Hogg weighted location estimate is wrong in \citeA{Puhek1992,Tongue1993,Wang2013b,Wang2014,Williams1997}.} This estimate can only be reported for probability 0.5 but generalizes to three dimensions.
-\item \texttt{RAND}: The modified RAND R-234 estimate \cite{RAND1952} is a weighted sum of the square root of the eigenvalues of the covariance matrix, that is of the standard deviations of the two principal components. The bias correction with \texttt{accuracy=TRUE} is based on a cubic regression fit to tabulated data \cite{Pesapane1977,Puhek1992}. This estimate can only be reported for probability 0.5 and does not generalize to three dimensions.
-%\item \texttt{Valstar}: The Valstar estimate \cite{Ethridge1983,Puhek1992} can only be reported for level 0.5 and two-dimensional data. It differs from the RAND-estimate only for highly elliptical distributions and in its method of correcting for systematic accuracy bias.
 \end{itemize}
 \item \texttt{getConfEll()}: Calculates the confidence ellipse for the true mean of the distribution under the assumption of multivariate normality of shot coordinates. The coordinates may be correlated and have unequal variances. The confidence ellipse gives the iso-probability contour, the points on its rim all have the same Mahalanobis distance to the center. The result also includes the ellipse based on a robust estimate for the covariance matrix of the coordinates using the MCD algorithm (from package \texttt{robustbase}). The confidence ellipse generalizes to three-dimensional data.
 \end{itemize}
@@ -386,7 +403,7 @@ getConfEll(DFscar17, level=0.95,
 @
 
 Function \texttt{getRayParam()} estimates the Rayleigh distribution's radial precision parameter $\sigma$ together with its radial standard deviation RSD $=\sigma \sqrt{\frac{4-\pi}{2}}$, and its
-mean radius MR $=\sigma \sqrt{\frac{\pi}{2}}$, including parametric confidence intervals. Function \texttt{getMaxParam()} likewise estimates $\sigma$, MR $=\sigma \sqrt{\frac{8}{\pi}}$ and RSD $=\sigma \sqrt{\frac{3 \pi - 8}{\pi}}$ of the Maxwell-Boltzmann distribution from three-dimensional data.
+mean radius MR $=\sigma \sqrt{\frac{\pi}{2}}$, including parametric confidence intervals. For 3D data, it also estimates $\sigma$, MR $=\sigma \sqrt{\frac{8}{\pi}}$ and RSD $=\sigma \sqrt{\frac{3 \pi - 8}{\pi}}$ of the Maxwell-Boltzmann distribution.
 
 <<cHitProb>>=
 ## Rayleigh parameter estimates with 95% confidence interval
@@ -394,7 +411,7 @@ getRayParam(DFscar17, level=0.95)
 
 ## Maxwell-Boltzmann parameter estimates with 95% confidence interval
 xyz <- matrix(rnorm(60), ncol=3)
-getMaxParam(xyz, level=0.95)
+getRayParam(xyz, level=0.95)
 @
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -441,7 +458,7 @@ CEP100yd <- getCEP(DFscar17, type=c("GrubbsPatnaik", "Rayleigh"),
 CEP100yd$CEP
 
 ## extract CEP in MOA
-CEPmoa <- CEP100yd$CEP["MOA", c("GrubbsPatnaik", "Rayleigh")]
+CEPmoa <- CEP100yd$CEP$CEP0.5["MOA", c("GrubbsPatnaik", "Rayleigh")]
 
 ## 50% CEP in inch for the same group extrapolated to 100m
 fromMOA(CEPmoa, dst=100, conversion="m2in")
@@ -462,17 +479,19 @@ getHitProb(DFscar17, r=MOA, unit="MOA", doRob=FALSE,
 \label{sec:litCEP}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-The literature on the circular error probable (CEP) is extensive and diverse: Applications for CEP are found in areas such as target shooting, missile ballistics, or positional accuracy of navigation and guidance systems like GPS. The statistical foundations in quadratic forms of normal variables are important for analyzing the power of inference tests. The Hoyt and Rayleigh distribution have applications in (wireless) signal processing, the Rice distribution is important for medical imaging techniques like MRI, the Maxwell-Boltzmann distribution comes from the physics of ideal gases.
+The literature on the circular error probable (CEP) is extensive and diverse: Applications for CEP are found in areas such as target shooting, missile ballistics, error analysis for geopositional asessments, or positional accuracy of navigation and guidance systems like GPS. The statistical foundations in quadratic forms of normal variables are important for analyzing the power of inference tests. The Hoyt and Rayleigh distribution have applications in (wireless) signal processing, the Rice distribution is important for medical imaging techniques like MRI, the Maxwell-Boltzmann distribution comes from the physics of ideal gases.
 
 The following list is by no means intended to be complete. Beware that the quality of the cited articles is not uniformly high. The relevant publications may be roughly categorized into different groups:
 
 \begin{itemize}
-\item Articles that develop a CEP estimator or the modification of one -- e.\,g., RAND-234 \cite{RAND1952}, modified RAND-234 \cite{Pesapane1977}, \citeA{Grubbs1964a}, Rayleigh \cite{Culpepper1978,Saxena2005,Singh1992}, \citeA{Krempasky2003}, \citeA{Ethridge1983}, \citeA{Spall1992}, correlated bivariate normal \cite{DiDonato1961a,Evans1985}. Some articles focus on the confidence intervals for CEP \cite{DiDonato2007,Sathe1991,Taub1983b,Thomas1973,Zhang2012}.
+\item Articles that develop a CEP estimator or the modification of one -- e.\,g., RAND-234 \cite{RAND1952}, modified RAND-234 \cite{Pesapane1977}, \citeA{Grubbs1964a}, Rayleigh \cite{Culpepper1978,Saxena2005,Singh1992}, \citeA{Ethridge1983}, \citeA{Bell1973}, \citeA{Nicholson1974}, \citeA{Siouris1993}, \citeA{Krempasky2003}, \citeA{Ignani2010}, correlated bivariate normal \cite{DiDonato1961a,Evans1985}, and Bayes \cite{Spall1992}.
+\item Some articles focus on the confidence intervals for CEP \cite{DiDonato2007,Sathe1991,Taub1983b,Thomas1973,Zhang2012}.
 \item Articles or Master's theses comparing the characteristics of CEP estimators in different scenarios \cite{Blischke1966,Elder1986,Kamat1962,McMillan2008,Moranda1959,Moranda1960,Nelson1988,Puhek1992,Tongue1993,Taub1983a,Wang2013a,Wang2013b,Wang2014,Williams1997}.
-\item Publications studying the correlated bivariate normal distribution re-written in polar coordinates radius and angle \cite{Chew1962,Greenwalt1962,Harter1960,Hoover1984,Hoyt1947}. The distribution of the radius is known as the Hoyt \citeyear{Hoyt1947} distribution. The closed form expression for its cumulative distribution function has only recently been identified as the symmetric difference between two first-order Marcum $Q$-functions \cite{Marcum1950,Paris2009a,Paris2009b}. The latter are special cases of the non-central $\chi^{2}$-distribution \cite{Nuttall1975}. A closed-form solution for the 50\% quantile is given by \citeA{Krempasky2003}. The statistical literature on coverage problems in the multivariate normal distribution is reviewed in \citeA{Guenther1964}.
-\item \citeA{DiDonato1961a,DiDonato1961b,DiDonato1962a,DiDonato1962b,Evans1985} develop methods to use the correlated bivariate normal distribution for CEP estimation when systematic accuracy bias must be taken into account. This requires integrating the distribution over a disc that is not centered on the true mean of the shot group but on the point of aim. This so-called \emph{offset circle probability} is the probability of a quadratic form of a normal variable \cite{Duchesne2010}. The exact distribution of quadratic forms is a weighted average of non-central $\chi^{2}$-distributions and difficult to calculate without numerical tools. Therefore, the \citeA{Patnaik1949} two-moment central $\chi^{2}$-approximation or the Pearson \cite{Imhof1961,Pearson1959} three-moment central $\chi^{2}$-approximation are often used. Recently, \citeA{Liu2009} proposed a four-moment non-central $\chi^{2}$-approximation.
+\item Publications studying the correlated bivariate normal distribution with mean $0$ re-written in polar coordinates radius and angle \cite{Chew1962,Greenwalt1962,Harter1960,Hoover1984,Hoyt1947}. The distribution of the radius is known as the Hoyt \citeyear{Hoyt1947} distribution. The closed form expression for its cumulative distribution function has only recently been identified as the symmetric difference between two first-order Marcum $Q$-functions \cite{Marcum1950,Paris2009a,Paris2009b}. The latter are special cases of the non-central $\chi^{2}$-distribution \cite{Nuttall1975}. A nearly correct closed-form solution for the 50\% quantile is given by \citeA{Krempasky2003}. \citeA{Childs1975} and \citeA{Ignani2010} provide polynomial approximations for the 50\%, 90\%, 95\%, and 99\% quantile. The statistical literature on coverage problems in the multivariate normal distribution is reviewed in \citeA{Guenther1964}. From the perspective of radio engineering, \citeA{Beckmann1962, Beckmann1964} works out the relationship between the Rayleigh, Rice and Hoyt distribution and their generalization.
+\item \citeA{Moranda1960}, \citeA{DiDonato1961a,DiDonato1961b,DiDonato1962a,DiDonato1962b,Evans1985} as well as \citeA{Shultz1963,Bell1973}, \citeA{Evans1985}, and \citeA{Ager2004} develop methods to use the correlated bivariate normal distribution for CEP estimation when systematic accuracy bias must be taken into account. This requires integrating the distribution over a disc that is not centered on the true mean of the shot group but on the point of aim. This so-called \emph{offset circle probability} is the probability of a quadratic form of a normal variable \cite{Duchesne2010}. The exact distribution of quadratic forms is a weighted average of non-central $\chi^{2}$-distributions and difficult to calculate without numerical tools. Therefore, the \citeA{Patnaik1949} two-moment central $\chi^{2}$-approximation or the Pearson \cite{Imhof1961,Pearson1959} three-moment central $\chi^{2}$-approximation are often used. Recently, \citeA{Liu2009} proposed a four-moment non-central $\chi^{2}$-approximation.
 \item A number of articles present algorithms for the efficient numerical calculation of the Hoyt cumulative distribution function (cdf), as well as for its inverse, the quantile function \cite{DiDonato2004,DiDonato2007,Pyati1993,Shnidman1995}. Numerical algorithms to efficiently and precisely calculate the distribution of quadratic forms of normal random variables were proposed by \citeA{Davies1980,Farebrother1984,Farebrother1990,Imhof1961,Sheil1977}. A comparison and implementation can be found in \citeA{Duchesne2010}.
-\item The Spherical Error Probable is developed in \citeA{DiDonato1988,Singh1962,Singh1970}.
+\item The Spherical Error Probable is developed in \citeA{Singh1962,Singh1970,Childs1975,DiDonato1988,Siouris1993} and \citeA{Ignani2010}.
+\item The GPS-related literature on accuracy measures in navigation includes \citeA{Mertikas1985} and \citeA{Chin1987}.
 \end{itemize}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -495,7 +514,7 @@ The following distributions are available, illustrated in figure \ref{fig:distri
 \centering
 \includegraphics[width=12cm]{distributions}
 \vspace*{-1em}
-\caption{Distribution of radial error (red arrows) for bivariate normal shot distributions with point of aim (POA) and true mean (point of impact, POI).}
+\caption{Distribution of radial error (red arrows) with 50\% CEP (green circle) for several cases of bivariate normal shot distributions with point of aim (POA) and true mean (point of impact, POI). $\mu$: center, $\sigma$: standard deviation, $\rho$: correlation}
 \label{fig:distributions}
 \end{figure}
 
@@ -504,8 +523,17 @@ The following distributions are available, illustrated in figure \ref{fig:distri
 \item Maxwell-Boltzmann: The radius around the true mean in a trivariate uncorrelated normal random variable with equal variances, re-written in polar coordinates (radius, azimuth, elevation), follows a Maxwell-Boltzmann distribution. Fully defined in closed form (using the cdf of the normal distribution).
 \item Rice: The radius around the origin in a bivariate uncorrelated normal random variable with equal variances and an offset mean, re-written in polar coordinates (radius and angle), follows a Rice distribution. The pdf, cdf, and inverse cdf are defined in closed form with the Marcum $Q$-function. Reduces to the Rayleigh distribution if the mean has no offset.
 \item Hoyt: The radius around the true mean in a bivariate correlated normal random variable with unequal variances, re-written in polar coordinates (radius and angle), follows a Hoyt distribution. The pdf and cdf are defined in closed form, numerical root finding is used to find $\mathrm{cdf}^{-1}$. Reduces to the Rayleigh distribution if the correlation is 0 and the variances are equal.
-\item General case: The distribution of the radius around the origin in a bivariate correlated normal variable with unequal variances and an offset mean. The cdf of radial error is equal to the integral of the bivariate normal distribution over an offset disc. Not defined in closed form. Numerical methods for quadratic forms provided by package \texttt{CompQuadForm} are used to find the pdf and cdf. Numerical root finding is used to find $\mathrm{cdf}^{-1}$. Reduces to the Rice distribution if the correlation is 0 and the variances are equal. Reduces to the Hoyt distribution if the mean has no offset.
+\item General case: The distribution of the radius around the origin in a bivariate correlated normal variable with unequal variances and an offset mean. The cdf of radial error is equal to the integral of the bivariate normal distribution over an offset disc. Not defined in closed form. Numerical methods for quadratic forms provided by package \texttt{CompQuadForm} are used to find the pdf and cdf (figure \ref{fig:CEPintegration}). Numerical root finding is used to find $\mathrm{cdf}^{-1}$. Reduces to the Rice distribution if the correlation is 0 and the variances are equal. Reduces to the Hoyt distribution if the mean has no offset.
 \end{itemize}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=6cm]{normal_cep_no_bias.png}
+\includegraphics[width=6cm]{normal_cep_bias.png}
+\vspace*{0.5em}
+\caption{Bivariate normal distribution with 95\% confidence ellipse, sample points, 50\% CEP circle and corresponding volume under the normal surface. Left: Without systematic bias. Right: With systematic bias.}
+\label{fig:CEPintegration}
+\end{figure}
 
 <<cDistributions1, out.width='3in'>>=
 ## probability of staying within 10cm of the point of aim
@@ -563,6 +591,74 @@ sdY <- 2                              # standard deviation along y
 hp  <- getHoytParam(c(sdX^2, sdY^2))  # convert to Hoyt parameters
 pHoyt(1.5, qpar=hp$q, omega=hp$omega)
 pmvnEll(1.5, sigma=diag(c(sdX^2, sdY^2)), mu=c(0, 0), e=diag(2), x0=c(0, 0))
+@
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Inference from range statistics and efficiency calculations}
+\label{sec:rangeStat}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+When it seems too costly to collect $(x,y)$-coordinates of all shots, range statistics like extreme spread, figure of merit, or the length of the bounding box diagonal are often measured instead (section \ref{sec:descPrecMeas}). The statistical distribution of these measures depends on the number of shots per group $n$, and on the true spread of the distribution, but its exact form is unknown \cite{Taylor1975b}. Nevertheless, it is possible to use range statistics for inference on the true spread of the distribution (Rayleigh parameter $\sigma$, section \ref{sec:CEP}) when assuming a circular bivariate normal shot distribution with 0 mean.
+
+Following the approach from \citeA{Taylor1975b}, a Monte Carlo simulation of circular bivariate normal shot groups with 0 mean and variance 1 in both directions was carried out. The result is a lookup table for the distribution of extreme spread, figure of merit, bounding box diagonal, and Rayleigh $\sigma$. The table records the first four moments (mean, variance, skewness, kurtosis), the coefficient of variation, as well as the median and other major quantiles of the Monte Carlo distribution over 2 million repetitions in each scenario. One scenario was a combination of the $n$ shots in each group, and the $n_{g}$ groups over which individual range statistics were averaged. Values for $n$ were 2, 3, \ldots, 49, 50, 55, \ldots, 95, 100. Values for $n_{g}$ were 1, 2, \ldots, 9, 10. The lookup table with the simulation results is available as data frame \texttt{DFdistr}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Estimate Rayleigh $\sigma$ from range statistics}
+\label{sec:rangeToSigma}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Based on the lookup table from the Monte Carlo simulation, function \texttt{range2sigma()} estimates the Rayleigh $\sigma$ parameter from measured range statistics -- extreme spread, figure of merit, and the bounding box diagonal, assuming a circular bivariate normal shot distribution with 0 mean. This is possible because, conditional on $n$ and $n_{g}$, range statistics directly scale with $\sigma$. Dividing the simulated mean range statistic for $\sigma = 1$ and the given $n$ as well as $n_{g}$ by the empirically measured range statistic therefore estimates $\sigma$. Confidence intervals can be inferred from the corresponding quantiles of the Monte Carlo distribution.
+
+If $\sigma$ should be estimated for a value of $n$ that was not simulated (but is less than 100), a spline interpolation between the neighboring simulated values is used. If the desired coverage probability for the confidence interval corresponds to quantiles that were not calculated, the Monte Carlo distribution of squared extreme spread is approximated by a Patnaik $\chi^{2}$ distribution as suggested by \citeA{Taylor1975b}.\footnote{Fort details, see \url{http://ballistipedia.com/index.php?title=Range_Statistics}}
+
+<<cRange1>>=
+# get range statistics from DFscar17 data
+es  <- getMaxPairDist(DFscar17)$d      # extreme spread
+fom <- getBoundingBox(DFscar17)$FoM    # figure of merit
+d   <- getBoundingBox(DFscar17)$diag   # bounding box diagonal
+
+# estimate Rayleigh sigma from each statistic
+range2sigma(c(es, fom, d), stat=c("ES", "FoM", "D"),
+            n=nrow(DFscar17), nGroups=1, CIlevel=0.9)
+@
+
+Compare the results with estimating Rayleigh $\sigma$ from using $(x,y)$-coordinates of all shots.
+<<cRange2>>=
+getRayParam(DFscar17, level=0.9)$sigma
+@
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Efficiency of group statistics}
+\label{sec:efficiency}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Assuming a circular bivariate normal shot distribution with 0 mean, the efficiency of using range statistics for inference on the Rayleigh $\sigma$ parameter can be estimated when the distribution of the mean range statistic is assumed to be approximately normal -- by appeal to the central limit theorem.
+
+Given the number of shots per group $n$, it is then possible to determine the number of groups $n_{g}$ that is required to achieve a desired coverage probability (level) for the confidence interval (CI) for $\sigma$ with a desired CI width expressed as a fraction of the mean. Conversely, given $n$ and the number of groups $n_{g}$ over which the range statistic was averaged, we can estimate the CI width as a fraction of the mean for the given coverage probability. The CI width is a measure for the \emph{statistical} precision of the estimator with more narrow CIs for the same level indicating better precision.\footnote{For details, noting that $E$ in the references is half the CI width, see\\
+\url{http://ballistipedia.com/index.php?title=Range_Statistics}\\
+\url{http://ballistipedia.com/images/3/32/Sitton_1990.pdf}}
+
+Get the number of groups and total number of shots required to achieve a 90\% CI with a CI width of 20\% of the mean ($E=10$\% on either side), using 3, 5, or 10 shots per group and measuring extreme spread.
+<<cEfficiency1>>=
+# ...Ceil gives the result when the number of groups is rounded
+# up to the nearest integer
+efficiency(n=c(3, 5, 10), CIlevel=0.9, CIwidth=0.2, stat="ES")
+@
+
+Compare the result to directly estimating Rayleigh $\sigma$ from $(x,y)$-coordinates.
+<<cEfficiency2>>=
+efficiency(n=c(3, 5, 10), CIlevel=0.9, CIwidth=0.2, stat="Rayleigh")
+@
+
+Given the simulated quantiles of the distribution for extreme spread, we can check that the result for $n=10$ given above when assuming normality of mean extreme spread is approximately correct: The 5\% quantile with $n_{g} = 10$ groups indeed is about 10\% below the mean, and the 95\% quantile with 10 groups is about 10\% above the mean.
+<<cEfficiency3>>=
+with(subset(DFdistr, (n == 10L) & (nGroups == 10L)),
+     c(ES_Q050/ES_M, ES_Q950/ES_M))
+@
+
+Get the achievable 90\% CI width as a fraction of the mean with 10 groups of 3, 5, 10 shots each using extreme spread.
+<<cEfficiency4>>=
+efficiency(n=c(3, 5, 10), nGroups=10, CIlevel=0.9, stat="ES")
 @
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -663,12 +759,14 @@ The angular size of an object with absolute size $s$ is its angular diameter at 
 \label{fig:anglesCenter}
 \end{figure}
 
-The \texttt{shotGroups} package includes functions \texttt{getMOA()} and \texttt{fromMOA()} to convert from absolute object size to the angular measures MOA, SMOA, mrad and vice versa. The functions need the distance to target $d$, object sizes $s$ and measurement units for $d$ and $s$. The option \texttt{type} controls which angular measure is returned:
+The \texttt{shotGroups} package includes functions \texttt{getMOA()} and \texttt{fromMOA()} to convert from absolute object size to the angular diameter in degree, radian, MOA, SMOA, mrad and vice versa. The functions need the distance to target $d$, object sizes $s$ and measurement units for $d$ and $s$. The option \texttt{type} controls which angular measure is returned:
 
 \begin{itemize}
-\item \texttt{type="MOA"}: Convert to/from MOA = minute of angle = arcmin. The circle is divided into 360 degrees, 1 MOA = $1/60$ degree such that the circle has $360 \cdot 60 = 21600$ MOA.
+\item \texttt{type="deg"}: Convert to/from angle in degree, where the circle is divided into 360 degrees.
+\item \texttt{type="MOA"}: Convert to/from MOA = minute of angle = arcmin. 1 MOA = $1/60$ degree such that the circle is divided into $360 \cdot 60 = 21600$ MOA.
 \item \texttt{type="SMOA"}: Convert to/from SMOA = Shooter's MOA = Inches Per Hundred Yards IPHY. 1 inch at 100 yards = 1 SMOA.
-\item \texttt{type="mrad"}: Convert to/from mrad = milliradian = 1/1000 radian. 1 radian is 1 unit of arc length on the unit circle which has a circumference of $2 \pi$. The circle is thus divided into $2 \pi \cdot 1000 \approx 6283.19$ mrad.
+\item \texttt{type="rad"}: Convert to/from angle in radian, where 1 radian is 1 unit of arc length on the unit circle which has a circumference of $2 \pi$. The circle circumference is thus divided into $2 \pi$ rad.
+\item \texttt{type="mrad"}: Convert to/from mrad = milliradian = 1/1000 radian. The circle circumference is divided into $2 \pi \cdot 1000 \approx 6283.19$ mrad.
 \item \texttt{type="mil"}: Convert to/from NATO mil. 1 mil = $\frac{2 \pi}{6400}$ radian -- the circle circumference is divided into 6400 mils.
 \end{itemize}
 
@@ -684,14 +782,28 @@ Figure \ref{fig:anglesCenter} shows how the angle $\alpha$ subtended by an objec
 Assuming that the argument for $\tan(\cdot)$ and the result from $\arctan(\cdot)$ are in radian, and that distance to target $d$ and object size $s$ are measured in the same unit, this leads to the following formulas for calculating $\alpha$ in MOA, SMOA as well as $x$ in mrad and NATO mil based on $d$ and $s$:
 
 \begin{itemize}
-\item Angle $\alpha$ in MOA: $\alpha = 60 \cdot \frac{360}{2 \pi} \cdot 2 \cdot \arctan\left(\frac{s}{2 d}\right) = \frac{21600}{\pi} \cdot \arctan\left(\frac{s}{2 d}\right)$
-\item Angle $\alpha$ in SMOA: By definition, size $s=1$ inch at $d = 100$ yards ($= 3600$ inch) is 1 SMOA.\\[1ex]
-Conversion factors to/from MOA are $\frac{21600}{\pi} \cdot \arctan\left(\frac{1}{2 \cdot 3600}\right) \approx 0.95493$ (fairly close to $3/\pi$), and $\frac{\pi}{21600} \cdot \frac{1}{\arctan(1/7200)} \approx 1.04720$ (fairly close to $\pi/3$).\\[1ex]
-$\alpha = \frac{\pi}{21600} \cdot \frac{1}{\arctan(1/7200)} \cdot \frac{21600}{\pi} \cdot \arctan\left(\frac{s}{2 d}\right) = \frac{1}{\arctan(1/7200)} \cdot \arctan\left(\frac{s}{2 d}\right)$
-\item Arc length $x$ in mrad: $x = 1000 \cdot 2 \cdot \arctan\left(\frac{s}{2 d}\right) = 2000 \cdot \arctan\left(\frac{s}{2 d}\right)$.\\[1ex]
-Conversion factors to/from MOA are $\frac{21600}{2000 \pi} \approx 3.43775$ and $\frac{2000 \pi}{21600} \approx 0.29089$.
-\item Arc length $x$ in NATO mil: $x = \frac{6400}{\pi} \cdot \arctan\left(\frac{s}{2 d}\right)$.\\[1ex]
-Conversion factors to/from MOA are $\frac{21600}{6400} = 3.375$ and $\frac{6400}{21600} \approx 0.2962963$.
+\item Angle $\alpha$ in degree: $\alpha = \frac{360}{2 \pi} \cdot 2
+    \cdot \arctan\left(\frac{s}{2 d}\right) =
+    \frac{360}{\pi} \cdot \arctan\left(\frac{s}{2 d}\right)$
+\item Angle $\alpha$ in MOA: $\alpha = 60 \cdot \frac{360}{\pi}
+    \cdot \arctan\left(\frac{s}{2 d}\right) = \frac{21600}{\pi} \cdot
+    \arctan\left(\frac{s}{2 d}\right)$
+\item Angle $\alpha$ in SMOA: By definition, size $s=1$ inch at
+    $d = 100$ yards ($= 3600$ inch) is 1 SMOA.\\[1ex]
+    Conversion factors to/from MOA are\\
+    $\frac{21600}{\pi} \cdot \arctan\left(\frac{1}{7200}\right) \approx 0.95493$, and\\[1ex]
+    $\frac{\pi}{21600} \cdot \frac{1}{\arctan(1/7200)} \approx 1.04720$.\\[1ex]
+    $\alpha = \frac{\pi}{21600} \cdot \frac{1}{\arctan(1/7200)} \cdot
+    \frac{21600}{\pi} \cdot \arctan\left(\frac{s}{2 d}\right) =
+    \frac{1}{\arctan(1/7200)} \cdot \arctan\left(\frac{s}{2 d}\right)$
+\item Arc length $x$ in rad:  $x = 2 \cdot \arctan\left(\frac{s}{2 d}\right)$.
+\item Arc length $x$ in mrad: $x = 2000 \cdot \arctan\left(\frac{s}{2 d}\right)$.\\[1ex]
+    Conversion factors to/from MOA are $\frac{21600}{2000 \pi} \approx 3.43775$
+    and $\frac{2000 \pi}{21600} \approx 0.29089$.
+\item Arc length $x$ in NATO mil: $x = \frac{6400}{\pi} \cdot
+    \arctan\left(\frac{s}{2 d}\right)$.\\[1ex]
+    Conversion factors to/from MOA are $\frac{21600}{6400} = 3.375$
+    and $\frac{6400}{21600} \approx 0.2962963$.
 \end{itemize}
 
 <<cMOAcenter1>>=
@@ -701,9 +813,11 @@ getMOA(c(1, 2, 10), dst=100, conversion="m2cm", type="MOA")
 
 Likewise, absolute object size $s$ can be calculated from angular size and distance to target $d$:
 \begin{itemize}
-\item From angle $\alpha$ in MOA: $s = 2 \cdot d \cdot \tan\left( \frac{(2 \pi/360) (\alpha / 60)}{2} \right) = 2 \cdot d \cdot \tan\left(\alpha \cdot \frac{\pi}{21600}\right)$
+\item From angle $\alpha$ in degree: $s = 2 \cdot d \cdot \tan\left(\alpha \cdot \frac{\pi}{360}\right)$
+\item From angle $\alpha$ in MOA: $s = 2 \cdot d \cdot \tan\left(\alpha \cdot \frac{\pi}{60 \cdot 360} \right) = 2 \cdot d \cdot \tan\left(\alpha \cdot \frac{\pi}{21600}\right)$
 \item From angle $\alpha$ in SMOA: $s = \frac{21600}{\pi} \cdot \arctan\left(\frac{1}{7200}\right) \cdot 2 \cdot d \cdot \tan\left(\alpha \cdot \frac{\pi}{21600}\right)$
-\item From arc length $x$ in mrad:     $s = 2 \cdot d \cdot \tan\left(x \cdot \frac{1}{2000}\right)$
+\item From arc length $x$ in rad: $s = 2 \cdot d \cdot \tan\left(x \cdot \frac{1}{2}\right)$
+\item From arc length $x$ in mrad: $s = 2 \cdot d \cdot \tan\left(x \cdot \frac{1}{2000}\right)$
 \item From arc length $x$ in NATO mil: $s = 2 \cdot d \cdot \tan\left(x \cdot \frac{\pi}{6400}\right)$
 \end{itemize}
 
@@ -717,8 +831,10 @@ fromMOA(c(1, 10, 20), dst=100, conversion="m2mm", type="mrad")
 
 Conversely, distance to target $d$ can be calculated from absolute object size $s$ and angular size:
 \begin{itemize}
-\item From angle $\alpha$ in MOA:    $d = \frac{s}{2} \cdot \frac{1}{\tan(\alpha \cdot \pi/21600)}$
-\item From angle $\alpha$ in SMOA:   $d = \frac{s}{2} \cdot \frac{1}{\tan(\alpha \cdot \arctan(1/7200))}$
+\item From angle $\alpha$ in degree: $d = \frac{s}{2} \cdot \frac{1}{\tan(\alpha \cdot \pi/360)}$
+\item From angle $\alpha$ in MOA: $d = \frac{s}{2} \cdot \frac{1}{\tan(\alpha \cdot \pi/21600)}$
+\item From angle $\alpha$ in SMOA: $d = \frac{s}{2} \cdot \frac{1}{\tan(\alpha \cdot \arctan(1/7200))}$
+\item From arc length $x$ in rad:  $d = \frac{s}{2} \cdot \frac{1}{\tan(x / 2)}$
 \item From arc length $x$ in mrad: $d = \frac{s}{2} \cdot \frac{1}{\tan(x / 2000)}$
 \item From arc length $x$ in NATO mil: $d = \frac{s}{2} \cdot \frac{1}{\tan(x \cdot \pi / 6400)}$
 \end{itemize}

@@ -23,7 +23,7 @@ function(xy, xyTopLeft=TRUE, bb=FALSE, bbMin=FALSE, bbDiag=FALSE, minCirc=FALSE,
          conversion="m2cm", unit="unit", alpha=0.5, target='ISSF_100m') {
     if(!is.matrix(xy))       { stop("xy must be a matrix") }
     if(!is.numeric(xy))      { stop("xy must be numeric") }
-    if(ncol(xy) != 2)        { stop("xy must have two columns") }
+    if(ncol(xy) != 2L)       { stop("xy must have two columns") }
     if(!is.numeric(caliber)) { stop("caliber must be numeric") }
     if(caliber <= 0)         { stop("caliber must be > 0") }
     if(!all(is.numeric(level)))    { stop("level must be numeric") }
@@ -51,14 +51,14 @@ function(xy, xyTopLeft=TRUE, bb=FALSE, bbMin=FALSE, bbDiag=FALSE, minCirc=FALSE,
 
     ## check if we can do robust estimation if so required
     N <- nrow(xy)
-    if(N < 4) {
+    if(N < 4L) {
         haveRob <- FALSE
         if(doRob) {
             warning("We need >= 4 points for robust estimations")
         }
     } else {
         haveRob <- TRUE
-    }                                    # if(nrow(xy) < 4)
+    }                                    # if(nrow(xy) < 4L)
 
     res <- vector("list", 0)             # empty list to later collect the results
 
@@ -201,17 +201,16 @@ function(xy, xyTopLeft=TRUE, bb=FALSE, bbMin=FALSE, bbDiag=FALSE, minCirc=FALSE,
     }
 
     if(CEP != "FALSE") {                 # circular error probable
-        CEPres <- lapply(level, function(x) {
-            getCEP(xyNew, CEPlevel=x, dstTarget=dstTarget,
-                   conversion=conversion, type=CEPtype, accuracy=FALSE) })
+        CEPres <- getCEP(xyNew, CEPlevel=level, dstTarget=dstTarget,
+                         conversion=conversion, type=CEPtype, accuracy=FALSE)
 
-        res$CEP <- sapply(CEPres, function(x) x$CEP["unit", CEPtype])
+        res$CEP <- sapply(CEPres$CEP, function(x) { x["unit", CEPtype] } )
 
         ## for axis limits
-        axisLimsX <- c(axisLimsX, sapply(CEPres, function(x) {
-            c(x$ctr[1] + x$CEP["unit", CEPtype], x$ctr[1] - x$CEP["unit", CEPtype]) }))
-        axisLimsY <- c(axisLimsY, sapply(CEPres, function(x) {
-            c(x$ctr[2] + x$CEP["unit", CEPtype], x$ctr[2] - x$CEP["unit", CEPtype]) }))
+        axisLimsX <- c(axisLimsX, sapply(CEPres$CEP, function(x) {
+            c(CEPres$ctr[1] + x["unit", CEPtype], CEPres$ctr[1] - x["unit", CEPtype]) }))
+        axisLimsY <- c(axisLimsY, sapply(CEPres$CEP, function(x) {
+            c(CEPres$ctr[2] + x["unit", CEPtype], CEPres$ctr[2] - x["unit", CEPtype]) }))
     }
 
     #####-----------------------------------------------------------------------
@@ -380,8 +379,8 @@ function(xy, xyTopLeft=TRUE, bb=FALSE, bbMin=FALSE, bbDiag=FALSE, minCirc=FALSE,
     }
 
     if(CEP != "FALSE") {                 # circular error probable
-        lapply(CEPres, function(x) {
-            drawCircle(x$ctr, x$CEP["unit", CEPtype], fg=cols["CEP"], lwd=2) })
+        lapply(CEPres$CEP, function(x) {
+            drawCircle(CEPres$ctr, x["unit", CEPtype], fg=cols["CEP"], lwd=2) })
         legText <- c(legText, paste("CEP", CEPtype, paste(level, collapse=" ")))
         legCol  <- c(legCol, cols["CEP"])
         legLty  <- c(legLty, 1)

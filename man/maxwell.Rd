@@ -29,7 +29,7 @@ The length of the result is determined by \code{n} for \code{rMaxwell}, and is t
 In \code{dMaxwell}, \code{pMaxwell} and \code{qMaxwell} are recycled to the length of the result. Only the first element of the logical parameters is used. In \code{rRayleigh}, only the first element of \code{sigma} is used.
 }
 \details{
-The parameter \code{sigma} may be determined with \code{\link[shotGroups]{getMaxParam}}.
+The parameter \code{sigma} may be determined with \code{\link[shotGroups]{getRayParam}}.
 
 See \code{\link[shotGroups]{Rayleigh}} for the distribution of radial error around the true center of uncorrelated bivariate normal variables with equal variances. See \code{\link[shotGroups]{Hoyt}} for the distribution of radial error around the true center of correlated bivariate normal variables with unequal variances. See \code{\link[shotGroups]{Rice}} for the distribution of radial error around an offset center for uncorrelated bivariate normal variables with equal variances. See \code{\link[shotGroups]{mvnEll}} for the distribution of radial error around an offset center for correlated normal variables with unequal variances.
 }
@@ -37,7 +37,7 @@ See \code{\link[shotGroups]{Rayleigh}} for the distribution of radial error arou
 \url{http://reference.wolfram.com/language/ref/MaxwellDistribution.html}
 }
 \seealso{
-\code{\link[shotGroups]{getMaxParam}},
+\code{\link[shotGroups]{getRayParam}},
 \code{\link[shotGroups]{Rayleigh}},
 \code{\link[shotGroups]{Hoyt}},
 \code{\link[shotGroups]{Rice}},

@@ -3,13 +3,13 @@
 readDataMisc <-
 function(fPath=".", fNames, fPat, combine=TRUE) {
     files <- getFileNames(fPath, fNames, fPat)
-    if(length(files) < 1) { stop("No files were selected") }
+    if(length(files) < 1L) { stop("No files were selected") }
 
     ## determine whether file is csv or whitespace delimited
     isCSV <- function(ext, nFields) {
         csv <- if(tolower(ext) == "csv") {        # explicit file extension
             TRUE
-        } else if((length(unique(nFields)) == 1) && (nFields[1] >= 2)) {
+        } else if((length(unique(nFields)) == 1L) && (nFields[1] >= 2)) {
             ## same number of comma-separated fields in all rows
             ## and at least two comma-separated fields
             TRUE
@@ -23,7 +23,7 @@ function(fPath=".", fNames, fPat, combine=TRUE) {
         pieces  <- strsplit(f, "\\.")[[1]]
         ext     <- tolower(pieces[length(pieces)]) # file extensions
         nFields <- count.fields(f, sep=",")
-        
+
         ## choose appropriate function to read in file
         readFun <- if(isCSV(ext, nFields)) {
             read.csv
@@ -71,7 +71,7 @@ function(fPath=".", fNames, fPat, combine=TRUE) {
             stop("Coordinates must be named X, Y - Point.X, Point.Y - or ShotX, ShotY")
         }
 
-        if(sum(c("z" %in% dfNames), "point.z" %in% dfNames, "shotz" %in% dfNames) > 1) {
+        if(sum(c("z" %in% dfNames, "point.z" %in% dfNames, "shotz" %in% dfNames)) > 1L) {
             stop("Coordinates must be named Z, Point.Z, or ShotZ")
         }
 
@@ -92,7 +92,7 @@ function(fPath=".", fNames, fPat, combine=TRUE) {
             warning("Variables AimX, AimY were renamed to aim.x, aim.y")
             names(x) <- dfNames
         }
-        
+
         x
     }
 
@@ -109,7 +109,7 @@ function(fPath=".", fNames, fPat, combine=TRUE) {
 readDataOT1 <-
 function(fPath=".", fNames, fPat, combine=TRUE) {
     files <- getFileNames(fPath, fNames, fPat)
-    if(length(files) < 1) { stop("No files were selected") }
+    if(length(files) < 1L) { stop("No files were selected") }
 
     ## assumed variables: Project Title, Group, Ammunition, Distance,
     ## Aim X, Aim Y, Center X, Center Y, Point X, Point Y
@@ -155,7 +155,7 @@ function(fPath=".", fNames, fPat, combine=TRUE) {
 readDataOT2 <-
 function(fPath=".", fNames, fPat, combine=TRUE) {
     files <- getFileNames(fPath, fNames, fPat)
-    if(length(files) < 1) { stop("No files were selected") }
+    if(length(files) < 1L) { stop("No files were selected") }
 
     ## assumed variables: Project Title, Group, Ammunition, Distance,
     ## Aim X, Aim Y, Center X, Center Y, Point X, Point Y, Velocity (optional)

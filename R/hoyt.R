@@ -34,7 +34,7 @@ getHoytParam.list <-
 function(x) {
     if(!all(sapply(x, is.matrix)))  { stop("x must be a matrix") }
     if(!all(sapply(x, is.numeric))) { stop("x must be numeric") }
-    if(!all(sapply(x, dim) == 2))   { stop("x must be (2 x 2)-matrix") }
+    if(!all(sapply(x, dim) == 2L))  { stop("x must be (2 x 2)-matrix") }
 
     getEV <- function(sigma) {           # eigenvalues from covariance matrix
         if(!isTRUE(all.equal(sigma, t(sigma)))) {
@@ -60,7 +60,7 @@ function(x) {
 ## based on covariance matrix
 getHoytParam.matrix <-
 function(x) {
-    if(any(dim(x) != 2))            { stop("x must be a (2 x 2)-matrix") }
+    if(any(dim(x) != 2L))           { stop("x must be a (2 x 2)-matrix") }
     if(!isTRUE(all.equal(x, t(x)))) { stop("x must be symmetric") }
 
     x <- eigen(x)$values
@@ -71,9 +71,9 @@ function(x) {
 ## not vectorized
 getHoytParam.default <-
 function(x) {
-    if(!is.numeric(x)) { stop("x must be numeric") }
-    if(any(x < 0))     { stop("x must be >= 0") }
-    if(length(x) != 2) { stop("x must have length 2") }
+    if(!is.numeric(x))  { stop("x must be numeric") }
+    if(any(x < 0))      { stop("x must be >= 0") }
+    if(length(x) != 2L) { stop("x must have length 2") }
     if(!all(x >= -sqrt(.Machine$double.eps) * abs(max(x)))) {
         stop("x is numerically not positive definite")
     }
@@ -111,7 +111,7 @@ function(qpar, omega) {
 dHoyt <-
 function(x, qpar, omega) {
     is.na(x)     <- is.nan(x)                # replace NaN with NA
-    is.na(qpar)  <- (qpar <= 0)  | (qpar >= 1) | !is.finite(qpar)
+    is.na(qpar)  <- (qpar  <= 0) | (qpar >= 1) | !is.finite(qpar)
     is.na(omega) <- (omega <= 0) | !is.finite(omega)
 
     argL  <- recycle(x, qpar, omega)
@@ -121,7 +121,7 @@ function(x, qpar, omega) {
 
     dens <- numeric(length(x))                 # initialize density to 0
     keep <- which((x >= 0) | !is.finite(x))    # keep non-negative x, NA, -Inf, Inf
-    if(length(keep) < 1) { return(dens) }      # nothing to do
+    if(length(keep) < 1L) { return(dens) }     # nothing to do
 
     lfac1 <- log(x[keep]) + log(1 + qpar[keep]^2) - log(qpar[keep]*omega[keep])
     lfac2 <- -x[keep]^2*(1+qpar[keep]^2)^2/(4*qpar[keep]^2*omega[keep])
@@ -182,7 +182,7 @@ function(a, b, nu, lower.tail=TRUE) {
 ## Electronics Letters, 45(4). 210-211. Erratum: doi:10.1049/el.2009.0828
 pHoyt <-
 function(q, qpar, omega, lower.tail=TRUE) {
-    is.na(qpar)  <- (qpar <= 0)  | (qpar >= 1) | !is.finite(qpar)
+    is.na(qpar)  <- (qpar  <= 0) | (qpar >= 1) | !is.finite(qpar)
     is.na(omega) <- (omega <= 0) | !is.finite(omega)
 
     argL  <- recycle(q, qpar, omega)
@@ -309,7 +309,7 @@ function(p, qpar, omega, lower.tail=TRUE, loUp=NULL) {
         loUp <- split(cbind(qLo, qUp), seq_along(p))
     } else {
         if(is.matrix(loUp)) {
-            loUp <- split(loUp, 1:nrow(loUp))
+            loUp <- split(loUp, seq_len(nrow(loUp)))
         } else if(is.vector(loUp)) {
             loUp <- list(loUp)
         } else if(!is.list(loUp)) {
@@ -341,7 +341,7 @@ function(n, qpar, omega, method=c("eigen", "chol", "cdf"), loUp=NULL) {
     method <- match.arg(method)
 
     ## if n is a vector, its length determines number of random variates
-    n     <- if(length(n) > 1) { length(n) } else { n }
+    n     <- if(length(n) > 1L) { length(n) } else { n }
     qpar  <- qpar[1]                     # only first shape parameter is used
     omega <- omega[1]                    # only first scale parameter is used
 
@@ -391,7 +391,7 @@ function(n, qpar, omega, method=c("eigen", "chol", "cdf"), loUp=NULL) {
             loUp <- split(cbind(qLo, qUp), seq_along(u))
         } else {
             if(is.matrix(loUp)) {
-                loUp <- split(loUp, 1:nrow(loUp))
+                loUp <- split(loUp, seq_len(nrow(loUp)))
             } else if(is.vector(loUp)) {
                 loUp <- list(loUp)
             } else if(!is.list(loUp)) {

@@ -49,7 +49,7 @@ library(shotGroups, verbose=FALSE)       # load shotGroups package
 getBoundingBox(DFtalon)                  # axis-aligned bounding box
 getMinBBox(DFtalon)                      # minimum-area bounding box
 getMinCircle(DFtalon)                    # minimum enclosing circle
-getMaxPairDist(DFtalon)                  # maximum pairwise distance
+getMaxPairDist(DFtalon)                  # extreme spread / group size
 
 ## ----cCEP, out.width='3in'-----------------------------------------------
 ## circular error probable
@@ -66,7 +66,7 @@ getRayParam(DFscar17, level=0.95)
 
 ## Maxwell-Boltzmann parameter estimates with 95% confidence interval
 xyz <- matrix(rnorm(60), ncol=3)
-getMaxParam(xyz, level=0.95)
+getRayParam(xyz, level=0.95)
 
 ## ----cHitProb1, out.width='3in'------------------------------------------
 ## for the Grubbs-Patnaik estimate
@@ -90,7 +90,7 @@ CEP100yd <- getCEP(DFscar17, type=c("GrubbsPatnaik", "Rayleigh"),
 CEP100yd$CEP
 
 ## extract CEP in MOA
-CEPmoa <- CEP100yd$CEP["MOA", c("GrubbsPatnaik", "Rayleigh")]
+CEPmoa <- CEP100yd$CEP$CEP0.5["MOA", c("GrubbsPatnaik", "Rayleigh")]
 
 ## 50% CEP in inch for the same group extrapolated to 100m
 fromMOA(CEPmoa, dst=100, conversion="m2in")
@@ -149,6 +149,34 @@ sdY <- 2                              # standard deviation along y
 hp  <- getHoytParam(c(sdX^2, sdY^2))  # convert to Hoyt parameters
 pHoyt(1.5, qpar=hp$q, omega=hp$omega)
 pmvnEll(1.5, sigma=diag(c(sdX^2, sdY^2)), mu=c(0, 0), e=diag(2), x0=c(0, 0))
+
+## ----cRange1-------------------------------------------------------------
+# get range statistics from DFscar17 data
+es  <- getMaxPairDist(DFscar17)$d      # extreme spread
+fom <- getBoundingBox(DFscar17)$FoM    # figure of merit
+d   <- getBoundingBox(DFscar17)$diag   # bounding box diagonal
+
+# estimate Rayleigh sigma from each statistic
+range2sigma(c(es, fom, d), stat=c("ES", "FoM", "D"),
+            n=nrow(DFscar17), nGroups=1, CIlevel=0.9)
+
+## ----cRange2-------------------------------------------------------------
+getRayParam(DFscar17, level=0.9)$sigma
+
+## ----cEfficiency1--------------------------------------------------------
+# ...Ceil gives the result when the number of groups is rounded
+# up to the nearest integer
+efficiency(n=c(3, 5, 10), CIlevel=0.9, CIwidth=0.2, stat="ES")
+
+## ----cEfficiency2--------------------------------------------------------
+efficiency(n=c(3, 5, 10), CIlevel=0.9, CIwidth=0.2, stat="Rayleigh")
+
+## ----cEfficiency3--------------------------------------------------------
+with(subset(DFdistr, (n == 10L) & (nGroups == 10L)),
+     c(ES_Q050/ES_M, ES_Q950/ES_M))
+
+## ----cEfficiency4--------------------------------------------------------
+efficiency(n=c(3, 5, 10), nGroups=10, CIlevel=0.9, stat="ES")
 
 ## ----cDrawGroup1, out.width='3in'----------------------------------------
 library(shotGroups, verbose=FALSE)       # load shotGroups package

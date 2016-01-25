@@ -35,6 +35,8 @@ In addition to the numerical results listed below, this function produces the fo
 \item a scatterplot of the (x,y)-coordinates together with the bounding box, minimum bounding box, minimum enclosing circle, and maximum group spread
 \item a histogram of distances to group center including a fitted Rayleigh distribution as well as a non-parametric kernel density estimate
 }
+
+If package \code{shiny} is installed, an interactive web app for this functionality can be run with \code{runGUI("analyze")}.
 }
 \value{
 A list with the results from the numerical analyses and statistical tests.

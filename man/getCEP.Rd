@@ -14,11 +14,11 @@
        accuracy = FALSE, type = 'CorrNormal', doRob = FALSE)}
 \arguments{
   \item{xy}{either a numerical (n x p)-matrix with the coordinates of n points (1 row of p coordinates per point), or a data frame with either the variables \code{X}, \code{Y} or \code{Point.X}, \code{Point.Y} (optionally \code{Z} or \code{Point.Z}).}
-  \item{CEPlevel}{a numerical value with the coverage for the CEP/SEP.}
+  \item{CEPlevel}{a numerical vector with the coverage values for the CEP/SEP.}
   \item{dstTarget}{a numerical value with the distance to the target - used in MOA calculation. See \code{\link[shotGroups]{getMOA}}.}
   \item{conversion}{how to convert the measurement unit for distance to target to that of the shot-coordinates - used in MOA calculation. See \code{\link[shotGroups]{getMOA}}.}
   \item{accuracy}{logical: take systematic location bias into account? See details.}
-  \item{type}{string vector indicating which CEP/SEP estimate to report. Possible values are \code{'CorrNormal', 'GrubbsPearson', 'GrubbsPatnaik', 'GrubbsLiu', 'Rayleigh', 'Ethridge', 'RAND'}. See details.}
+  \item{type}{string vector indicating which CEP/SEP estimate to report. Possible values are \code{'CorrNormal', 'GrubbsPearson', 'GrubbsPatnaik', 'GrubbsLiu', 'Rayleigh', 'Krempasky', 'Ignani', 'RMSE', 'Ethridge', 'RAND', 'Valstar'}. See details.}
   \item{doRob}{logical: use robust estimation of center and covariance matrix as basis for estimators?}
 }
 \details{
@@ -28,11 +28,16 @@ For \code{accuracy=FALSE} (default), the reported CEP/SEP estimates do not take 
 \item \code{GrubbsPearson}: The Grubbs-Pearson estimate (Grubbs, 1964) is based on the Pearson three-moment central chi^2-approximation of the true cumulative distribution function of radial error. The eigenvalues of the covariance matrix of shot-coordinates are used as variance estimates since they are the variances of the principal components (the PCA-rotated = decorrelated data). This estimate is available for all probability levels, and generalizes to three dimensions.
 \item \code{GrubbsPatnaik}: The Grubbs-Patnaik estimate (Grubbs, 1964) differs from the Grubbs-Pearson estimate insofar as it is based on the Patnaik two-moment central chi^2-approximation of the true cumulative distribution function of radial error.
 \item \code{GrubbsLiu}: The Grubbs-Liu estimate was not proposed by Grubbs but follows the same principle as his original estimates. It differs from them insofar as it is based on the Liu-Tang-Zhang four-moment non-central chi^2-approximation of the true cumulative distribution function of radial error. For \code{accuracy=FALSE}, it is identical to \code{GrubbsPearson}.
-\item \code{Rayleigh}: For \code{accuracy=FALSE} and two-dimensional data, this estimate uses the Rayleigh distribution (see \code{\link[shotGroups]{getRayParam}}). It is valid for uncorrelated bivariate normal coordinates with equal variances. This estimate is available for all probability levels. For \code{accuracy=FALSE} and three-dimensional data, the Maxwell-Boltzmann distribution is used (see \code{\link[shotGroups]{getMaxParam}}). For \code{accuracy=TRUE} and two-dimensional data, the estimate uses the Rice distribution (see \code{\link[shotGroups]{getRiceParam}}). For \code{accuracy=TRUE} and three-dimensional data, it is based on the offset sphere probabilities for the multivariate normal distribution set to have equal variances (see \code{\link[shotGroups]{qmvnEll}}).
-\item \code{Krempasky}: The Krempasky estimate (Krempasky, 2003) is based on a closed-form solution for the 50\% quantile of the radial error for the correlated bivariate normal distribution with 0 mean. It requires estimating the covariance matrix and can only be reported for probability 0.5 with \code{accuracy=FALSE}. It does not generalize to three dimensions.
+\item \code{Rayleigh}: For \code{accuracy=FALSE} and two-dimensional data, this estimate uses the Rayleigh distribution (see \code{\link[shotGroups]{getRayParam}}). It is valid for uncorrelated bivariate normal coordinates with equal variances. This estimate is available for all probability levels. For \code{accuracy=FALSE} and three-dimensional data, the Maxwell-Boltzmann distribution is used (see \code{\link[shotGroups]{getRayParam}}). For \code{accuracy=TRUE} and two-dimensional data, the estimate uses the Rice distribution (see \code{\link[shotGroups]{getRiceParam}}). For \code{accuracy=TRUE} and three-dimensional data, it is based on the offset sphere probabilities for the multivariate normal distribution set to have equal variances (see \code{\link[shotGroups]{qmvnEll}}).
+\item \code{Krempasky}: The Krempasky estimate (Krempasky, 2003) is based on a nearly exact closed-form solution for the 50\% quantile of the radial error for the correlated bivariate normal distribution with 0 mean. It requires estimating the covariance matrix and can only be reported for probability 0.5 with \code{accuracy=FALSE}. It does not generalize to three dimensions.
+\item \code{Ignani}: The Ignani estimate (Ignani, 2010) is based on a polynomial approximation for some quantiles of the radial error for the correlated bivariate normal distribution with 0 mean. It requires estimating the covariance matrix and can only be reported for probabilities 0.5, 0.9, 0.95, 0.99 with \code{accuracy=FALSE}. It generalizes to three dimensions.
+\item \code{RMSE}: For \code{accuracy=FALSE}, this estimator is the RMSE estimator often described in the GPS literature (van Diggelen, 2007) when using centered data for calculating RMSE (square root of the mean squared error). It is very similar to the \code{Rayleigh} estimator. For \code{accuracy=TRUE}, this the RMSE estimator often described in the GPS literature when using the original, non-centered data for calculating RMSE. It is similar to the \code{Rayleigh} estimator only when bias is small, but becomes seriously wrong otherwise. It is available for all probability levels, and generalizes to three dimensions.
 \item \code{Ethridge}: The Ethridge estimate (Ethridge, 1983; Puhek, 1992) is not based on the assumption of multivariate normality of coordinates but uses a robust unbiased estimator for the median radius (Hogg, 1967). It can only be reported for probability 0.5 but generalizes to three dimensions.
-\item \code{RAND}: The modified RAND R-234 estimate (RAND, 1952; Pesapane & Irvine, 1977; Puhek 1992) is a weighted sum of the square root of the eigenvalues of the covariance matrix, that is of the standard deviations of the two principal components. It can only be reported for probability 0.5 and does not generalize to three dimensions.
+\item \code{RAND}: The modified RAND R-234 estimate (RAND, 1952; Pesapane & Irvine, 1977; Puhek 1992) is a weighted sum of the square root of the eigenvalues of the covariance matrix of shot coordinates (the standard deviations of the data that is first de-correlated through rotation). It can only be reported for probability 0.5 and does not generalize to three dimensions.
+\item \code{Valstar}: Very similar to the RAND R-234 estimate with \code{accuracy=FALSE} except for very elliptical distributions but with a different bias correction with \code{accuracy=TRUE}. It can only be reported for probability 0.5 and does not generalize to three dimensions.
 }
+
+If package \code{shiny} is installed, an interactive web app for this functionality can be run with \code{runGUI("hitprob")}.
 }
 \value{
 A list with the (chosen) CEP/SEP estimates and supplementary information on the distribution shape.
@@ -49,6 +54,8 @@ Grubbs, F. E. (1964). Approximate circular and noncircular offset probabilities 
 
 Hogg, R. V. (1967). Some observations on robust estimation. Journal of the American Statistical Association, 62 (320), 1179-1186.
 
+Ignani, B. (2010). Determination of Circular and Spherical Position-Error Bounds in System Performance Analysis. Journal of Guidance, Control, and Dynamics, 33 (4), 1301-1304.
+
 Krempasky, J. J. (2003). CEP equation exact to the fourth order. Navigation: Journal of The Institute of Navigation, 50 (3), 143-149.
 
 Liu, H., Tang, Y., & Zhang, H. H. (2009). A new chi-square approximation to the distribution of non-negative definite quadratic forms in non-central normal variables. Computational Statistics & Data Analysis, 53(4), 853-856.
@@ -60,6 +67,8 @@ Puhek, P. (1992). Sensitivity analysis of circular error probable approximation 
 RAND Corporation. (1952). Offset circle probabilities (RAND-234). Santa Monica, CA: RAND Corporation.
 
 Singh, H. P. 1992. Estimation of Circular Probable Error. The Indian Journal of Statistics, Series B 5(3), 289-305.
+
+van Diggelen, F. 2007. Update: GNSS Accuracy: Lies, Damn Lies, and Statistics. GPS World.
 }
 \seealso{
 \code{\link[shotGroups]{Rayleigh}},
@@ -82,9 +91,9 @@ Singh, H. P. 1992. Estimation of Circular Probable Error. The Indian Journal of 
 
 # plot points, centers, and circles indicating 50\%-CEP estimates
 plot(point.y ~ point.x, data=DFtalon, asp=1, pch=16)
-drawCircle(cep$ctr, cep$CEP['unit',    'CorrNormal'], fg='red')
-drawCircle(cep$ctr, cep$CEP['unit', 'GrubbsPatnaik'], fg='green3')
-drawCircle(cep$ctr, cep$CEP['unit',      'Rayleigh'], fg='blue')
+drawCircle(cep$ctr, cep$CEP$CEP0.5['unit', 'CorrNormal'],    fg='red')
+drawCircle(cep$ctr, cep$CEP$CEP0.5['unit', 'GrubbsPatnaik'], fg='green3')
+drawCircle(cep$ctr, cep$CEP$CEP0.5['unit', 'Rayleigh'],      fg='blue')
 points(cep$ctr[1], cep$ctr[2], pch=4, col='gray50', cex=2, lwd=2)
 legend(x='bottomleft',
        legend=c('Grubbs 50', 'Corr Normal 50', 'Rayleigh 50', 'center'),
@@ -95,9 +104,7 @@ legend(x='bottomleft',
 dists <- getDistToCtr(DFtalon)           # distances to center
 
 # extract CEP radius for all estimates
-CEPr <- c(Grubbs=cep$CEP['unit', 'GrubbsPatnaik'],
-      CorrNormal=cep$CEP['unit',    'CorrNormal'],
-        Rayleigh=cep$CEP['unit',      'Rayleigh'])
+CEPr <- cep$CEP$CEP0.5['unit', ]
 
 # percentage of points in circle with radius = CEP
 100 * sapply(CEPr, function(x) sum(dists <= x)) / length(dists)
@@ -106,6 +113,6 @@ CEPr <- c(Grubbs=cep$CEP['unit', 'GrubbsPatnaik'],
 \dontrun{
 xy <- matrix(round(rnorm(100, 0, 5), 2), ncol=2)
 getCEP(xy, accuracy=FALSE, dstTarget=25, conversion='m2cm',
-       type=c('Grubbs', 'CorrNormal', 'Rayleigh')))
+       type=c('Grubbs', 'CorrNormal', 'Rayleigh'))
 }
 }

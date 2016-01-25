@@ -3,7 +3,7 @@ getCircleFrom3 <-
 function(xy) {
     if(!is.matrix(xy))  { stop("xy must be a matrix") }
     if(!is.numeric(xy)) { stop("xy must be numeric") }
-    if(any(dim(xy) != c(3, 2))) { stop("xy must be (3x2)-matrix") }
+    if(any(dim(xy) != c(3L, 2L))) { stop("xy must be (3x2)-matrix") }
 
     aa <- xy[1,  ]
     bb <- xy[2,  ]
@@ -51,9 +51,9 @@ getMaxRad <-
 function(xy, S) {
     if(!is.matrix(xy))  { stop("xy must be a matrix") }
     if(!is.numeric(xy)) { stop("xy must be numeric") }
-    if(ncol(xy) != 2)   { stop("xy must have two columns") }
+    if(ncol(xy) != 2L)  { stop("xy must have two columns") }
     if(!is.numeric(S))  { stop("S must be numeric") }
-    if((length(S) < 2) || (nrow(xy) < 2)) { stop("There must be at least two points") }
+    if((length(S) < 2L) || (nrow(xy) < 2L)) { stop("There must be at least two points") }
     if(length(S) > nrow(xy)) { stop("There can only be as many indices in S as points in xy") }
 
     n    <- length(S)                    # number of points
@@ -74,7 +74,7 @@ getAngleTri <-
 function(xy, deg=TRUE) {
     if(!is.matrix(xy))  { stop("xy must be a matrix") }
     if(!is.numeric(xy)) { stop("xy must be numeric") }
-    if(any(dim(xy) != c(3, 2))) { stop("xy must be (3x2)-matrix") }
+    if(any(dim(xy) != c(3L, 2L))) { stop("xy must be (3x2)-matrix") }
 
     d   <- dist(xy)
     dAB <- d[1]
@@ -98,7 +98,7 @@ isBiggerThan90 <-
 function(xy) {
     if(!is.matrix(xy))  { stop("xy must be a matrix") }
     if(!is.numeric(xy)) { stop("xy must be numeric") }
-    if(any(dim(xy) != c(3, 2))) { stop("xy must be (3x2)-matrix") }
+    if(any(dim(xy) != c(3L, 2L))) { stop("xy must be (3x2)-matrix") }
 
     d   <- dist(xy)
     dAB <- d[1]
@@ -123,8 +123,8 @@ getMinCircle.default <-
 function(xy) {
     if(!is.matrix(xy))  { stop("xy must be a matrix") }
     if(!is.numeric(xy)) { stop("xy must be numeric") }
-    if(nrow(xy) < 2)    { stop("There must be at least two points") }
-    if(ncol(xy) != 2)   { stop("xy must have two columns") }
+    if(nrow(xy) < 2L)   { stop("There must be at least two points") }
+    if(ncol(xy) != 2L)  { stop("xy must have two columns") }
 
     H    <- chull(xy)      # convex hull indices (vertices ordered clockwise)
     hPts <- xy[H, ]        # points that make up the convex hull
@@ -148,7 +148,7 @@ function(xy) {
 
     ## min circle touches hull in three points - Skyum algorithm
     S <- H                               # copy of hull indices that will be changed
-    while(length(S) >= 2) {
+    while(length(S) >= 2L) {
         n    <- length(S)                # number of remaining hull vertices
         Sidx <- seq(along=S)             # index for vertices
         post <- (Sidx %% n) + 1          # next vertex in S
@@ -159,7 +159,7 @@ function(xy) {
         Smax <- rbind(xy[S[prev[mIdx]], ], xy[S[mIdx], ], xy[S[post[mIdx]], ])
 
         ## if there's only two hull vertices, we're done
-        if(n <= 2) { break }
+        if(n <= 2L) { break }
 
         ## check if angle(ABC) is > 90
         ## if so, eliminate B - if not, we're done

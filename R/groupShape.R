@@ -16,7 +16,7 @@ function(xy, plots=TRUE, bandW=0.5, outlier=c("mcd", "pca"),
          dstTarget=100, conversion="m2cm", ...) {
     if(!is.matrix(xy))  { stop("xy must be a matrix") }
     if(!is.numeric(xy)) { stop("xy must be numeric") }
-    if(ncol(xy) != 2)   { stop("xy must have two columns") }
+    if(ncol(xy) != 2L)  { stop("xy must have two columns") }
 
     outlier <- match.arg(outlier)
 
@@ -28,13 +28,16 @@ function(xy, plots=TRUE, bandW=0.5, outlier=c("mcd", "pca"),
     res    <- vector("list", 0)          # empty list to later collect the results
     devNew <- getDevice()                # platform-dependent window open
 
-    haveRob <- if(Npts < 4) {
+    haveMVoutlier <- requireNamespace("mvoutlier", quietly=TRUE)
+    haveEnergy    <- requireNamespace("energy",    quietly=TRUE)
+
+    haveRob <- if(Npts < 4L) {
         warning(c("We need >= 4 points for robust estimations,\n",
                   "outlier analysis, and chi^2 plot for multivariate normality"))
         FALSE                           # can we do robust estimation?
     }  else {
         TRUE
-    }                                   # if(Npts < 4)
+    }                                   # if(Npts < 4L)
 
     #####-----------------------------------------------------------------------
     ## correlation matrix of (x,y)-coords
@@ -46,29 +49,33 @@ function(xy, plots=TRUE, bandW=0.5, outlier=c("mcd", "pca"),
 
         #####-------------------------------------------------------------------
         ## outlier-analysis for joint distribution of (x,y)-coords
-        if(plots) {
+        if(plots && haveMVoutlier) {
             devNew()                         # open new diagram
             op <- par(no.readonly=TRUE)      # save device parameters
-    
+
             ## outlier-analysis-plot         # this can fail due to memory constraints
             outXY <- tryCatch(mvoutlier::aq.plot(xy), error=function(e) {
                 warning(c("mvoutlier::aq.plot() failed:\n", e$message))
                 return(list(outliers=NA)) })
             par(op)                          # reset device parameters
-        } else {
+        } else if(haveMVoutlier) {
             pdf(file=NULL)                   # redirect diagram to null device
             ## outlier-analysis-plot         # this can fail due to memory constraints
             outXY <- tryCatch(mvoutlier::aq.plot(xy), error=function(e) {
                 warning(c("mvoutlier::aq.plot() failed:\n", e$message))
                 return(list(outliers=NA)) })
             dev.off()
+        } else {
+            warning(c("Package mvoutlier is not installed"))
+            outXY <- list(outliers=NA)
         }
 
-        res$Outliers <- if(outlier == "mcd") {  #  identified outliers
+        ##  identified outliers
+        res$Outliers <- if((outlier == "mcd") && !is.na(outXY$outliers)) {
             which(outXY$outliers)
-        } else if(outlier == "pca") {
+        } else if((outlier == "pca") && haveMVoutlier) {
             which(mvoutlier::pcout(xy, makeplot=FALSE, ...)$wfinal01 == 0)
-        }
+        } else { NULL }
     } else {
         res$corXYrob <- NULL
         res$Outliers <- NULL
@@ -77,7 +84,7 @@ function(xy, plots=TRUE, bandW=0.5, outlier=c("mcd", "pca"),
     #####-----------------------------------------------------------------------
     ## normality tests
     ## Shapiro-Wilk-Tests for normality of (x,y)-coords separately
-    if(Npts >= 3) {
+    if(Npts >= 3L) {
         if(Npts <= 5000) {               # Shapiro-Wilk only for <= 5000 points
             res$ShapiroX <- shapiro.test(X)  # normality x-coords
             res$ShapiroY <- shapiro.test(Y)  # normality y-coords
@@ -99,13 +106,18 @@ function(xy, plots=TRUE, bandW=0.5, outlier=c("mcd", "pca"),
         }
 
         ## Energy-Test for multivariate normality of joint (x,y)-distribution
-        res$multNorm <- energy::mvnorm.etest(xy, R=1499)
+        res$multNorm <- if(haveEnergy) {
+            energy::mvnorm.etest(xy, R=1499)
+        } else {
+            warning("Package energy for multivariate normality test not installed")
+            NULL
+        }
    } else {
         res$ShapiroX <- NULL
         res$ShapiroY <- NULL
         res$multNorm <- NULL
         warning("We need >= 3 points for normality tests")
-    }                                    # if(Npts >= 3)
+    }                                    # if(Npts >= 3L)
 
     if(plots) {
         ## infer (x,y)-coord units from conversion
@@ -240,13 +252,13 @@ function(xy, plots=TRUE, bandW=0.5, outlier=c("mcd", "pca"),
 }
 
 groupShapePlot <-
-function(xy, which=1, bandW=0.5, outlier=c("mcd", "pca"),
+function(xy, which=1L, bandW=0.5, outlier=c("mcd", "pca"),
          dstTarget=100, conversion="m2cm", ...) {
-    
+
     if(!is.data.frame(xy)) { stop("xy must be a data.frame") }
     xy <- getXYmat(xy)
     if(!is.numeric(xy))    { stop("xy must be numeric") }
-    if(ncol(xy) != 2)      { stop("xy must have two columns") }
+    if(ncol(xy) != 2L)     { stop("xy must have two columns") }
 
     which   <- match.arg(as.character(which), choices=1:7)
     outlier <- match.arg(outlier)
@@ -258,8 +270,10 @@ function(xy, which=1, bandW=0.5, outlier=c("mcd", "pca"),
     Npts <- nrow(xy)                     # number of points
     res  <- vector("list", 0)            # empty list to later collect the results
 
+    haveMVoutlier <- requireNamespace("mvoutlier", quietly=TRUE)
+
     haveRob <- TRUE                      # can we do robust estimation?
-    if(Npts < 4) {
+    if(Npts < 4L) {
         warning(c("We need >= 4 points for robust estimations,\n",
                   "outlier analysis, and chi^2 plot for multivariate normality"))
         haveRob <- FALSE
@@ -267,9 +281,9 @@ function(xy, which=1, bandW=0.5, outlier=c("mcd", "pca"),
         rob      <- robustbase::covMcd(xy, cor=TRUE)
         ctrRob   <- rob$center       # robust estimate: group center,
         covXYrob <- rob$cov          # group covariance matrix
-    }                                   # if(Npts < 4)
+    }                                # if(Npts < 4L)
 
-    if((which == 1) && haveRob) {
+    if((which == 1L) && haveRob && haveMVoutlier) {
         #####-------------------------------------------------------------------
         ## outlier-analysis for joint distribution of (x,y)-coords
         ## this can fail due to memory constraints
@@ -288,7 +302,7 @@ function(xy, which=1, bandW=0.5, outlier=c("mcd", "pca"),
     axisLimsX <- numeric(0)
     axisLimsY <- numeric(0)
 
-    if(which == 2) {
+    if(which == 2L) {
         #####-------------------------------------------------------------------
         ## diagram: separate Q-Q-plots for eyeballing normality in x- and y-coords
         qqnorm(X, pch=20, main="Q-Q-plot x-coordinates for eyeballing normality",
@@ -298,7 +312,7 @@ function(xy, which=1, bandW=0.5, outlier=c("mcd", "pca"),
         qqline(X, col="red", lwd=2)      # reference line
     }
 
-    if(which == 3) {
+    if(which == 3L) {
         qqnorm(Y, pch=20, main="Q-Q-plot y-coordinates for eyeballing normality",
                sub=paste("distance:", dstTarget, unitDst),
                xlab="Quantiles from standard normal distribution",
@@ -306,7 +320,7 @@ function(xy, which=1, bandW=0.5, outlier=c("mcd", "pca"),
         qqline(Y, col="red", lwd=2)      # reference line
     }
 
-    if(which == 4) {
+    if(which == 4L) {
         #####-------------------------------------------------------------------
         ## diagram: histograms for x- and y-coords
         ## x-coords
@@ -331,7 +345,7 @@ function(xy, which=1, bandW=0.5, outlier=c("mcd", "pca"),
                col=c("blue", "red"), lty=c(1, 1), lwd=c(2, 2), bg=rgb(1, 1, 1, 0.7))
     }
 
-    if(which == 5) {
+    if(which == 5L) {
         ## histogram y-coords
         ## choose y-axis limits
         maxNormY <- getMaxNorm(Y, 2)[2]
@@ -355,7 +369,7 @@ function(xy, which=1, bandW=0.5, outlier=c("mcd", "pca"),
                col=c("blue", "red"), lty=c(1, 1), lwd=c(2, 2), bg=rgb(1, 1, 1, 0.7))
     }
 
-    if(which == 6) {
+    if(which == 6L) {
         ## chi-square qq-plot for eyeballing multivariate normality
         ## quantiles of squared robust Mahalanobis distance against quantiles
         ## from chi^2 distribution with 2 df
@@ -377,7 +391,7 @@ function(xy, which=1, bandW=0.5, outlier=c("mcd", "pca"),
         }                                # if(haveRob)
     }
 
-    if(which == 7) {
+    if(which == 7L) {
         #####-------------------------------------------------------------------
         ## diagram: 2D-kernel density estimate for joint (x,y)-distribution
         ## determine axis limits

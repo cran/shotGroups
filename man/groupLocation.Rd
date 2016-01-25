@@ -22,6 +22,8 @@
 }
 \details{
 The number of replicates for the reported bootstrap confidence intervals is at least 1499. If the BCa interval is reported, it is at least the number of points.
+
+If package \code{shiny} is installed, an interactive web app for this functionality can be run with \code{runGUI("analyze")}.
 }
 \value{
 A list with the results from the numerical analyses and statistical tests.

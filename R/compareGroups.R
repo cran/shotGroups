@@ -11,7 +11,7 @@ function(DF, plots=TRUE, xyTopLeft=TRUE, ABalt=c("two.sided", "less", "greater")
     CEPtype <- match.arg(CEPtype,
                          choices=c("CorrNormal", "GrubbsPearson", "GrubbsLiu",
                                    "GrubbsPatnaik", "Rayleigh", "Krempasky",
-                                   "Ethridge", "RAND"), several.ok=FALSE)
+                                   "Ignani", "RMSE", "Ethridge", "RAND", "Valstar"), several.ok=FALSE)
 
     ## check if CEP / CI level is given in percent
     if(CEPlevel >= 1) {
@@ -75,8 +75,8 @@ function(DF, plots=TRUE, xyTopLeft=TRUE, ABalt=c("two.sided", "less", "greater")
     }
 
     ## check if we have enough groups and points per group
-    if(nlevels(DF$series) < 2) { stop("We need >= 2 groups for a comparison") }
-    if(any(xtabs(~ series, data=DF) < 2)) { stop("We need >= 2 points in each group") }
+    if(nlevels(DF$series) < 2L)            { stop("We need >= 2 groups for a comparison") }
+    if(any(xtabs(~ series, data=DF) < 2L)) { stop("We need >= 2 points in each group") }
 
     ## prepare data: get (x,y)-coords relative to point of aim as matrix
     xy <- getXYmat(DF, xyTopLeft=xyTopLeft)
@@ -190,14 +190,14 @@ function(DF, plots=TRUE, xyTopLeft=TRUE, ABalt=c("two.sided", "less", "greater")
 
     sigmaL <- Map(makeMOA, sigma, dst=dstTarget, conversion=conversion)
     MRL    <- Map(makeMOA, MR,    dst=dstTarget, conversion=conversion)
-    res$sigma <- do.call("cbind", sigmaL) 
-    res$MR    <- do.call("cbind", MRL) 
+    res$sigma <- do.call("cbind", sigmaL)
+    res$MR    <- do.call("cbind", MRL)
     res$sigmaMRci <- Map(makeMOA, sigMRci, dst=dstTarget, conversion=conversion)
 
     ## 50% circular error probable
     CEPlist <- Map(getCEP, xyL, CEPlevel=CEPlevel, dstTarget=dstTarget,
                    conversion=conversion, type=CEPtype, doRob=FALSE)
-    CEPl    <- lapply(CEPlist, function(x) { x$CEP[ , CEPtype, drop=FALSE] })
+    CEPl    <- lapply(CEPlist, function(x) { x$CEP[[1]][ , CEPtype, drop=FALSE] })
     CEPmat  <- do.call("cbind", CEPl)    # as matrix
     colnames(CEPmat) <- names(xyL)
     res$CEP <- CEPmat
@@ -222,7 +222,7 @@ function(DF, plots=TRUE, xyTopLeft=TRUE, ABalt=c("two.sided", "less", "greater")
                            series=factor(rep(seq_along(levels(DF$series)), nObs),
                                          labels=levels(DF$series)))
 
-    if(nS == 2) {                        # compare two groups
+    if(nS == 2L) {                       # compare two groups
         res$AnsariX  <- coin::ansari_test(x ~ series, alternative=ABalt,
                                           data=DF, distribution="exact")
         res$AnsariY  <- coin::ansari_test(y ~ series, alternative=ABalt,
@@ -255,7 +255,7 @@ function(DF, plots=TRUE, xyTopLeft=TRUE, ABalt=c("two.sided", "less", "greater")
 
         ## confidence ellipse
         confElls <- Map(getConfEll, xyL, level=CEPlevel, dst=dstTarget, conversion=conversion)
-        
+
         ## adjust axis limits
         getConfEllLims <- function(x) {
             cbind(X=c(x$ctr[1] + x$size["unit", "semi-major"],
@@ -289,8 +289,8 @@ function(DF, plots=TRUE, xyTopLeft=TRUE, ABalt=c("two.sided", "less", "greater")
         }
 
         ## add legend
-        legend(x="bottomleft", legend=names(xyL), lty=NA, pch=syms[1:nS],
-               col=cols[1:nS], lwd=2, pt.cex=1.5, bg=rgb(1, 1, 1, 0.6))
+        legend(x="bottomleft", legend=names(xyL), lty=NA, pch=syms[seq_len(nS)],
+               col=cols[seq_len(nS)], lwd=2, pt.cex=1.5, bg=rgb(1, 1, 1, 0.6))
 
         #####-------------------------------------------------------------------
         ## diagram: 2D-scatter plot for the (x,y)-distribution
@@ -301,8 +301,8 @@ function(DF, plots=TRUE, xyTopLeft=TRUE, ABalt=c("two.sided", "less", "greater")
              sub=paste("distance:", dstTarget, unitDst),
              xlab=paste0("X [", unitXY, "]"), ylab=paste0("Y [", unitXY, "]"))
         abline(v=0, h=0, col="lightgray")  # add point of aim
-        points(res$ctr[1, ], res$ctr[2, ], col=cols[1:nS],
-               pch=syms[1:nS], lwd=2, cex=3)
+        points(res$ctr[1, ], res$ctr[2, ], col=cols[seq_len(nS)],
+               pch=syms[seq_len(nS)], lwd=2, cex=3)
 
         ## add bounding box and maximum group spread
         for(i in seq(along=xyL)) {
@@ -315,8 +315,8 @@ function(DF, plots=TRUE, xyTopLeft=TRUE, ABalt=c("two.sided", "less", "greater")
         }
 
         ## add legend
-        legend(x="bottomleft", legend=names(xyL), lty=NA, pch=syms[1:nS],
-               col=cols[1:nS], lwd=2, pt.cex=1.5, bg=rgb(1, 1, 1, 0.6))
+        legend(x="bottomleft", legend=names(xyL), lty=NA, pch=syms[seq_len(nS)],
+               col=cols[seq_len(nS)], lwd=2, pt.cex=1.5, bg=rgb(1, 1, 1, 0.6))
 
         #####-------------------------------------------------------------------
         ## diagram: 2D-scatter plot for the (x,y)-distribution
@@ -327,7 +327,7 @@ function(DF, plots=TRUE, xyTopLeft=TRUE, ABalt=c("two.sided", "less", "greater")
              sub=paste("distance:", dstTarget, unitDst),
              xlab=paste0("X [", unitXY, "]"), ylab=paste0("Y [", unitXY, "]"))
         abline(v=0, h=0, col="lightgray")  # add point of aim
-        points(res$ctr[1, ], res$ctr[2, ], col=cols[1:nS], pch=syms[1:nS],
+        points(res$ctr[1, ], res$ctr[2, ], col=cols[seq_len(nS)], pch=syms[seq_len(nS)],
                lwd=2, cex=3)
 
         ## add circle with mean distance to center and minimum enclosing circle
@@ -337,9 +337,9 @@ function(DF, plots=TRUE, xyTopLeft=TRUE, ABalt=c("two.sided", "less", "greater")
         }
 
         ## add legend
-        legend(x="bottomleft", legend=names(xyL), lty=NA, pch=syms[1:nS],
-               col=cols[1:nS], lwd=2, pt.cex=1.5, bg=rgb(1, 1, 1, 0.6))
-        
+        legend(x="bottomleft", legend=names(xyL), lty=NA, pch=syms[seq_len(nS)],
+               col=cols[seq_len(nS)], lwd=2, pt.cex=1.5, bg=rgb(1, 1, 1, 0.6))
+
         #####-------------------------------------------------------------------
         ## diagram: distances to center
         ## grouped boxplot + Rayleigh MR+CI
@@ -354,7 +354,7 @@ function(DF, plots=TRUE, xyTopLeft=TRUE, ABalt=c("two.sided", "less", "greater")
                 xlab="group", ylab=paste0("distance to center [", unitXY, "]"))
         axis(side=1, at=seq_along(levels(dstCtrDF$series)),
              labels=substring(levels(dstCtrDF$series), 1, 7), las=2)
-        
+
         ## Rayleigh MR+CI
         ## raw distances to center
         stripchart(dstCtr ~ series, data=dstCtrDF, pch=20, vert=TRUE,
@@ -386,7 +386,7 @@ function(DF, plots=TRUE, xyTopLeft=TRUE, ABalt=c("two.sided", "less", "greater")
 }
 
 compareGroupsPlot <-
-function(DF, which=1, xyTopLeft=TRUE, CEPlevel=0.5, CIlevel=0.95, conversion="m2cm") {
+function(DF, which=1L, xyTopLeft=TRUE, CEPlevel=0.5, CIlevel=0.95, conversion="m2cm") {
     if(!is.data.frame(DF)) { stop("DF must be a data frame") }
 
     which <- match.arg(as.character(which), choices=1:4)
@@ -439,8 +439,8 @@ function(DF, which=1, xyTopLeft=TRUE, CEPlevel=0.5, CIlevel=0.95, conversion="m2
     }
 
     ## check if we have enough groups and points per group
-    if(nlevels(DF$series) < 2) { stop("We need >= 2 groups for a comparison") }
-    if(any(xtabs(~ series, data=DF) < 2)) { stop("We need >= 2 points in each group") }
+    if(nlevels(DF$series) < 2L)            { stop("We need >= 2 groups for a comparison") }
+    if(any(xtabs(~ series, data=DF) < 2L)) { stop("We need >= 2 points in each group") }
 
     ## prepare data: get (x,y)-coords relative to point of aim as matrix
     xy <- getXYmat(DF, xyTopLeft=xyTopLeft)
@@ -510,8 +510,8 @@ function(DF, which=1, xyTopLeft=TRUE, CEPlevel=0.5, CIlevel=0.95, conversion="m2
 
     sigmaL <- Map(makeMOA, sigma, dst=dstTarget, conversion=conversion)
     MRL    <- Map(makeMOA, MR,    dst=dstTarget, conversion=conversion)
-    res$sigma <- do.call("cbind", sigmaL) 
-    res$MR    <- do.call("cbind", MRL) 
+    res$sigma <- do.call("cbind", sigmaL)
+    res$MR    <- do.call("cbind", MRL)
     res$sigmaMRci <- Map(makeMOA, sigMRci, dst=dstTarget, conversion=conversion)
 
     ## distance to center, Rayleigh sigma + MR
@@ -531,7 +531,7 @@ function(DF, which=1, xyTopLeft=TRUE, CEPlevel=0.5, CIlevel=0.95, conversion="m2
 
     ## confidence ellipse
     confElls <- Map(getConfEll, xyL, level=CEPlevel, dst=dstTarget, conversion=conversion)
-    
+
     ## for axis limits
     getConfEllLims <- function(x) {
         cbind(X=c(x$ctr[1] + x$size["unit", "semi-major"],
@@ -551,15 +551,15 @@ function(DF, which=1, xyTopLeft=TRUE, CEPlevel=0.5, CIlevel=0.95, conversion="m2
     ## determine axis limits
     xLims <- range(c(DF$x, axisLimsX))
     yLims <- range(c(DF$y, axisLimsY))
-    
+
     syms <- c(4, 16, 2, 1, 6, 8, 3, 5, 7, 9:13, 15, 17:25)  # data symbols
     cols <- getColors(nS)            # colors
-    
+
     if(nS > length(syms)) {
         stop(paste("At most", length(syms), "series possible"))
     }
-    
-    if(which == 1) {
+
+    if(which == 1L) {
         #####-----------------------------------------------------------------------
         ## diagram: 2D-scatter plot for the (x,y)-distribution
         plot(y ~ x, data=DF, xlim=xLims, ylim=yLims, asp=1, lwd=2,
@@ -578,11 +578,11 @@ function(DF, which=1, xyTopLeft=TRUE, CEPlevel=0.5, CIlevel=0.95, conversion="m2
         }
 
         ## add legend
-        legend(x="bottomleft", legend=names(xyL), lty=NA, pch=syms[1:nS],
-               col=cols[1:nS], lwd=2, pt.cex=1.5, bg=rgb(1, 1, 1, 0.6))
+        legend(x="bottomleft", legend=names(xyL), lty=NA, pch=syms[seq_len(nS)],
+               col=cols[seq_len(nS)], lwd=2, pt.cex=1.5, bg=rgb(1, 1, 1, 0.6))
     }
 
-    if(which == 2) {
+    if(which == 2L) {
         #####-----------------------------------------------------------------------
         ## diagram: 2D-scatter plot for the (x,y)-distribution
         plot(y ~ x, data=DF, asp=1, xlim=xLims, ylim=yLims, lwd=2,
@@ -591,8 +591,8 @@ function(DF, which=1, xyTopLeft=TRUE, CEPlevel=0.5, CIlevel=0.95, conversion="m2
              sub=paste("distance:", dstTarget, unitDst),
              xlab=paste0("X [", unitXY, "]"), ylab=paste0("Y [", unitXY, "]"))
         abline(v=0, h=0, col="lightgray")  # add point of aim
-        points(res$ctr[1, ], res$ctr[2, ], col=cols[1:nS],
-               pch=syms[1:nS], lwd=2, cex=3)
+        points(res$ctr[1, ], res$ctr[2, ], col=cols[seq_len(nS)],
+               pch=syms[seq_len(nS)], lwd=2, cex=3)
 
         ## add bounding box and maximum group spread
         for(i in seq(along=xyL)) {
@@ -605,11 +605,11 @@ function(DF, which=1, xyTopLeft=TRUE, CEPlevel=0.5, CIlevel=0.95, conversion="m2
         }
 
         ## add legend
-        legend(x="bottomleft", legend=names(xyL), lty=NA, pch=syms[1:nS],
-               col=cols[1:nS], lwd=2, pt.cex=1.5, bg=rgb(1, 1, 1, 0.6))
+        legend(x="bottomleft", legend=names(xyL), lty=NA, pch=syms[seq_len(nS)],
+               col=cols[seq_len(nS)], lwd=2, pt.cex=1.5, bg=rgb(1, 1, 1, 0.6))
     }
 
-    if(which == 3) {
+    if(which == 3L) {
         #####-----------------------------------------------------------------------
         ## diagram: 2D-scatter plot for the (x,y)-distribution
         plot(y ~ x, data=DF, asp=1, xlim=xLims, ylim=yLims, lwd=2,
@@ -618,7 +618,7 @@ function(DF, which=1, xyTopLeft=TRUE, CEPlevel=0.5, CIlevel=0.95, conversion="m2
              sub=paste("distance:", dstTarget, unitDst),
              xlab=paste0("X [", unitXY, "]"), ylab=paste0("Y [", unitXY, "]"))
         abline(v=0, h=0, col="lightgray")  # add point of aim
-        points(res$ctr[1, ], res$ctr[2, ], col=cols[1:nS], pch=syms[1:nS],
+        points(res$ctr[1, ], res$ctr[2, ], col=cols[seq_len(nS)], pch=syms[seq_len(nS)],
                lwd=2, cex=3)
 
         ## add circle with mean distance to center and minimum enclosing circle
@@ -628,11 +628,11 @@ function(DF, which=1, xyTopLeft=TRUE, CEPlevel=0.5, CIlevel=0.95, conversion="m2
         }
 
         ## add legend
-        legend(x="bottomleft", legend=names(xyL), lty=NA, pch=syms[1:nS],
-               col=cols[1:nS], lwd=2, pt.cex=1.5, bg=rgb(1, 1, 1, 0.6))
+        legend(x="bottomleft", legend=names(xyL), lty=NA, pch=syms[seq_len(nS)],
+               col=cols[seq_len(nS)], lwd=2, pt.cex=1.5, bg=rgb(1, 1, 1, 0.6))
     }                                    # if(plots)
 
-    if(which == 4) {
+    if(which == 4L) {
         #####-------------------------------------------------------------------
         ## diagram: distances to center
         ## grouped boxplot + Rayleigh MR+CI

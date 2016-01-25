@@ -68,7 +68,7 @@ function(x, radius, nv=100, fg=par("fg"), bg=NA,
          pch=par("pch"), cex=par("cex")) {
     if(!is.numeric(x))      { stop("x must be numeric") }
     if(!is.vector(x))       { stop("x must be a vector") }
-    if(length(x) != 2)      { stop("x must have length 2") }
+    if(length(x) != 2L)     { stop("x must have length 2") }
     if(!is.numeric(radius)) { stop("radius must be numeric") }
 
     angles <- seq(0, 2*pi, length.out=nv)
@@ -100,12 +100,12 @@ drawEllipse.default <-
 function(x, shape, radius=1, nv=100, axes=FALSE,
          fg=par("fg"), bg=NA, colCtr=NA,
          lty=par("lty"), lwd=par("lwd"), pch=par("pch"), cex=par("cex")) {
-    if(!is.numeric(x))       { stop("x must be numeric") }
-    if(!is.vector(x))        { stop("x must be a vector") }
-    if(length(x) != 2)       { stop("x must have length two") }
-    if(!is.matrix(shape))    { stop("shape must be a matrix") }
-    if(!is.numeric(shape))   { stop("shape must be numeric") }
-    if(any(dim(shape) != 2)) { stop("shape must be a (2 x 2)-matrix") }
+    if(!is.numeric(x))        { stop("x must be numeric") }
+    if(!is.vector(x))         { stop("x must be a vector") }
+    if(length(x) != 2L)       { stop("x must have length two") }
+    if(!is.matrix(shape))     { stop("shape must be a matrix") }
+    if(!is.numeric(shape))    { stop("shape must be numeric") }
+    if(any(dim(shape) != 2L)) { stop("shape must be a (2 x 2)-matrix") }
     if(!isTRUE(all.equal(shape, t(shape)))) {
         stop("shape must be symmetric")
     }
@@ -137,12 +137,12 @@ drawEllSector <-
 function(x, shape=diag(2), radius=1, sect0=0, sect1=90, rot=0, nv=100,
          fg=par("fg"), bg=NA, colCtr=NA,
          lty=par("lty"), lwd=par("lwd"), pch=par("pch"), cex=par("cex")) {
-    if(!is.numeric(x))       { stop("x must be numeric") }
-    if(!is.vector(x))        { stop("x must be a vector") }
-    if(length(x) != 2)       { stop("x must have length two") }
-    if(!is.matrix(shape))    { stop("shape must be a matrix") }
-    if(!is.numeric(shape))   { stop("shape must be numeric") }
-    if(any(dim(shape) != 2)) { stop("shape must be a (2 x 2)-matrix") }
+    if(!is.numeric(x))        { stop("x must be numeric") }
+    if(!is.vector(x))         { stop("x must be a vector") }
+    if(length(x) != 2L)       { stop("x must have length two") }
+    if(!is.matrix(shape))     { stop("shape must be a matrix") }
+    if(!is.numeric(shape))    { stop("shape must be numeric") }
+    if(any(dim(shape) != 2L)) { stop("shape must be a (2 x 2)-matrix") }
     if(!isTRUE(all.equal(shape, t(shape)))) {
         stop("shape must be symmetric")
     }
@@ -153,7 +153,7 @@ function(x, shape=diag(2), radius=1, sect0=0, sect1=90, rot=0, nv=100,
     angles  <- seq(sect0*pi/180, sect1*pi/180, length.out=nv)  # angles in radians
     sect    <- radius * cbind(cos(angles), sin(angles)) %*% CF[ , CFord]  # sector
     sect    <- rbind(sect, c(0, 0))
-    
+
     ang  <- -rot*pi/180
     G    <- cbind(c(cos(ang), sin(ang)), c(-sin(ang), cos(ang)))
     sect <- sect %*% G
@@ -162,24 +162,24 @@ function(x, shape=diag(2), radius=1, sect0=0, sect1=90, rot=0, nv=100,
 
     ## draw center, ellipse
     points(x[1], x[2], col=colCtr, pch=pch, lwd=lwd, cex=cex)  # center
-    polygon(sectCtr, border=fg, col=bg, lwd=lwd, lty=lty)      # ellipse   
+    polygon(sectCtr, border=fg, col=bg, lwd=lwd, lty=lty)      # ellipse
 }
 
 drawTriSector <-
 function(x, radius=1, sect0=0, sect1=90, rot=0,
          fg=par("fg"), bg=NA, colCtr=NA,
          lty=par("lty"), lwd=par("lwd"), pch=par("pch"), cex=par("cex")) {
-    if(!is.numeric(x)) { stop("x must be numeric") }
-    if(!is.vector(x))  { stop("x must be a vector") }
-    if(length(x) != 2) { stop("x must have length two") }
-    if(sect0 >= sect1) { stop("sect0 must be smaller than sect 1") }
+    if(!is.numeric(x))  { stop("x must be numeric") }
+    if(!is.vector(x))   { stop("x must be a vector") }
+    if(length(x) != 2L) { stop("x must have length two") }
+    if(sect0 >= sect1)  { stop("sect0 must be smaller than sect 1") }
 
     angles <- c(sect0*pi/180, sect1*pi/180)  # angles in radians
     sect   <- rbind(c(0, 0),
                     c(radius, radius*tan(angles[1])),
                     c(radius, radius*tan(angles[2])),
                     c(0, 0))
-    
+
     ang  <- -rot*pi/180
     G    <- cbind(c(cos(ang), sin(ang)), c(-sin(ang), cos(ang)))
     sect <- sect %*% G
@@ -188,7 +188,7 @@ function(x, radius=1, sect0=0, sect1=90, rot=0,
 
     ## draw center, triangle
     points(x[1], x[2], col=colCtr, pch=pch, lwd=lwd, cex=cex)  # center
-    polygon(sectCtr, border=fg, col=bg, lwd=lwd, lty=lty)      # triangle   
+    polygon(sectCtr, border=fg, col=bg, lwd=lwd, lty=lty)      # triangle
 }
 
 ## draw oval shape from DSU targets
@@ -197,12 +197,12 @@ function(x, shape=diag(2), radius=1, angle, h=0, rot=0, nv=100,
          fg=par("fg"), bg=NA, colCtr=NA,
          lty=par("lty"), lwd=par("lwd"), pch=par("pch"), cex=par("cex"),
          plot=TRUE) {
-    if(!is.numeric(x))       { stop("x must be numeric") }
-    if(!is.vector(x))        { stop("x must be a vector") }
-    if(length(x) != 2)       { stop("x must have length two") }
-    if(!is.matrix(shape))    { stop("shape must be a matrix") }
-    if(!is.numeric(shape))   { stop("shape must be numeric") }
-    if(any(dim(shape) != 2)) { stop("shape must be a (2 x 2)-matrix") }
+    if(!is.numeric(x))        { stop("x must be numeric") }
+    if(!is.vector(x))         { stop("x must be a vector") }
+    if(length(x) != 2L)       { stop("x must have length two") }
+    if(!is.matrix(shape))     { stop("shape must be a matrix") }
+    if(!is.numeric(shape))    { stop("shape must be numeric") }
+    if(any(dim(shape) != 2L)) { stop("shape must be a (2 x 2)-matrix") }
     if(!isTRUE(all.equal(shape, t(shape)))) {
         stop("shape must be symmetric")
     }

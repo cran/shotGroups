@@ -14,17 +14,17 @@ getMaxPairDist.default <-
 function(xy) {
     if(!is.matrix(xy))  { stop("xy must be a matrix") }
     if(!is.numeric(xy)) { stop("xy must be numeric") }
-    if(nrow(xy) < 2) {
+    if(nrow(xy) < 2L) {
         warning("Maximum pairwise distance needs >= 2 points")
         return(list(d=0, idx=nrow(xy)))
     }
 
-    if(ncol(xy) == 1) {        # 1D
+    if(ncol(xy) == 1L) {        # 1D
         mPts <- c(which.min(xy), which.max(xy))  # rows with max distance
         dst  <- abs(diff(range(xy)))           # max distance
-    } else if(ncol(xy) == 2) { # 2D -> only convex hull is relevant
-        H    <- chull(xy)      # convex hull indices (vertices ordered clockwise)
-        pts  <- xy[H, ]        # points that make up the convex hull
+    } else if(ncol(xy) == 2L) { # 2D -> only convex hull is relevant
+        H    <- chull(xy)       # convex hull indices (vertices ordered clockwise)
+        pts  <- xy[H, ]         # points that make up the convex hull
         N    <- nrow(pts)                      # number of points on hull
         dMat <- dist(pts, method="euclidean")  # distance matrix
         idx  <- which.max(as.matrix(dMat))     # maximum distance

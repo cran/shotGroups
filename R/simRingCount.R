@@ -13,7 +13,7 @@ simRingCount.default <-
 function(xy, target, caliber, unit="cm") {
     if(!is.matrix(xy))       { stop("xy must be a matrix") }
     if(!is.numeric(xy))      { stop("xy must be numeric") }
-    if(ncol(xy) != 2)        { stop("xy must have two columns") }
+    if(ncol(xy) != 2L)       { stop("xy must have two columns") }
     if(!is.numeric(caliber)) { stop("caliber must be numeric") }
     if(caliber <= 0)         { stop("caliber must be > 0") }
 

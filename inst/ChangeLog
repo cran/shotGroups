@@ -1,6 +1,62 @@
-$Date: 2015-11-09 10:51:29 +0000 (Thu, 12 Nov 2015) $
+$Date: 2016-01-25 10:51:29 +0000 (Mon, 25 Jan 2016) $
 
 SHOTGROUPS RELEASE VERSIONS at http://cran.r-project.org/
+
+Version 0.7 (January 25, 2016)
+    * DESCRIPTION
+      - move packages mvoutlier and energy to Suggests to reduce the
+        number of hard dependencies
+
+    * DFdistr
+      - new data frame with the distribution of range statistics
+        (extreme spread, figure of merit, bounding box diagonal)
+        and Rayleigh sigma from a Monte Carlo simulation under the
+        assumption of bivariate circular normality. Includes the
+        first four moments and several quantiles of each distribution
+
+    * range2sigma()
+      - new function that uses given range statistics to estimate
+        Rayleigh sigma under the assumption of a circular bivariate
+        normal shot distribution (based on DFdistr)
+
+    * efficiency()
+      - new function to estimate the number of required groups for
+        a given number of shots per group and CI level to achieve a
+        desired CI width when measuring a range statistic or estimating
+        Rayleigh sigma, assuming bivariate circular normality.
+        Also estimates achievable CI width for given number of shots
+        per group, number of groups, and CI level (based on DFdistr)
+
+    * runGUI()
+      - new function that starts one of 4 shiny-based web application
+        frontends for separate elements of the shotGroups functionality
+        runGUI("analyze")
+        runGUI("hitprob")
+        runGUI("angular")
+        runGUI("range")
+        (requires installing shiny)
+
+    * getCEP()
+      - add Ignani estimate from Ignani (2010)
+      - add RMSE estimate from van Diggelen (2007)
+      - add Valstar estimate from Williams (1997)
+      - vectorize in CEPlevel
+      - getCEP.default(): CorrNormal, Grubbs, Rayleigh, and RMSE
+        estimates work with 1D data (in addition to 2D and 3D)
+
+    * getHitProb()
+      - vectorize in r
+      - getHitProb.default(): CorrNormal, Grubbs, and Rayleigh
+        estimates work with 1D data (in addition to 2D and 3D)
+      - fix bug: type="CorrNormal" and accuracy=FALSE gave same result
+        as accuracy=TRUE
+
+    * getRayParam()
+      - now also provides estimates for 3D data (Maxwell-Boltzmann
+        distribution) and 1D data (half normal distribution)
+
+    * getMaxParam()
+      - removed as getRayParam() now handles 3D data
 
 Version 0.6.2 (November 12, 2015)
     * getCEP()

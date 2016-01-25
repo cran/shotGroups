@@ -21,14 +21,15 @@ function(xy, level=0.95, doRob=FALSE, type=c("LiZhangDai", "MOM")) {
 
 getRiceParam.default <-
 function(xy, level=0.95, doRob=FALSE, type=c("LiZhangDai", "MOM")) {
-    if(!is.matrix(xy))  { stop("xy must be a matrix") }
+    xy <- as.matrix(xy)
+    p  <- ncol(xy)
     if(!is.numeric(xy)) { stop("xy must be numeric") }
-    if(ncol(xy) != 2)   { stop("x must be (n x 2)-matrix") }
+    if(!(p %in% (1:3))) { stop("x must be (n x 1/2/3)-matrix") }
 
     type <- match.arg(type)
 
     ## check if we can do robust estimation if so required
-    haveRob <- if(nrow(xy) < 4) {
+    haveRob <- if(nrow(xy) < 4L) {
         if(doRob) {
             warning("We need >= 4 points for robust estimations")
         }
@@ -36,7 +37,7 @@ function(xy, level=0.95, doRob=FALSE, type=c("LiZhangDai", "MOM")) {
     } else {
         rob <- robustbase::covMcd(xy, cor=FALSE)
         TRUE
-    }                                    # if(nrow(xy) < 4)
+    }                                    # if(nrow(xy) < 4L)
 
     ctr <- if(doRob && haveRob) {        # estimated center
         rob$center                       # robust estimate
@@ -47,15 +48,15 @@ function(xy, level=0.95, doRob=FALSE, type=c("LiZhangDai", "MOM")) {
     ## get sigma estimate from Rayleigh distribution
     sigmaHat <- getRayParam(xy=xy, level=level, doRob=doRob)$sigma
 
-    ## estimate nu^2 -> but E(xBar'xBar) = mu'mu + (2/N)*sigma^2
+    ## estimate nu^2 -> but E(xBar'xBar) = mu'mu + (p/N)*sigma^2
     N    <- nrow(xy)
-    bias <- (2/N)*sigmaHat["sigma"]^2
+    bias <- (p/N)*sigmaHat["sigma"]^2
 
-    ## conventional estimator: xBar'xBar - (2/N)*sigmaHat^2
+    ## conventional estimator: xBar'xBar - (p/N)*sigmaHat^2
     ce <- sum(ctr^2) - bias
 
     nuSqHat <- if(type == "MOM") {
-        ## set xBar'xBar - (2/N)*sigmaHat^2 to 0 when (2/N)*sigmaHat^2 > xBar'xBar
+        ## set xBar'xBar - (p/N)*sigmaHat^2 to 0 when (p/N)*sigmaHat^2 > xBar'xBar
         max(ce, 0)
     } else if(type == "LiZhangDai") {
         ## ML -> bad for low SNR -> instead: Li, Zhang & Dai, 2009
@@ -63,12 +64,12 @@ function(xy, level=0.95, doRob=FALSE, type=c("LiZhangDai", "MOM")) {
     }
 
     ## c4 correction for negative bias due to taking square root (concave)
-    nuHat <- (1/c4(2*N+1))*sqrt(nuSqHat)
+    nuHat <- (1/c4(p*N+1))*sqrt(nuSqHat)
 
     ## radial mean and sd
     MSD <- getMSDfromRice(nu=nuHat, sigma=sigmaHat["sigma"])
 
-    return(list(nu=setNames(nuHat, NULL),
+    return(list(nu=setNames(nuHat,    NULL),
              sigma=sigmaHat,
                 MR=setNames(MSD$mean, NULL),
                RSD=setNames(MSD$sd,   NULL)))
@@ -131,7 +132,7 @@ function(x, nu, sigma) {
 
     dens <- numeric(length(x))                 # initialize density to 0
     keep <- which((x >= 0) | !is.finite(x))    # keep non-negative x, NA, -Inf, Inf
-    if(length(keep) < 1) { return(dens) }      # nothing to do
+    if(length(keep) < 1L) { return(dens) }     # nothing to do
 
     lfac1 <- log(x[keep]) - 2*log(sigma[keep])
     lfac2 <-   -(x[keep]^2 + nu[keep]^2) / (2*sigma[keep]^2)

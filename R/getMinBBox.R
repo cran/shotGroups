@@ -13,8 +13,8 @@ getMinBBox.default <-
 function(xy) {
     if(!is.matrix(xy))  { stop("xy must be a matrix") }
     if(!is.numeric(xy)) { stop("xy must be numeric") }
-    if(ncol(xy) != 2)   { stop("xy must have two columns") }
-    if(nrow(xy) < 2)    { stop("xy must have at least two rows") }
+    if(ncol(xy) != 2L)  { stop("xy must have two columns") }
+    if(nrow(xy) < 2L)   { stop("xy must have at least two rows") }
 
     ## rotating calipers algorithm using the convex hull
     H    <- chull(xy)                    # hull indices, vertices ordered clockwise

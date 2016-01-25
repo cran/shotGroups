@@ -13,7 +13,7 @@ getConfEll.default <-
 function(xy, level=0.5, dstTarget=100, conversion="m2cm", doRob=TRUE) {
     if(!is.matrix(xy))     { stop("xy must be a matrix") }
     if(!is.numeric(xy))    { stop("xy must be numeric") }
-    if(nrow(xy) < 2)       { stop("we need >= 2 points for confidence ellipse") }
+    if(nrow(xy) < 2L)      { stop("we need >= 2 points for confidence ellipse") }
     if(!is.numeric(level)) { stop("level must be numeric") }
     if(level <= 0)         { stop("level must be > 0") }
 
@@ -37,10 +37,10 @@ function(xy, level=0.5, dstTarget=100, conversion="m2cm", doRob=TRUE) {
     mag <- sqrt(dfn*qf(level, dfn, dfd)) # magnification factor = t-value
     ## radii confidence ellipse
     size <- makeMOA(mag*ellRad, dst=dstTarget, conversion=conversion)
-    colnames(size) <- if(dfn == 2) {
+    colnames(size) <- if(dfn == 2L) {
         c("semi-major", "semi-minor")
     } else {
-        paste("semi-axis", 1:dfn, sep="-")
+        paste("semi-axis", seq_len(dfn), sep="-")
     }
 
     ## error ellipse characteristics -> radii = sqrt of eigenvalues
@@ -49,12 +49,12 @@ function(xy, level=0.5, dstTarget=100, conversion="m2cm", doRob=TRUE) {
     flat   <- 1 - (1/aspRat)             # flattening
     shape  <- c(aspectRatio=aspRat, flattening=flat, trace=trXY, det=detXY)
 
-    haveRob <- if(nrow(xy) < 4) {
+    haveRob <- if(nrow(xy) < 4L) {
         if(doRob) { warning("We need >= 4 points for robust estimations") }
         FALSE
     } else {
         TRUE
-    }                                    # if(nrow(xy) < 4)
+    }                                    # if(nrow(xy) < 4L)
 
     if(doRob && haveRob) {               # same for robust estimation
         rob       <- robustbase::covMcd(xy)
@@ -70,10 +70,8 @@ function(xy, level=0.5, dstTarget=100, conversion="m2cm", doRob=TRUE) {
         aspRatRob <- sqrt(kappa(covXYrob, exact=TRUE))   # aspect ratio
         flatRob   <- 1 - (1/aspRatRob)   # flattening
         shapeRob  <- c(aspectRatio=aspRatRob, flattening=flatRob, trace=trXYrob, det=detXYrob)
-    }                                    # if(doRob & haveRob)
-
-    ## set robust estimates to NULL if not available
-    if(!(doRob && haveRob)) {
+    } else {
+        ## set robust estimates to NULL if not available
         sizeRob  <- NULL
         shapeRob <- NULL
         ctrRob   <- NULL

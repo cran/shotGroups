@@ -16,7 +16,7 @@ function(xy, plots=TRUE, CEPlevel=0.5, CIlevel=0.95, CEPtype="CorrNormal",
          bootCI=c("basic", "bca"), dstTarget=100, conversion="m2cm") {
     if(!is.matrix(xy))        { stop("xy must be a matrix") }
     if(!is.numeric(xy))       { stop("xy must be numeric") }
-    if(ncol(xy) != 2)         { stop("xy must have two columns") }
+    if(ncol(xy) != 2L)        { stop("xy must have two columns") }
     if(!is.numeric(CEPlevel)) { stop("CEPlevel must be numeric") }
     if(CEPlevel <= 0)         { stop("CEPlevel must be > 0") }
     if(!is.numeric(CIlevel))  { stop("CIlevel must be numeric") }
@@ -42,7 +42,7 @@ function(xy, plots=TRUE, CEPlevel=0.5, CIlevel=0.95, CEPtype="CorrNormal",
     Npts <- nrow(xy)                     # number of observations
     res  <- vector("list", 0)            # empty list to later collect the results
 
-    haveRob <- if(Npts < 4) {            # can we do robust estimation?
+    haveRob <- if(Npts < 4L) {           # can we do robust estimation?
         warning("We need >= 4 points for robust estimations")
         FALSE
     } else {
@@ -360,17 +360,17 @@ function(xy, plots=TRUE, CEPlevel=0.5, CIlevel=0.95, CEPtype="CorrNormal",
 }
 
 groupSpreadPlot <-
-function(xy, which=1, CEPlevel=0.5, CIlevel=0.95, dstTarget=100, conversion="m2cm") {
+function(xy, which=1L, CEPlevel=0.5, CIlevel=0.95, dstTarget=100, conversion="m2cm") {
     if(!is.data.frame(xy))    { stop("xy must be a data.frame") }
     xy <- getXYmat(xy)
     if(!is.numeric(xy))       { stop("xy must be numeric") }
-    if(ncol(xy) != 2)         { stop("xy must have two columns") }
+    if(ncol(xy) != 2L)        { stop("xy must have two columns") }
     if(!is.numeric(CEPlevel)) { stop("CEPlevel must be numeric") }
     if(CEPlevel <= 0)         { stop("CEPlevel must be > 0") }
     if(!is.numeric(CIlevel))  { stop("CIlevel must be numeric") }
     if(CIlevel <= 0)          { stop("CIlevel must be > 0") }
 
-    which <- match.arg(as.character(which), choices=1:3)
+    which <- match.arg(as.character(which), choices=1L:3L)
 
     ## check if CEP / CI level is given in percent
     if(CIlevel >= 1) {
@@ -391,10 +391,10 @@ function(xy, which=1, CEPlevel=0.5, CIlevel=0.95, dstTarget=100, conversion="m2c
     res  <- vector("list", 0)            # empty list to later collect the results
 
     haveRob <- TRUE                      # can we do robust estimation?
-    if(Npts < 4) {
+    if(Npts < 4L) {
         warning("We need >= 4 points for robust estimations")
         haveRob <- FALSE
-    }                                    # if(haveRob)
+    }                                    # if(Npts < 4L)
 
     ## to determine axis limits later, collect all results in a vector
     axesCollX <- numeric(0)
@@ -425,7 +425,7 @@ function(xy, which=1, CEPlevel=0.5, CIlevel=0.95, dstTarget=100, conversion="m2c
 
     #####-----------------------------------------------------------------------
     ## mean distance to group center and associated parameterss
-    dstCtr     <- getDistToCtr(xy)
+    dstCtr <- getDistToCtr(xy)
 
     ## radial standard deviation
     ## http://ballistipedia.com/index.php?title=Describing_Precision
@@ -489,7 +489,7 @@ function(xy, which=1, CEPlevel=0.5, CIlevel=0.95, dstTarget=100, conversion="m2c
     xLims <- range(c(X, axesCollX))
     yLims <- range(c(Y, axesCollY))
 
-    if(which == 1) {
+    if(which == 1L) {
         #####-------------------------------------------------------------------
         ## diagram: histogram for distances to group center
         xRange    <- range(dstCtr)
@@ -514,7 +514,7 @@ function(xy, which=1, CEPlevel=0.5, CIlevel=0.95, dstTarget=100, conversion="m2c
                col=c("blue", "red"), lty=1, lwd=2, bg=rgb(1, 1, 1, 0.7))
     }
 
-    if(which == 2) {
+    if(which == 2L) {
         #####-------------------------------------------------------------------
         ## diagram: 2D-scatter plot for the (x,y)-distribution
         plot(Y ~ X, asp=1, xlim=xLims, ylim=yLims, pch=20,
@@ -548,7 +548,7 @@ function(xy, which=1, CEPlevel=0.5, CIlevel=0.95, dstTarget=100, conversion="m2c
                lty=c(NA, NA, 1, 1, 1), lwd=2, bg=rgb(1, 1, 1, 0.7))
     }
 
-    if(which == 3) {
+    if(which == 3L) {
         #####-------------------------------------------------------------------
         ## diagram: 2D-scatter plot for the (x,y)-distribution
         plot(Y ~ X, asp=1, xlim=xLims, ylim=yLims, pch=20,

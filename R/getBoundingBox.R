@@ -13,7 +13,7 @@ getBoundingBox.default <-
 function(xy) {
     if(!is.matrix(xy))  { stop("xy must be a matrix") }
     if(!is.numeric(xy)) { stop("xy must be numeric") }
-    if(ncol(xy) != 2)   { stop("xy must have two columns") }
+    if(ncol(xy) != 2L)  { stop("xy must have two columns") }
 
     x   <- range(xy[ , 1])
     y   <- range(xy[ , 2])

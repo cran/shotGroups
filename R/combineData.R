@@ -25,7 +25,7 @@ function(DFs) {
     setGroup <- function(x) {
         if(!("group" %in% names(x))) {
             x$group <- 1
-        } else if(all(x$group == "") || all(is.na(x$group))) {
+        } else if(all(!(x$group == "")) || all(is.na(x$group))) {
             x$group <- 1
         }
 
@@ -77,7 +77,7 @@ function(DFs) {
         ## if not -> use file name
         ## if ammunition is available -> use it
         groupVA <- if(!is.null(x$project.title)) {
-            if(!all(is.na(x$project.title)) && !all(x$project.title == "")) {
+            if(!all(is.na(x$project.title)) && any(x$project.title == "")) {
                 x$project.title
             } else {
                 x$file
@@ -87,7 +87,7 @@ function(DFs) {
         }
 
         groupVB <- if(!is.null(x$ammunition)) {
-            if(!all(is.na(x$ammunition)) && !all(x$ammunition == "")) {
+            if(!all(is.na(x$ammunition)) && any(x$ammunition == "")) {
                 x$ammunition
             } else {
                 ""
@@ -95,7 +95,7 @@ function(DFs) {
         } else {
             ""
         }
-        
+
         #groupVerb <- paste(x$group, groupVA, groupVB, sep="_")
         groupVerb <- paste(groupVA, groupVB, sep="_")
 
@@ -107,7 +107,7 @@ function(DFs) {
         x$groupVerb <- groupVerb
         x
     }
-    
+
     DFs <- lapply(DFs, setGroupVerbose)
 
     ## restrict data frames to shared variables variables
@@ -119,7 +119,7 @@ function(DFs) {
 
     ## add new factor Origin for coding original file
     origin <- factor(rep(seq_along(DFs), nObs))
-    
+
     ## add new factor series for coding Groups as a consecutive number over files
     ## first a factor with alphabetically ordered levels
     orgSer <- droplevels(interaction(origin, DFall$group))

@@ -16,7 +16,7 @@ function(xy, level=0.95, plots=TRUE, bootCI=c("basic", "bca"),
          dstTarget=100, conversion="m2cm") {
     if(!is.matrix(xy))       { stop("xy must be a matrix") }
     if(!is.numeric(xy))      { stop("xy must be numeric") }
-    if(ncol(xy) != 2)        { stop("xy must have two columns") }
+    if(ncol(xy) != 2L)       { stop("xy must have two columns") }
     if(!is.numeric(level))   { stop("level must be numeric") }
     if(level <= 0)           { stop("level must be > 0") }
 
@@ -35,12 +35,12 @@ function(xy, level=0.95, plots=TRUE, bootCI=c("basic", "bca"),
     Npts <- nrow(xy)                     # number of observations
     res  <- vector("list", 0)            # empty list to later collect the results
 
-    haveRob <- if(Npts < 4) {            # can we do robust estimation?
+    haveRob <- if(Npts < 4L) {           # can we do robust estimation?
         warning("We need >= 4 points for robust estimations")
         haveRob <- FALSE
     } else {
-        TRUE        
-    }                                    # if(nrow(xy) < 4)
+        TRUE
+    }                                    # if(nrow(xy) < 4L)
 
     #####-----------------------------------------------------------------------
     ## location measures
@@ -64,12 +64,12 @@ function(xy, level=0.95, plots=TRUE, bootCI=c("basic", "bca"),
     }                                    # if(haveRob)
 
     ## Hotelling's T^2 test for equality of (x,y)-center with point of aim (0,0)
-    res$Hotelling <- if(Npts > 2) {
+    res$Hotelling <- if(Npts > 2L) {
         anova(lm(cbind(X, Y) ~ 1), test="Hotelling-Lawley")
     } else {
         warning("We need >= 3 points for Hotelling's T^2 test")
         NULL
-    }                                    # if(Npts > 2)
+    }                                    # if(Npts > 2L)
 
     #####-----------------------------------------------------------------------
     ## confidence intervals for x- and y-coords
@@ -85,7 +85,7 @@ function(xy, level=0.95, plots=TRUE, bootCI=c("basic", "bca"),
 
     ## non-parametric: bootstrap-CIs for center (basic and BCa)
     if(!("none" %in% bootCI)) {          # do bootstrap CIs
-        NrplMin <- 1499                  # minimum number of replications
+        NrplMin <- 1499L                 # minimum number of replications
         Nrpl <- if("bca" %in% bootCI) {  # number of replications
             max(NrplMin, Npts+1)         # BCa needs at least number of points
         } else {

@@ -27,9 +27,8 @@ function(xy, level=0.95, mu, doRob=FALSE) {
 
 getRayParam.default <-
 function(xy, level=0.95, mu, doRob=FALSE) {
-    if(!is.matrix(xy))     { stop("xy must be a matrix") }
+    xy <- as.matrix(xy)
     if(!is.numeric(xy))    { stop("xy must be numeric") }
-    if(ncol(xy) != 2)      { stop("x must be (n x 2)-matrix") }
     if(!is.numeric(level)) { stop("level must be numeric") }
     if(level <= 0)         { stop("level must be > 0") }
 
@@ -40,7 +39,7 @@ function(xy, level=0.95, mu, doRob=FALSE) {
     }
 
     ## check if we can do robust estimation if so required
-    haveRob <- if(nrow(xy) < 4) {
+    haveRob <- if(nrow(xy) < 4L) {
         if(doRob) {
             warning("We need >= 4 points for robust estimations")
         }
@@ -48,46 +47,63 @@ function(xy, level=0.95, mu, doRob=FALSE) {
     } else {
         rob <- robustbase::covMcd(xy, cor=FALSE)
         TRUE
-    }                                    # if(nrow(xy) < 4)
+    }                                    # if(nrow(xy) < 4L)
 
     N     <- nrow(xy)
+    p     <- ncol(xy)
     alpha <- 1-level
 
     if(!missing(mu)) {                   # Singh C1 - true mean is known
         xyCtr  <- sweep(xy, 2, mu, "-")  # center with true mean
         rSqSum <- if(doRob && haveRob) { # sum squared radii centered data
             ## = N*trace of uncorrected covariance matrix -> N*trace((N-1)/N)*cov(xy)
-            (nrow(xy)-1)*sum(diag(rob$cov))
+            (N-1)*sum(diag(rob$cov))
         } else {
             sum(xyCtr^2)                 # sum squared radii
         }                                # if(doRob && haveRob)
 
-        varHat  <- rSqSum/(2*N)          # unbiased variance estimate - no Bessel correction
-        corrFac <- 1/c4(2*N + 1)         # c4 correction with n = 2*N + 1
-        chisqDF <- 2*N                   # chi^2 degrees of freedom
+        varHat  <- rSqSum/(p*N)          # unbiased variance estimate - no Bessel correction
+        corrFac <- 1/c4(p*N + 1)         # c4 correction with n = 2*N + 1
+        chisqDF <- p*N                   # chi^2 degrees of freedom
     } else {                             # Singh C2 - true center is estimated
         rSqSum <- if(doRob && haveRob) { # sum squared radii centered data
             ## = N*trace of uncorrected covariance matrix -> N*trace((N-1)/N)*cov(xy)
-            (nrow(xy)-1)*sum(diag(rob$cov))
+            (N-1)*sum(diag(rob$cov))
         } else {
             xyCtr <- scale(xy, scale=FALSE, center=TRUE)  # centered data
             sum(xyCtr^2)                 # sum squared radii
         }                                # if(doRob && haveRob)
 
         ## unbiased variance estimate including Bessel correction
-        varHat  <- rSqSum/(2*(N-1))
-        corrFac <- 1/c4(2*N - 1)         # c4 correction with n = 2*N - 1
-        chisqDF <- 2*(N-1)               # chi^2 degrees of freedom
+        varHat  <- rSqSum/(p*(N-1))
+        corrFac <- 1/c4(p*N - (p-1))     # c4 correction with n = 2*N - 1
+        chisqDF <- p*(N-1)               # chi^2 degrees of freedom
     }                                    # if(!missing(mu))
 
     sigHat  <- corrFac * sqrt(varHat)    # bias-corrected sigma estimate
     sigCIlo <- corrFac * sqrt(rSqSum / qchisq(1-(alpha/2), chisqDF))
     sigCIup <- corrFac * sqrt(rSqSum / qchisq(   alpha/2,  chisqDF))
 
-    MR    <- sigHat * sqrt(pi/2)         # radial error mean
-    RSD   <- sigHat * sqrt((4-pi)/2)     # radial error standard deviation
-    MRci  <- c(sigCIlo, sigCIup) * sqrt(pi/2)
-    RSDci <- c(sigCIlo, sigCIup) * sqrt((4-pi)/2)
+    ## mean and sd for the chi distribution
+    if(p == 1L) {                        # half normal with theta = sqrt(pi/2)
+        ## http://mathworld.wolfram.com/Half-NormalDistribution.html
+        MU <- sqrt(2/pi)
+        SD <- sqrt((pi-2)/pi)
+    } else if(p == 2L) {                 # Rayleigh distribution
+        MU <- sqrt(pi/2)
+        SD <- sqrt((4-pi)/2)
+    } else if(p == 3L) {                 # Maxwell-Boltzmann distribution
+        MU <- sqrt(8/pi)
+        SD <- sqrt((3*pi-8)/pi)
+    } else {
+        MU <- NA_real_
+        SD <- NA_real_
+    }
+
+    MR    <- sigHat * MU                 # radial error mean
+    RSD   <- sigHat * SD                 # radial error standard deviation
+    MRci  <- c(sigCIlo, sigCIup) * MU
+    RSDci <- c(sigCIlo, sigCIup) * SD
 
     return(list(sigma=c(sigma=sigHat, sigCIlo=sigCIlo, sigCIup=sigCIup),
                   RSD=c(RSD=RSD, RSDciLo=RSDci[1], RSDciUp=RSDci[2]),
@@ -107,7 +123,7 @@ function(x, scale=1) {
 
     dens <- numeric(length(x))
     keep <- which((x >= 0) | !is.finite(x))
-    if(length(keep) < 1) { return(dens) }
+    if(length(keep) < 1L) { return(dens) }
 
     dens[keep] <- exp(log(x[keep]) - 0.5*(x[keep]/scale[keep])^2 - 2*log(scale[keep]))
 
@@ -127,7 +143,7 @@ function(x, scaleSq=1) {
 
     dens <- numeric(length(x))
     keep <- which((x >= 0) | !is.finite(x))
-    if(length(keep) < 1) { return(dens) }
+    if(length(keep) < 1L) { return(dens) }
 
     dens[keep] <- exp(log(x[keep]) - 0.5*(x[keep]^2 / scaleSq[keep]) - log(scaleSq[keep]))
 

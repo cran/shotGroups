@@ -2,7 +2,7 @@ analyzeGroup <-
 function(DF, xyTopLeft=TRUE, conversion="m2cm", bandW=0.5,
          CEPtype="CorrNormal", bootCI=c("basic", "bca")) {
     if(!is.data.frame(DF)) { stop("DF must be a data frame") }
-    
+
     ## convert DF names to lower case
     DF <- setNames(DF, tolower(names(DF)))
 
@@ -43,9 +43,10 @@ function(DF, xyTopLeft=TRUE, conversion="m2cm", bandW=0.5,
 
     #####-----------------------------------------------------------------------
     ## assess shape, location and spread
-    if(length(unique(DF$distance)) > 1) {
+    if(length(unique(DF$distance)) > 1L) {
         warning("Distance to target is not homogeneous - using the average distance")
     }
+
     dstTrgt  <- mean(DF$distance)       # distance to target
     shape    <- groupShape(xy, plots=TRUE, bandW=bandW, outlier="mcd",
                            dstTarget=dstTrgt, conversion=conversion)
