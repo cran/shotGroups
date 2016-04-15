@@ -1,7 +1,7 @@
 combineData <-
 function(DFs) {
     if(!is.list(DFs)) { stop("DFs must be a list") }
-    if(!all(sapply(DFs, is.data.frame))) {
+    if(!all(vapply(DFs, is.data.frame, logical(1)))) {
         stop("DFs must be a list of data frames")
     }
 
@@ -25,7 +25,7 @@ function(DFs) {
     setGroup <- function(x) {
         if(!("group" %in% names(x))) {
             x$group <- 1
-        } else if(all(!(x$group == "")) || all(is.na(x$group))) {
+        } else if(all(x$group == "") || all(is.na(x$group))) {
             x$group <- 1
         }
 
@@ -77,7 +77,7 @@ function(DFs) {
         ## if not -> use file name
         ## if ammunition is available -> use it
         groupVA <- if(!is.null(x$project.title)) {
-            if(!all(is.na(x$project.title)) && any(x$project.title == "")) {
+            if(!all(is.na(x$project.title)) && !all(x$project.title == "")) {
                 x$project.title
             } else {
                 x$file
@@ -87,7 +87,7 @@ function(DFs) {
         }
 
         groupVB <- if(!is.null(x$ammunition)) {
-            if(!all(is.na(x$ammunition)) && any(x$ammunition == "")) {
+            if(!all(is.na(x$ammunition)) && !all(x$ammunition == "")) {
                 x$ammunition
             } else {
                 ""
@@ -100,8 +100,8 @@ function(DFs) {
         groupVerb <- paste(groupVA, groupVB, sep="_")
 
         ## trim leading/trailing _, collapse __ to _, replace " " with _
-        groupVerb   <-  sub("_$", "", groupVerb)
-        groupVerb   <-  sub("^_", "", groupVerb)
+        groupVerb   <-  sub("_$", "",  groupVerb)
+        groupVerb   <-  sub("^_", "",  groupVerb)
         groupVerb   <- gsub("__", "_", groupVerb)
         groupVerb   <- gsub("[[:blank:]]+", "_", groupVerb)
         x$groupVerb <- groupVerb
@@ -113,7 +113,7 @@ function(DFs) {
     ## restrict data frames to shared variables variables
     varsNow <- Reduce(intersect, lapply(DFs, names))  # shared set of variables
     DFrestr <- lapply(DFs, function(x) x[, varsNow])  # select only these
-    nObs    <- sapply(DFrestr, nrow)         # number of observations in each data frame
+    nObs    <- vapply(DFrestr, nrow, integer(1))      # number of observations in each data frame
     DFall   <- do.call("rbind", DFrestr)     # combine data frames
     rownames(DFall) <- NULL                  # remove row names
 

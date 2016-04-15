@@ -16,7 +16,8 @@ function(x, unit="cm", dstTarget=100, conversion="m2cm") {
 
 getTarget.default <-
 function(x, unit="cm", dstTarget=100, conversion="m2cm") {
-    unit <- match.arg(unit, choices=c("cm", "mm", "m", "in", "ft", "yd", "MOA", "SMOA", "mrad", "mil"))
+    unit <- match.arg(unit, choices=c("cm", "mm", "m", "in", "ft", "yd",
+                                      "deg", "MOA", "SMOA", "rad", "mrad", "mil"))
 
     ## add ring radii
     if(!is.null(x$convert$ringW)) {
@@ -37,7 +38,7 @@ function(x, unit="cm", dstTarget=100, conversion="m2cm") {
 
     ## convert all available measurements (ring width and radii, etc.)
     x$unitConv <- unit                           # add unit converted to
-    x$inUnit <- if(unit %in% c("MOA", "SMOA", "mrad", "mil"))  {  # angular size
+    x$inUnit <- if(unit %in% c("deg", "MOA", "SMOA", "rad", "mrad", "mil"))  {  # angular size
         ringConv <- with(x, paste0(unitDst, "2", unitTarget))
         with(x, Map(getMOA, convert, conversion=ringConv,
                     dst=dstTarget, type=unit))
@@ -52,7 +53,8 @@ function(x, unit="cm", dstTarget=100, conversion="m2cm") {
 ## draw a target
 drawTarget <-
 function(x, unit="cm", dstTarget=100, conversion="m2cm", add=FALSE, cex=par("cex")) {
-    unit <- match.arg(unit, choices=c("cm", "mm", "m", "in", "ft", "yd", "MOA", "SMOA", "mrad", "mil"))
+    unit <- match.arg(unit, choices=c("cm", "mm", "m", "in", "ft", "yd",
+                                      "deg", "MOA", "SMOA", "rad", "mrad", "mil"))
 
     ## get chosen target including measures converted to unit
     target <- getTarget(x, unit=unit, dstTarget=dstTarget, conversion=conversion)

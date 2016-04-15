@@ -32,7 +32,7 @@ function(xy, xyTopLeft=TRUE, bb=FALSE, bbMin=FALSE, bbDiag=FALSE, minCirc=FALSE,
     if((alpha < 0) || (alpha > 1)) { stop("alpha must be in [0,1]") }
 
     unit <- match.arg(unit, choices=c("unit", "m", "cm", "mm", "yd", "ft", "in",
-                                      "MOA", "SMOA", "mrad", "mil"))
+                                      "deg", "MOA", "SMOA", "rad", "mrad", "mil"))
     CEP  <- as.character(CEP)
     if(CEP != "FALSE") {
         ## set CEP type to given estimator or to default
@@ -47,7 +47,7 @@ function(xy, xyTopLeft=TRUE, bb=FALSE, bbMin=FALSE, bbDiag=FALSE, minCirc=FALSE,
         }
         level
     }
-    level <- sapply(level, levelTo01)
+    level <- vapply(level, levelTo01, numeric(1))
 
     ## check if we can do robust estimation if so required
     N <- nrow(xy)
@@ -80,7 +80,7 @@ function(xy, xyTopLeft=TRUE, bb=FALSE, bbMin=FALSE, bbDiag=FALSE, minCirc=FALSE,
         convFac <- getConvFac(paste0("mm2", unitXYnew))
         calSize <- convFac * caliber/2
         xy                               # new xy-coords = old xy-coords
-    } else if(unit %in% c("MOA", "SMOA", "mrad", "mil")) {
+    } else if(unit %in% c("deg", "MOA", "SMOA", "rad", "mrad", "mil")) {
         unitXYnew <- unit
         ## convert caliber given in mm to angular size
         calSize <- getMOA(caliber/2, dst=dstTarget, conversion=paste0(unitDst, "2mm"), type=unit)
@@ -196,7 +196,7 @@ function(xy, xyTopLeft=TRUE, bb=FALSE, bbMin=FALSE, bbDiag=FALSE, minCirc=FALSE,
                                       x$ctr[1] - x$size["semi-major"])
             axisLimsY <- c(axisLimsY, x$ctr[2] + x$size["semi-major"],
                                       x$ctr[2] - x$size["semi-major"])
-            x })                         # drop MOA, SMOA, mrad
+            x })                         # drop RAD, MOA, SMOA, rad, mrad, mil
         res$confEll <- cEllCopy
     }
 
@@ -204,13 +204,15 @@ function(xy, xyTopLeft=TRUE, bb=FALSE, bbMin=FALSE, bbDiag=FALSE, minCirc=FALSE,
         CEPres <- getCEP(xyNew, CEPlevel=level, dstTarget=dstTarget,
                          conversion=conversion, type=CEPtype, accuracy=FALSE)
 
-        res$CEP <- sapply(CEPres$CEP, function(x) { x["unit", CEPtype] } )
+        res$CEP <- vapply(CEPres$CEP, function(x) { x["unit", CEPtype] }, numeric(1) )
 
         ## for axis limits
-        axisLimsX <- c(axisLimsX, sapply(CEPres$CEP, function(x) {
-            c(CEPres$ctr[1] + x["unit", CEPtype], CEPres$ctr[1] - x["unit", CEPtype]) }))
-        axisLimsY <- c(axisLimsY, sapply(CEPres$CEP, function(x) {
-            c(CEPres$ctr[2] + x["unit", CEPtype], CEPres$ctr[2] - x["unit", CEPtype]) }))
+        axisLimsX <- c(axisLimsX, vapply(CEPres$CEP, function(x) {
+                c(CEPres$ctr[1] + x["unit", CEPtype], CEPres$ctr[1] - x["unit", CEPtype])
+            }, numeric(2)))
+        axisLimsY <- c(axisLimsY, vapply(CEPres$CEP, function(x) {
+                c(CEPres$ctr[2] + x["unit", CEPtype], CEPres$ctr[2] - x["unit", CEPtype])
+            }, numeric(2)))
     }
 
     #####-----------------------------------------------------------------------

@@ -22,7 +22,7 @@ function(xy, r=1, unit="unit", dstTarget=100, conversion="m2cm",
 
     unit <- match.arg(unit,
                       choices=c("unit", "m", "cm", "mm", "yd", "ft", "in",
-                                "MOA", "SMOA", "mrad", "mil"))
+                                "deg", "MOA", "SMOA", "rad", "mrad", "mil"))
 
     type <- match.arg(type,
                       choices=c("CorrNormal", "GrubbsPearson", "GrubbsPatnaik",
@@ -60,7 +60,7 @@ function(xy, r=1, unit="unit", dstTarget=100, conversion="m2cm",
     ## convert r to unit of (x,y)-coordinates
     rNew <- if(unit == "unit") {         # keep unit
         r                                # new r = r
-    } else if(unit %in% c("MOA", "SMOA", "mrad", "mil")) {
+    } else if(unit %in% c("deg", "MOA", "SMOA", "rad", "mrad", "mil")) {
         fromMOA(r, dst=dstTarget, conversion=conversion, type=unit)
     } else {                             # absolute size unit
         r2rNew <- getConvFac(paste0(unit, "2", unitXY))
@@ -163,8 +163,8 @@ function(xy, r=1, unit="unit", dstTarget=100, conversion="m2cm",
                        GrubbsPatnaik=GrubbsPatnaik,
                        GrubbsLiu=GrubbsLiu,
                        Rayleigh=Rayleigh)
-    
+
     rownames(CEPinvMat) <- paste0("R", r)
-    
+
     return(CEPinvMat[ , type, drop=TRUE])
 }

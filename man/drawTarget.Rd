@@ -6,7 +6,7 @@
            add = FALSE, cex = par('cex'))}
 \arguments{
   \item{x}{either a character value with the name of a target in \code{\link[shotGroups]{targets}} or a list with a target definition containing the same components as those in \code{\link[shotGroups]{targets}} (see below).}
-  \item{unit}{the measurement unit that should be used in the plot. Possible values are \code{'cm', 'mm', 'm', 'in', 'ft', 'yd', 'MOA', 'SMOA', 'milrad'}.}
+  \item{unit}{the measurement unit that should be used in the plot. Possible values are \code{'cm', 'mm', 'm', 'in', 'ft', 'yd', 'deg', 'MOA', 'SMOA', 'rad', 'mrad', 'mil'}.}
   \item{dstTarget}{a numerical value with the distance to the target - used in MOA calculation. See \code{\link[shotGroups]{getMOA}}.}
   \item{conversion}{how to convert the measurement unit for distance to target to that of the (x,y)-coordinates - used in MOA calculation. See \code{\link[shotGroups]{getMOA}}.}
   \item{add}{logical: add to existing plot or create new plot?}

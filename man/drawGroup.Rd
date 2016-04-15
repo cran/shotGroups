@@ -39,7 +39,7 @@
   \item{level}{a numerical vector giving the coverages of the confidence ellipses and CEPs.}
   \item{dstTarget}{a numerical value giving the distance to the target - used in MOA calculation. See \code{\link[shotGroups]{getMOA}}.}
   \item{conversion}{how to convert the measurement unit for distance to target to that of the (x,y)-coordinates - used in MOA calculation. See \code{\link[shotGroups]{getMOA}}.}
-  \item{unit}{Measurement unit for the diagram. Defalt \code{'unit'} indicates that the measurement unit given in \code{conversion} should be used. Possible values are \code{'unit', 'm', 'cm', 'mm', 'yd', 'ft', 'in', 'MOA', 'SMOA', 'milrad'}.}
+  \item{unit}{Measurement unit for the diagram. Defalt \code{'unit'} indicates that the measurement unit given in \code{conversion} should be used. Possible values are \code{'unit', 'm', 'cm', 'mm', 'yd', 'ft', 'in', 'deg', 'MOA', 'SMOA', 'rad', 'mrad', 'mil'}.}
   \item{alpha}{a numerical value in [0,1] which controls the alpha blending for simulated transparency used to draw the bullet holes}
   \item{target}{a character string indicating the target type to be drawn in the scatterplot. Set to \code{NA} to omit target background. See \code{\link[shotGroups]{targets}}.}
 }

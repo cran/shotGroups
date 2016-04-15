@@ -37,6 +37,8 @@ For \code{accuracy=FALSE} (default), the reported CEP/SEP estimates do not take 
 \item \code{Valstar}: Very similar to the RAND R-234 estimate with \code{accuracy=FALSE} except for very elliptical distributions but with a different bias correction with \code{accuracy=TRUE}. It can only be reported for probability 0.5 and does not generalize to three dimensions.
 }
 
+Estimators based on the normal distribution use the plug-in method (Blischke & Halpin, 1966), i.e., they substitute the true covariance matrix and mean vector with those estimated from the data. They are thus strictly valid only for the asymptotic distribution, while the finite sample distribution may differ somewhat.
+
 If package \code{shiny} is installed, an interactive web app for this functionality can be run with \code{runGUI("hitprob")}.
 }
 \value{
@@ -46,6 +48,8 @@ A list with the (chosen) CEP/SEP estimates and supplementary information on the 
 \item{ctr}{group center}
 }
 \references{
+Blischke W. R. and Halpin, A. H. (1966). Asymptotic properties of some estimators of quantiles of circular error. Journal of the American Statistical Association, 61 (315), 618-632.
+
 DiDonato, A. R. (1988). Integration of the trivariate normal distribution over an offset spehere and an inverse problem (NSWC TR 87-27). Dahlgren, VA: U.S. Naval Surface Weapons Center Dahlgren Division.
 
 DiDonato, A. R., & Jarnagin, M. P. (1961). Integration of the general bivariate Gaussian distribution over an offset circle. Mathematics of Computation, 15 (76), 375-382.

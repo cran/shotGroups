@@ -90,8 +90,8 @@ function(DF, plots=TRUE, xyTopLeft=TRUE, ABalt=c("two.sided", "less", "greater")
     }
 
     xyL  <- lapply(split(DF, DF$series), extractXY)
-    nS   <- length(xyL)                  # total number of series
-    nObs <- sapply(xyL, nrow)            # number of obs per series
+    nS   <- length(xyL)                   # total number of series
+    nObs <- vapply(xyL, nrow, integer(1)) # number of obs per series
     names(xyL) <- levels(DF$series)
 
     ## to determine axis limits later, collect all results in a vector
@@ -454,8 +454,8 @@ function(DF, which=1L, xyTopLeft=TRUE, CEPlevel=0.5, CIlevel=0.95, conversion="m
     }
 
     xyL  <- lapply(split(DF, DF$series), extractXY)
-    nS   <- length(xyL)                  # total number of series
-    nObs <- sapply(xyL, nrow)            # number of obs per series
+    nS   <- length(xyL)                   # total number of series
+    nObs <- vapply(xyL, nrow, integer(1)) # number of obs per series
     names(xyL) <- levels(DF$series)
 
     ## to determine axis limits later, collect all results in a vector

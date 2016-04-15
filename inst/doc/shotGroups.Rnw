@@ -281,9 +281,9 @@ Reported statistical parameters and tests:
 \item Maximum pairwise distance between points for each group (center-to-center, = maximum spread, in original measurement units, MOA, SMOA, mrad)
 \item Figure of merit FoM and diagonal of the (oriented) minimum-area bounding box for each group (in original measurement units, MOA, SMOA, mrad)
 \item Radius of the minimum enclosing circle for each group (in original measurement units, MOA, SMOA, mrad)
-\item Estimated Rayleigh parameter $\sigma$ (precision) for each group (in original measurement units, MOA, SMOA, milliradian)
-\item Estimated Rayleigh mean radius MR for each group (in original measurement units, MOA, SMOA, milliradian)
-\item Parametric $\chi^{2}$ confidence intervals for Rayleigh $\sigma$ and MR (in original measurement units, MOA, SMOA, milliradian)
+\item Estimated Rayleigh parameter $\sigma$ (precision) for each group (in original measurement units, MOA, SMOA, mrad)
+\item Estimated Rayleigh mean radius MR for each group (in original measurement units, MOA, SMOA, mrad)
+\item Parametric $\chi^{2}$ confidence intervals for Rayleigh $\sigma$ and MR (in original measurement units, MOA, SMOA, mrad)
 \item Estimate for the 50\% circular error probable (CEP) in each group (see section \ref{sec:CEP}; in original measurement units, MOA, SMOA, mrad)
 \item Ansari-Bradley-test results from testing equality of group variances for $x$- and $y$-coordinates -- when two groups are compared. With more than two groups, the Fligner-Killeen-test is used
 \item Wilcoxon-Rank-Sum-test (= Mann-Whitney-$U$-test) result from testing equality of average point distances to their respective group center -- when two groups are compared. With more than two groups, the Kruskal-Wallis-test is used
@@ -323,7 +323,7 @@ The \texttt{shotGroups} package also provides a number of utility functions that
 \item estimate Rayleigh parameter $\sigma$ from range statistics like extreme spread, and do efficiency calculations for several group statistics (section \ref{sec:rangeStat})
 \item plot a group to scale on a target background and add precision indicators (section \ref{sec:drawGroup})
 \item simulate the ring count for a given group, bullet diameter, and target type (section \ref{sec:simRingCount})
-\item convert between absolute and angular size units MOA, SMOA, and mrad (section \ref{sec:unitConversion})
+\item convert between absolute and angular size units deg, MOA, SMOA, rad, and mrad (section \ref{sec:unitConversion})
 \item try an analysis on collections of empirical data included in the package (section \ref{sec:datasets})
 \end{itemize}
 
@@ -370,8 +370,6 @@ Beyond calculating decriptive/geometric precision measures, \texttt{shotGroups} 
 
 The following functions estimate the region that is expected to contain a given fraction of shots (bullet hole centers) under different assumptions. The given fraction of shots is the same as the probability for one shot to lie within the calculated region. The functions can use the MCD method for a robust estimate of the group center and covariance matrix (from package \texttt{robustbase}).
 
-See section \ref{sec:litCEP} for more references to relevant literature, and section \ref{sec:distributions} for a discussion of the different distributions of radial error mentioned below.
-
 \begin{itemize}
 \item \texttt{getCEP()}: Calculates estimates for the Circular Error Probable CEP. For three-dimensional data, the Spherical Error Probable SEP is returned. The CEP/SEP estimate is the radius of the circle/sphere around the point of aim (POA) that is expected to cover a certain fraction of points. If systematic accuracy bias is ignored, the POA is assumed to coincide with the true group center. If systematic accuracy bias is taken into account, the POA is in the origin $0$, possibly offset from the true group center. The following estimates are available:
 \begin{itemize}
@@ -391,6 +389,8 @@ See section \ref{sec:litCEP} for more references to relevant literature, and sec
 \end{itemize}
 \item \texttt{getConfEll()}: Calculates the confidence ellipse for the true mean of the distribution under the assumption of multivariate normality of shot coordinates. The coordinates may be correlated and have unequal variances. The confidence ellipse gives the iso-probability contour, the points on its rim all have the same Mahalanobis distance to the center. The result also includes the ellipse based on a robust estimate for the covariance matrix of the coordinates using the MCD algorithm (from package \texttt{robustbase}). The confidence ellipse generalizes to three-dimensional data.
 \end{itemize}
+
+Estimates based on the normal distribution use the plug-in method \cite{Blischke1966}, i.\,e., they substitute the true covariance matrix and mean vector with those estimated from the data. They are thus strictly valid only for the asymptotic distribution, while the finite sample distribution may differ somewhat. See section \ref{sec:litCEP} for more references to relevant literature, and section \ref{sec:distributions} for a discussion of the different distributions of radial error mentioned below.
 
 <<cCEP, out.width='3in'>>=
 ## circular error probable
@@ -484,13 +484,13 @@ The literature on the circular error probable (CEP) is extensive and diverse: Ap
 The following list is by no means intended to be complete. Beware that the quality of the cited articles is not uniformly high. The relevant publications may be roughly categorized into different groups:
 
 \begin{itemize}
-\item Articles that develop a CEP estimator or the modification of one -- e.\,g., RAND-234 \cite{RAND1952}, modified RAND-234 \cite{Pesapane1977}, \citeA{Grubbs1964a}, Rayleigh \cite{Culpepper1978,Saxena2005,Singh1992}, \citeA{Ethridge1983}, \citeA{Bell1973}, \citeA{Nicholson1974}, \citeA{Siouris1993}, \citeA{Krempasky2003}, \citeA{Ignani2010}, correlated bivariate normal \cite{DiDonato1961a,Evans1985}, and Bayes \cite{Spall1992}.
-\item Some articles focus on the confidence intervals for CEP \cite{DiDonato2007,Sathe1991,Taub1983b,Thomas1973,Zhang2012}.
+\item Articles that develop a CEP estimator or the modification of one -- e.\,g., RAND-234 \cite{RAND1952}, modified RAND-234 \cite{Pesapane1977}, \citeA{Grubbs1964a}, Rayleigh \cite{Culpepper1978,Saxena2005,Singh1992}, \citeA{Ethridge1983}, \citeA{Bell1973}, \citeA{Nicholson1974}, \citeA{Siouris1993}, \citeA{Krempasky2003}, \citeA{Ignani2010}, correlated bivariate normal \cite{DiDonato1961a,Evans1985,Winkler2012}, and Bayes \cite{Spall1992}.
+\item Some articles focus on the confidence intervals for CEP \cite{DiDonato2007,Sathe1991,Taub1983b,Thomas1973a,Thomas1974,Zhang2012}.
 \item Articles or Master's theses comparing the characteristics of CEP estimators in different scenarios \cite{Blischke1966,Elder1986,Kamat1962,McMillan2008,Moranda1959,Moranda1960,Nelson1988,Puhek1992,Tongue1993,Taub1983a,Wang2013a,Wang2013b,Wang2014,Williams1997}.
 \item Publications studying the correlated bivariate normal distribution with mean $0$ re-written in polar coordinates radius and angle \cite{Chew1962,Greenwalt1962,Harter1960,Hoover1984,Hoyt1947}. The distribution of the radius is known as the Hoyt \citeyear{Hoyt1947} distribution. The closed form expression for its cumulative distribution function has only recently been identified as the symmetric difference between two first-order Marcum $Q$-functions \cite{Marcum1950,Paris2009a,Paris2009b}. The latter are special cases of the non-central $\chi^{2}$-distribution \cite{Nuttall1975}. A nearly correct closed-form solution for the 50\% quantile is given by \citeA{Krempasky2003}. \citeA{Childs1975} and \citeA{Ignani2010} provide polynomial approximations for the 50\%, 90\%, 95\%, and 99\% quantile. The statistical literature on coverage problems in the multivariate normal distribution is reviewed in \citeA{Guenther1964}. From the perspective of radio engineering, \citeA{Beckmann1962, Beckmann1964} works out the relationship between the Rayleigh, Rice and Hoyt distribution and their generalization.
-\item \citeA{Moranda1960}, \citeA{DiDonato1961a,DiDonato1961b,DiDonato1962a,DiDonato1962b,Evans1985} as well as \citeA{Shultz1963,Bell1973}, \citeA{Evans1985}, and \citeA{Ager2004} develop methods to use the correlated bivariate normal distribution for CEP estimation when systematic accuracy bias must be taken into account. This requires integrating the distribution over a disc that is not centered on the true mean of the shot group but on the point of aim. This so-called \emph{offset circle probability} is the probability of a quadratic form of a normal variable \cite{Duchesne2010}. The exact distribution of quadratic forms is a weighted average of non-central $\chi^{2}$-distributions and difficult to calculate without numerical tools. Therefore, the \citeA{Patnaik1949} two-moment central $\chi^{2}$-approximation or the Pearson \cite{Imhof1961,Pearson1959} three-moment central $\chi^{2}$-approximation are often used. Recently, \citeA{Liu2009} proposed a four-moment non-central $\chi^{2}$-approximation.
-\item A number of articles present algorithms for the efficient numerical calculation of the Hoyt cumulative distribution function (cdf), as well as for its inverse, the quantile function \cite{DiDonato2004,DiDonato2007,Pyati1993,Shnidman1995}. Numerical algorithms to efficiently and precisely calculate the distribution of quadratic forms of normal random variables were proposed by \citeA{Davies1980,Farebrother1984,Farebrother1990,Imhof1961,Sheil1977}. A comparison and implementation can be found in \citeA{Duchesne2010}.
-\item The Spherical Error Probable is developed in \citeA{Singh1962,Singh1970,Childs1975,DiDonato1988,Siouris1993} and \citeA{Ignani2010}.
+\item \citeA{Cadwell1964,DiDonato1961a,DiDonato1961b,DiDonato1962a,DiDonato1962b,Evans1985,Gilliland1962,Gilliland1974,Moranda1960} as well as \citeA{Ager2004,Bell1973,Evans1985,Shultz1963} develop methods to use the correlated bivariate normal distribution for CEP estimation when systematic accuracy bias must be taken into account. This requires integrating the distribution over a disc that is not centered on the true mean of the shot group but on the point of aim. This so-called \emph{offset circle probability} is the probability of a quadratic form of a normal variable \cite{Duchesne2010}. The exact distribution of quadratic forms is a weighted average of non-central $\chi^{2}$-distributions and difficult to calculate without numerical tools. Therefore, the \citeA{Patnaik1949} two-moment central $\chi^{2}$-approximation or the Pearson \cite{Imhof1961,Pearson1959} three-moment central $\chi^{2}$-approximation are often used. Recently, \citeA{Liu2009} proposed a four-moment non-central $\chi^{2}$-approximation.
+\item A number of articles present algorithms for the efficient numerical calculation of the Hoyt cumulative distribution function (cdf), as well as for its inverse, the quantile function \cite{DiDonato2004,DiDonato2007,Gillis1991,Govindarajulu1986,Pyati1993,Rogers1993,Shnidman1995}. Numerical algorithms to efficiently and precisely calculate the distribution of quadratic forms of normal random variables were proposed by \citeA{Davies1980,Farebrother1984,Farebrother1990,Imhof1961,Kuonen1999,Sheil1977}. A comparison and implementation can be found in \citeA{Duchesne2010}.
+\item The Spherical Error Probable (SEP) is developed in \citeA{Childs1975,DiDonato1988,Ignani2010,Singh1962,Singh1970,Siouris1993,Thomas1973b}.
 \item The GPS-related literature on accuracy measures in navigation includes \citeA{Mertikas1985} and \citeA{Chin1987}.
 \end{itemize}
 
@@ -669,7 +669,7 @@ efficiency(n=c(3, 5, 10), nGroups=10, CIlevel=0.9, stat="ES")
 Function \texttt{drawGroup()} serves to illustrate a group of bullet holes by drawing the holes to scale on a target background, possibly adding the following features:
 
 \begin{itemize}
-\item The diagram can be drawn in original measurement units, in absolute size units m, cm, mm, yd, ft, in, or in angular measures MOA, SMOA, mrad.
+\item The diagram can be drawn in original measurement units, in absolute size units m, cm, mm, yd, ft, in, or in angular measures deg, MOA, SMOA, rad, mrad, mil.
 \item A target background can be selected from a number of pre-defined circular target types from different shooting federations (ISSF, DSB, BDS, BDMP, DSU, see \texttt{help(targets)}). Targets can also be plotted just by themselves using \texttt{drawTarget()}.
 \item Precision indicators can be added to the plot individually:
 \begin{itemize}
@@ -759,7 +759,7 @@ The angular size of an object with absolute size $s$ is its angular diameter at 
 \label{fig:anglesCenter}
 \end{figure}
 
-The \texttt{shotGroups} package includes functions \texttt{getMOA()} and \texttt{fromMOA()} to convert from absolute object size to the angular diameter in degree, radian, MOA, SMOA, mrad and vice versa. The functions need the distance to target $d$, object sizes $s$ and measurement units for $d$ and $s$. The option \texttt{type} controls which angular measure is returned:
+The \texttt{shotGroups} package includes functions \texttt{getMOA()} and \texttt{fromMOA()} to convert from absolute object size to the angular diameter in degree, MOA, SMOA, radian, mrad, NATO mil and vice versa. The functions need the distance to target $d$, object sizes $s$ and measurement units for $d$ and $s$. The option \texttt{type} controls which angular measure is returned:
 
 \begin{itemize}
 \item \texttt{type="deg"}: Convert to/from angle in degree, where the circle is divided into 360 degrees.
@@ -770,7 +770,7 @@ The \texttt{shotGroups} package includes functions \texttt{getMOA()} and \texttt
 \item \texttt{type="mil"}: Convert to/from NATO mil. 1 mil = $\frac{2 \pi}{6400}$ radian -- the circle circumference is divided into 6400 mils.
 \end{itemize}
 
-Function \texttt{getDistance()} returns the distance to an object given its absolute size and angular size in MOA, SMOA, mrad, or mil.
+Function \texttt{getDistance()} returns the distance to an object given its absolute size and angular size in deg, MOA, SMOA, rad, mrad, or mil.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsubsection{Calculating the angular diameter of an object}
@@ -779,7 +779,7 @@ Function \texttt{getDistance()} returns the distance to an object given its abso
 
 Figure \ref{fig:anglesCenter} shows how the angle $\alpha$ subtended by an object of size $s$ at distance $d$ can be calculated from the right triangle with hypotenuse $d$ and cathetus $s/2$: $\tan\left(\frac{\alpha}{2}\right) = \frac{s}{2} \cdot \frac{1}{d}$, therefore $\alpha = 2 \cdot \arctan\left(\frac{s}{2 d}\right)$.
 
-Assuming that the argument for $\tan(\cdot)$ and the result from $\arctan(\cdot)$ are in radian, and that distance to target $d$ and object size $s$ are measured in the same unit, this leads to the following formulas for calculating $\alpha$ in MOA, SMOA as well as $x$ in mrad and NATO mil based on $d$ and $s$:
+Assuming that the argument for $\tan(\cdot)$ and the result from $\arctan(\cdot)$ are in radian, and that distance to target $d$ and object size $s$ are measured in the same unit, this leads to the following formulas for calculating $\alpha$ in deg, MOA, SMOA as well as $x$ in rad, mrad and NATO mil based on $d$ and $s$:
 
 \begin{itemize}
 \item Angle $\alpha$ in degree: $\alpha = \frac{360}{2 \pi} \cdot 2

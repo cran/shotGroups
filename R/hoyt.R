@@ -5,7 +5,7 @@
 recycle <-
 function(...) {
     dots <- list(...)
-    maxL <- max(sapply(dots, length))
+    maxL <- max(vapply(dots, length, integer(1)))
     lapply(dots, rep, length=maxL)
 }
 
@@ -32,9 +32,9 @@ function(x) {
 ## based on list of covariance matrices
 getHoytParam.list <-
 function(x) {
-    if(!all(sapply(x, is.matrix)))  { stop("x must be a matrix") }
-    if(!all(sapply(x, is.numeric))) { stop("x must be numeric") }
-    if(!all(sapply(x, dim) == 2L))  { stop("x must be (2 x 2)-matrix") }
+    if(!all(vapply(x, is.matrix,  logical(1)))) { stop("x must be a matrix") }
+    if(!all(vapply(x, is.numeric, logical(1)))) { stop("x must be numeric") }
+    if(!all(vapply(x, dim, integer(2)) == 2L))  { stop("x must be (2 x 2)-matrix") }
 
     getEV <- function(sigma) {           # eigenvalues from covariance matrix
         if(!isTRUE(all.equal(sigma, t(sigma)))) {
@@ -48,11 +48,11 @@ function(x) {
         lambda
     }
 
-    ev    <- lapply(x, getEV)            # eigenvalues for all matrices
-    ev1   <- sapply(ev, head, n=1)       # all first eigenvalues
-    ev2   <- sapply(ev, tail, n=1)       # all second eigenvalues
-    qpar  <- 1/sqrt(((ev1+ev2)/ev2) - 1) # Hoyt q
-    omega <- ev1+ev2                     # Hoyt omega
+    ev    <- lapply(x, getEV)              # eigenvalues for all matrices
+    ev1   <- vapply(ev, head, FUN.VALUE=numeric(1), n=1)  # all first eigenvalues
+    ev2   <- vapply(ev, tail, FUN.VALUE=numeric(1), n=1)  # all second eigenvalues
+    qpar  <- 1/sqrt(((ev1+ev2)/ev2) - 1)   # Hoyt q
+    omega <- ev1+ev2                       # Hoyt omega
 
     return(list(q=qpar, omega=omega))
 }

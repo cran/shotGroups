@@ -39,8 +39,8 @@ shinyUI(fluidPage(
                             min=0, max=1, value=0.5, step=0.05),
                 checkboxGroupInput("hitpCEPtype1", label=h5("CEP type (default: CorrNormal)"),
                                    choices=CEPtypes, selected=c(1, 5)),
-                checkboxInput("hitpAcc", label=h5("CEP w/ accuracy"), FALSE),
-                checkboxInput("hitpDoRob1", label=h5("Robust estimate"), FALSE)
+                checkboxInput("hitpAcc", label="CEP w/ accuracy", FALSE),
+                checkboxInput("hitpDoRob1", label="Robust estimate", FALSE)
             ),
 
             #####---------------------------------------------------------------
@@ -52,7 +52,7 @@ shinyUI(fluidPage(
                             choices=hitpRUnit, selected=1),
                 checkboxGroupInput("hitpCEPtype2", label=h5("CEP type (default: CorrNormal)"),
                                    choices=CEPtypes[1:5], selected=c(1, 5)),
-                checkboxInput("hitpDoRob2", label=h5("Robust estimate"), FALSE)
+                checkboxInput("hitpDoRob2", label="Robust estimate", FALSE)
             ),
 
             #####---------------------------------------------------------------

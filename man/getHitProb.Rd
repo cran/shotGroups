@@ -17,7 +17,7 @@ getHitProb(xy, r=1, unit = 'unit', dstTarget = 100, conversion = 'm2cm',
 \arguments{
   \item{xy}{either a numerical (n x p)-matrix with the coordinates of n points (1 row of p coordinates per point), or a data frame with either the variables \code{X}, \code{Y} or \code{Point.X}, \code{Point.Y} (optionally \code{Z} or \code{Point.Z}).}
   \item{r}{a numerical vector with the radius values for the circle/sphere that defines the region for which the probability should be calculated.}
-  \item{unit}{Measurement unit for radius \code{r}. Default \code{'unit'} indicates that the measurement unit for (x,y)-coordinates given in \code{conversion}. Possible values are \code{'unit', 'm', 'cm', 'mm', 'yd', 'ft', 'in', 'MOA', 'SMOA', 'milrad'}.}
+  \item{unit}{Measurement unit for radius \code{r}. Default \code{'unit'} indicates that the measurement unit for (x,y)-coordinates given in \code{conversion}. Possible values are \code{'unit', 'm', 'cm', 'mm', 'yd', 'ft', 'in', 'deg', 'MOA', 'SMOA', 'rad', 'mrad', 'mil'}.}
   \item{dstTarget}{a numerical value with the distance to the target - used in MOA calculation. See \code{\link[shotGroups]{getMOA}}.}
   \item{conversion}{how to convert the measurement unit for distance to target to that of the shot-coordinates - used in MOA calculation. See \code{\link[shotGroups]{getMOA}}.}
   \item{accuracy}{logical: take systematic location bias into account? See details.}
@@ -43,7 +43,7 @@ A vector with the (chosen) hit-probability estimates. For more than one \code{r}
 }
 \references{
 DiDonato, A. R. (1988). Integration of the trivariate normal distribution over an offset spehere and an inverse problem (NSWC TR 87-27). Dahlgren, VA: U.S. Naval Surface Weapons Center Dahlgren Division.
-  
+
 DiDonato, A. R., & Jarnagin, M. P. (1961). Integration of the general bivariate Gaussian distribution over an offset circle. Mathematics of Computation, 15 (76), 375-382.
 
 Grubbs, F. E. (1964). Approximate circular and noncircular offset probabilities of hitting. Operations Research, 12(1), 51-62.

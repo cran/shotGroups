@@ -30,11 +30,11 @@ unitsXYInv  <- c("1"="cm", "2"="mm", "3"="in")
 unitsAbs    <- c("m"="1", "cm"="2", "mm"="3", "yard"="4", "feet"="5", "inch"="6")
 unitsAbsInv <- c("1"="m", "2"="cm", "3"="mm", "4"="yd", "5"="ft", "6"="in")
 
-unitsAng    <- c("MOA"="1", "SMOA"="2", "mrad"="3", "NATO mil"="4")
-unitsAngInv <- c("1"="MOA", "2"="SMOA", "3"="mrad", "4"="mil")
+unitsAng    <- c("degree"="1", "MOA"="2", "SMOA"="3", "radian"="4", "milliradian"="5", "NATO mil"="6")
+unitsAngInv <- c("1"="deg",    "2"="MOA", "3"="SMOA", "4"="rad",    "5"="mrad",        "6"="mil")
 
-unitsPlot    <- c("cm"="1", "mm"="2", "in"="3", "MOA"="4", "SMOA"="5", "milliradian"="6", "NATO mil"="7")
-unitsPlotInv <- c("1"="cm", "2"="mm", "3"="in", "4"="MOA", "5"="SMOA", "6"="mrad", "7"="mil")
+unitsPlot    <- c("cm"="1", "mm"="2", "inch"="3", "degree"="4", "MOA"="5", "SMOA"="6", "radian"=7, "milliradian"="8", "NATO mil"="9")
+unitsPlotInv <- c("1"="cm", "2"="mm", "3"="in",   "4"="deg",    "5"="MOA", "6"="SMOA", "7"="rad",  "8"="mrad",        "9"="mil")
 
 CEPtypes <- c("Correlated Normal"="1", "Grubbs-Pearson"="2", "Grubbs-Patnaik"="3",
               "Grubbs-Liu"="4", "Rayleigh"="5", "Krempasky"="6", "Ignani"="7",
