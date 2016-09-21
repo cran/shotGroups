@@ -44,7 +44,7 @@ function(r=1, sigma=diag(2), mu, e, x0, lower.tail=TRUE) {
     ## non-centrality parameters
     ncp <- xmu2^2 / S1eig$values
     cqf <- vapply(r[keep], function(x) {
-                      CompQuadForm::farebrother(x^2, lambda=S1eig$values, delta=ncp)$res },
+                      CompQuadForm::farebrother(x^2, lambda=S1eig$values, delta=ncp)$Qq },
                   numeric(1))
 
     ## NA, NaN, -Inf, Inf (-Inf, Inf will be changed hereafter)

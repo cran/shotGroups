@@ -1,4 +1,4 @@
-7e2b08223e181b550b16fadfafbba035 *DESCRIPTION
+26c40aeabe7199f8255d23b364f2f9ef *DESCRIPTION
 929f8d002169b656367a5bade017143b *NAMESPACE
 6b1d3824a04417cef10f27fc11087e14 *R/CEPs.R
 f05632e63d3fd1cb2d25b93217b044ef *R/analyzeGroup.R
@@ -24,9 +24,9 @@ ee1f0868a02bb807d5680f60485d35fa *R/groupLocation.R
 794f9498897404a9113f2e9a2d511a2e *R/groupShape.R
 4075ff32fec444fab9af07d77df8deb8 *R/groupSpread.R
 302a102634fab7c7422f7037ac16826a *R/grubbs.R
-8c5115cb8d341617f759822994825584 *R/hoyt.R
+80f5bbf19adcf3fea71eaaabb10f444e *R/hoyt.R
 a8163ae70b8fc1301f96c5ff9ead4b3f *R/maxwell.R
-05c3cbe72c354b0ac9c88264ab657d1a *R/mvnEll.R
+a641355f01fc8438661600ba9667aadf *R/mvnEll.R
 a78a81ab0ba3be58cad69b899d195561 *R/range2sigma.R
 4c8052e431f74013078e3252611018c0 *R/rayleigh.R
 1f8a9bbc7951498a854f34b16730f1b5 *R/readData.R
@@ -49,10 +49,10 @@ f3456db07e0edb2ca21fbd576a3d0fd5 *data/DFsavage.rda
 fb3f67c786603fdf977502f98d088431 *data/DFscar17.rda
 8ec5239fa85880981035d674b3785c23 *data/DFtalon.rda
 5f55a1501a283c9523d5dc389eb97eb1 *data/targets.rda
-3928d967b6f4d759361dde9b789df6c1 *inst/ChangeLog
+dbb2d5039d99c0906a3ac4e8c3c76ca6 *inst/ChangeLog
 e03f696584305080096809abd0ed7478 *inst/doc/shotGroups.R
 ebb89db44214d426df416c999ad10890 *inst/doc/shotGroups.Rnw
-28f3e4950675fd19ec91f1e071d2fe86 *inst/doc/shotGroups.pdf
+8353af1a5e736b0f52f4bd27c5785602 *inst/doc/shotGroups.pdf
 79c571d5fea273396a82474d03bb53c4 *inst/shinyAnalyzeGroups/helper.R
 c087c8b3b664973667241df6e53858c8 *inst/shinyAnalyzeGroups/server.R
 027a58483e32391e6e1d8bca47892a12 *inst/shinyAnalyzeGroups/ui.R
@@ -115,7 +115,7 @@ b2f5b3a38c8b9009c22a31f5a9f2e751 *man/readDataMisc.Rd
 386b7d8e20009b04fca9b3f29b11caca *man/readDataOT2.Rd
 3d090f4fdf4262a34372b52ccf0e1933 *man/rice.Rd
 ee9674d234edc9aae22e84dde866b0cc *man/runGUI.Rd
-43b8e2481d43f8fbffcc7eb5fbc9f96d *man/shotGroups-package.Rd
+f6a04b87cd7df535c47234892057d577 *man/shotGroups-package.Rd
 80f9bd32153cc14d22c2eaf4a99fa0ce *man/simRingCount.Rd
 180d5b680cf034543e143b5b8753d1d3 *man/targets.Rd
 614f6dbbad4e46e902c88b80f1a0dc34 *vignettes/anglesCenter.pdf

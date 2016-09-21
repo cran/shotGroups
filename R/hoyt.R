@@ -111,7 +111,35 @@ function(qpar, omega) {
 dHoyt <-
 function(x, qpar, omega) {
     is.na(x)     <- is.nan(x)                # replace NaN with NA
-    is.na(qpar)  <- (qpar  <= 0) | (qpar >= 1) | !is.finite(qpar)
+    is.na(qpar)  <- (qpar  <  0) | (qpar > 1) | !is.finite(qpar)
+    is.na(omega) <- (omega <= 0) | !is.finite(omega)
+
+    argL  <- recycle(x, qpar, omega)
+    x     <- argL[[1]]
+    qpar  <- argL[[2]]
+    omega <- argL[[3]]
+
+    dens <- numeric(length(x))                 # initialize density to 0
+    keep <- which((x >= 0) | !is.finite(x))    # keep non-negative x, NA, -Inf, Inf
+    if(length(keep) < 1L) { return(dens) }     # nothing to do
+
+    ## Hoyt is a special case of the Nakagami-m distribution with Hoyt
+    ## parameter q = m. Squared Nakagami-distributed variable is
+    ## gamma distributed with gamma shape = Nakagami shape,
+    ## gamma scale = Nakagami scale / Nagakami shape
+    dens[keep] <- exp(dgamma(x[keep]^2,
+                      shape=qpar[keep],
+                      scale=omega[keep]/qpar[keep],
+                      log=TRUE) + log(2) + log(x[keep]))
+
+    return(dens)
+}
+
+## equivalent
+dHoyt2 <-
+function(x, qpar, omega) {
+    is.na(x)     <- is.nan(x)                # replace NaN with NA
+    is.na(qpar)  <- (qpar  <  0) | (qpar > 1) | !is.finite(qpar)
     is.na(omega) <- (omega <= 0) | !is.finite(omega)
 
     argL  <- recycle(x, qpar, omega)
@@ -133,7 +161,6 @@ function(x, qpar, omega) {
     return(dens)
 }
 
-## equivalent
 ## Hoyt, RS. 1947. Probability functions for the modulus and angle of the
 ## normal complex variate. Bell System Technical Journal, 26(2). 318-359.
 ## Hoyt pdf is for scaled variables with S := 1/sqrt(Su^2+Sv^2), u=U/S, v=V/S
@@ -182,7 +209,7 @@ function(a, b, nu, lower.tail=TRUE) {
 ## Electronics Letters, 45(4). 210-211. Erratum: doi:10.1049/el.2009.0828
 pHoyt <-
 function(q, qpar, omega, lower.tail=TRUE) {
-    is.na(qpar)  <- (qpar  <= 0) | (qpar >= 1) | !is.finite(qpar)
+    is.na(qpar)  <- (qpar  <  0) | (qpar > 1) | !is.finite(qpar)
     is.na(omega) <- (omega <= 0) | !is.finite(omega)
 
     argL  <- recycle(q, qpar, omega)
@@ -282,7 +309,7 @@ function(q, qpar, omega, lower.tail=TRUE) {
 ## Hoyt quantile function through root finding of cdf
 qHoyt <-
 function(p, qpar, omega, lower.tail=TRUE, loUp=NULL) {
-    is.na(qpar)  <- (qpar <= 0)  | (qpar >= 1) | !is.finite(qpar)
+    is.na(qpar)  <- (qpar  <  0)  | (qpar > 1) | !is.finite(qpar)
     is.na(omega) <- (omega <= 0) | !is.finite(omega)
 
     argL  <- recycle(p, qpar, omega)
@@ -336,7 +363,7 @@ function(p, qpar, omega, lower.tail=TRUE, loUp=NULL) {
 ## random numbers from Hoyt distribution
 rHoyt <-
 function(n, qpar, omega, method=c("eigen", "chol", "cdf"), loUp=NULL) {
-    is.na(qpar)  <- (qpar <= 0)  | (qpar >= 1) | !is.finite(qpar)
+    is.na(qpar)  <- (qpar  <  0)  | (qpar > 1) | !is.finite(qpar)
     is.na(omega) <- (omega <= 0) | !is.finite(omega)
     method <- match.arg(method)
 
