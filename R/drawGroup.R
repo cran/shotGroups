@@ -1,26 +1,34 @@
 drawGroup <-
-function(xy, xyTopLeft=TRUE, bb=FALSE, bbMin=FALSE, bbDiag=FALSE, minCirc=FALSE,
+function(xy, center=FALSE,
+         xyTopLeft=TRUE, bb=FALSE, bbMin=FALSE, bbDiag=FALSE, minCirc=FALSE,
          maxSpread=FALSE, meanDist=FALSE, confEll=FALSE, CEP=FALSE, ringID=FALSE,
-         doRob=FALSE, level=0.95, scaled=TRUE, caliber=9, dstTarget=100,
-         conversion="m2cm", unit="unit", alpha=0.5, target='ISSF_100m') {
+         doRob=FALSE, level=0.95, scaled=TRUE, caliber=9,
+         dstTarget=100, conversion="m2cm",
+         unit="unit", alpha=0.5, target='ISSF_100m') {
     UseMethod("drawGroup")
 }
 
 drawGroup.data.frame <-
-function(xy, xyTopLeft=TRUE, bb=FALSE, bbMin=FALSE, bbDiag=FALSE, minCirc=FALSE,
+function(xy, center=FALSE,
+         xyTopLeft=TRUE, bb=FALSE, bbMin=FALSE, bbDiag=FALSE, minCirc=FALSE,
          maxSpread=FALSE, meanDist=FALSE, confEll=FALSE, CEP=FALSE, ringID=FALSE,
-         doRob=FALSE, level=0.95, scaled=TRUE, caliber=9, dstTarget=100,
-         conversion="m2cm", unit="unit", alpha=0.5, target='ISSF_100m') {
-    xy <- getXYmat(xy, xyTopLeft=xyTopLeft)
+         doRob=FALSE, level=0.95, scaled=TRUE, caliber=9,
+         dstTarget=100, conversion="m2cm",
+         unit="unit", alpha=0.5, target='ISSF_100m') {
+    xy        <- getXYmat(xy, xyTopLeft=xyTopLeft, center=center)
     xyTopLeft <- FALSE                   # swapping Y was done in getXYmat()
+    center    <- FALSE                   # centering was done in getXYmat()
+
     NextMethod("drawGroup")
 }
 
 drawGroup.default <-
-function(xy, xyTopLeft=TRUE, bb=FALSE, bbMin=FALSE, bbDiag=FALSE, minCirc=FALSE,
+function(xy, center=FALSE,
+         xyTopLeft=TRUE, bb=FALSE, bbMin=FALSE, bbDiag=FALSE, minCirc=FALSE,
          maxSpread=FALSE, meanDist=FALSE, confEll=FALSE, CEP=FALSE, ringID=FALSE,
-         doRob=FALSE, level=0.95, scaled=TRUE, caliber=9, dstTarget=100,
-         conversion="m2cm", unit="unit", alpha=0.5, target='ISSF_100m') {
+         doRob=FALSE, level=0.95, scaled=TRUE, caliber=9,
+         dstTarget=100, conversion="m2cm",
+         unit="unit", alpha=0.5, target='ISSF_100m') {
     if(!is.matrix(xy))       { stop("xy must be a matrix") }
     if(!is.numeric(xy))      { stop("xy must be numeric") }
     if(ncol(xy) != 2L)       { stop("xy must have two columns") }
@@ -30,7 +38,10 @@ function(xy, xyTopLeft=TRUE, bb=FALSE, bbMin=FALSE, bbDiag=FALSE, minCirc=FALSE,
     if(any(level <= 0))      { stop("level must be > 0") }
     if(!is.numeric(alpha))   { stop("alpha must be numeric") }
     if((alpha < 0) || (alpha > 1)) { stop("alpha must be in [0,1]") }
-
+    if(center) {
+        warning("Centering only works for data frames, ignored here")
+    }
+    
     unit <- match.arg(unit, choices=c("unit", "m", "cm", "mm", "yd", "ft", "in",
                                       "deg", "MOA", "SMOA", "rad", "mrad", "mil"))
     CEP  <- as.character(CEP)

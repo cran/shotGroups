@@ -2,14 +2,15 @@
 \alias{compareGroups}
 \title{Compare bullet hole groups}
 \description{Numerically and graphically compare accuracy, precision, and distribution shape of up to 15 groups of bullet holes.}
-\usage{compareGroups(DF, plots = TRUE, xyTopLeft = TRUE,
+\usage{compareGroups(DF, plots = TRUE, xyTopLeft = TRUE, center = FALSE,
               ABalt = c('two.sided', 'less', 'greater'),
               Walt = c('two.sided', 'less', 'greater'),
               CEPtype = 'CorrNormal', CEPlevel = 0.5, CIlevel = 0.95, conversion = 'm2cm')}
 \arguments{
-  \item{DF}{a data frame containing (at least) these variables: \code{Series} (a \code{\link{factor}}), and either \code{Point.X}, \code{Point.Y} or \code{X}, \code{Y} defining the bullet holes. Variables \code{Distance} (distance to target), \code{Aim.X}, \code{Aim.Y} (point of aim) are useful - if they are missing, a warning is given and a default assumed.}
+  \item{DF}{a data frame containing (at least) these variables: \code{series} (a \code{\link{factor}}), and either \code{point.x}, \code{point.y} or \code{x}, \code{y} defining the bullet holes. Variables \code{distance} (distance to target), \code{aim.x}, \code{aim.y} (point of aim) are useful - if they are missing, a warning is given and a default assumed.}
   \item{plots}{logical: show diagrams?}
   \item{xyTopLeft}{logical: is the origin of the absolute coordinate system in the top-left corner? See details.}
+  \item{center}{logical: center groups to mean (0,0) first to compare only with respect to precision?}
   \item{ABalt}{a character string indicating the hypothesis for the Ansari-Bradley-Test for equal variances. Only used when exactly 2 groups are compared.}
   \item{Walt}{a character string indicating the hypothesis for the Wilcoxon-Rank-Sum-Test for equality of average distance to group center (equivalent to the Mann-Whitney-U-Test). Only used when exactly 2 groups are compared.}
   \item{CEPtype}{string indicating which CEP estimate to report from \code{\link[shotGroups]{getCEP}}.}
@@ -20,7 +21,7 @@
 \details{
 By default, OnTarget PC/TDS' 'Export Point Data' places the origin of the absolute coordinate system in the top-left corner. In OnTarget TDS, this setting can be changed by checking the box 'Tools -> Options -> Options tab -> Data Export -> Invert Y-Axis on Export'. In that case, use \code{xyTopLeft=FALSE}. If groups appear to be upside-down, \code{xyTopLeft} is the setting to change.
 
-OnTarget PC/TDS' \code{Group} variable identifies groups just within one file, whereas factor \code{series} is taken to number groups also across different original files. If your data was read with \code{\link[shotGroups]{readDataOT1}}, \code{\link[shotGroups]{readDataOT2}} or \code{\link[shotGroups]{readDataMisc}}, \code{series} is added automatically. For data from just one file, you can otherwise copy variable \code{Groups} to \code{series} in a data frame called \code{shots} with \code{shots$series} \code{<-} \code{shots$Group}.\cr
+OnTarget PC/TDS' \code{Group} variable identifies groups just within one file, whereas factor \code{series} is taken to number groups also across different original files. If your data was read with \code{\link[shotGroups]{readDataOT1}}, \code{\link[shotGroups]{readDataOT2}} or \code{\link[shotGroups]{readDataMisc}}, \code{series} is added automatically. For data from just one file, you can otherwise copy variable \code{group} to \code{series} in a data frame called \code{shots} with \code{shots$series} \code{<-} \code{shots$group}.\cr
 If the data is missing information about the point of aim, (0,0) is assumed. If distance to target is missing, 100 is assumed.
 
 In addition to the numerical results listed below, this function produces the following diagrams:

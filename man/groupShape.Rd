@@ -4,16 +4,17 @@
 \alias{groupShape.default}
 \title{Shape analysis for a single group of bullet holes}
 \description{Assesses shape of a single group of bullet holes: Outlier analysis as well as numerical and graphical normality checks for a set of (x,y)-coordinates.}
-\usage{groupShape(xy, plots = TRUE, bandW = 0.5, outlier=c('mcd', 'pca'),
-           dstTarget = 100, conversion = 'm2cm', ...)
+\usage{groupShape(xy, center = FALSE, plots = TRUE, bandW = 0.5,
+           outlier = c('mcd', 'pca'), dstTarget = 100, conversion = 'm2cm', ...)
 
-\method{groupShape}{data.frame}(xy, plots = TRUE, bandW = 0.5, outlier=c('mcd', 'pca'),
-           dstTarget = 100, conversion = 'm2cm', ...)
+\method{groupShape}{data.frame}(xy, center = FALSE, plots = TRUE, bandW = 0.5,
+           outlier=c('mcd', 'pca'), dstTarget = 100, conversion = 'm2cm', ...)
 
-\method{groupShape}{default}(xy, plots = TRUE, bandW = 0.5, outlier=c('mcd', 'pca'),
-           dstTarget = 100, conversion = 'm2cm', ...)}
+\method{groupShape}{default}(xy, center = FALSE, plots = TRUE, bandW = 0.5,
+           outlier=c('mcd', 'pca'), dstTarget = 100, conversion = 'm2cm', ...)}
 \arguments{
-  \item{xy}{either a numerical (n x 2)-matrix with the (x,y)-coordinates of n points (1 row of coordinates per point), or a data frame with either the variables \code{X}, \code{Y} or \code{Point.X}, \code{Point.Y} as well as \code{Aim.X}, \code{Aim.Y} giving the point of aim. If missing, point of aim is assumed to be in (0,0).}
+  \item{xy}{either a numerical (n x 2)-matrix with the (x,y)-coordinates of n points (1 row of coordinates per point), or a data frame with either the variables \code{x}, \code{y} or \code{point.x}, \code{point.y} as well as \code{aim.x}, \code{aim.y} giving the point of aim. If missing, point of aim is assumed to be in (0,0).}
+  \item{center}{logical: center groups to mean (0,0) first? If variable \code{series} does not exist, all shots are treated as belonging to the same group. Only available in method \code{groupShape.data.frame()}.}
   \item{plots}{logical: show diagrams?}
   \item{bandW}{for argument \code{bandwith} of \code{\link[graphics]{smoothScatter}}.}
   \item{outlier}{method for outlier identification: \code{mcd} uses robust Mahalanobis distances (see \code{\link[mvoutlier]{aq.plot}}), \code{pca} uses robust principal components analysis (see \code{\link[mvoutlier]{pcout}}). Requires installing package \code{mvoutlier}.}

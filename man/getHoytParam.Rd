@@ -16,7 +16,7 @@
 
 \method{getHoytParam}{default}(x)}
 \arguments{
-  \item{x}{one of the following: a (2 x 2)-covariance matrix, a list of (2 x 2)-covariance matrices, a data frame with either the variables \code{X}, \code{Y} or \code{Point.X}, \code{Point.Y}, a 2-vector with eigenvalues.}
+  \item{x}{one of the following: a (2 x 2)-covariance matrix, a list of (2 x 2)-covariance matrices, a data frame with either the variables \code{x}, \code{y} or \code{point.x}, \code{point.y}, a 2-vector with eigenvalues.}
 }
 \details{
 The parameters \code{q} and \code{omega} derive from the eigenvalues ev1, ev2 of the covariance matrix of the bivariate normal distribution as follows: \code{q = 1 / sqrt(((ev1+ev2)/ev2) - 1)} and \code{omega = ev1 + ev2}.
@@ -32,7 +32,7 @@ A list with the following components:
 Hoyt, R. S. (1947). Probability functions for the modulus and angle of the normal complex variate.
 Bell System Technical Journal, 26(2), 318-359.
 
-\url{http://reference.wolfram.com/mathematica/ref/HoytDistribution.html}
+\url{http://reference.wolfram.com/language/ref/HoytDistribution.html}
 }
 \seealso{
 \code{\link[shotGroups]{Hoyt}}

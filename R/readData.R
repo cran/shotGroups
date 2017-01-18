@@ -9,7 +9,7 @@ function(fPath=".", fNames, fPat, combine=TRUE) {
     isCSV <- function(ext, nFields) {
         csv <- if(tolower(ext) == "csv") {        # explicit file extension
             TRUE
-        } else if((length(unique(nFields)) == 1L) && (nFields[1] >= 2)) {
+        } else if((length(unique(nFields)) == 1L) && (nFields[1] >= 2L)) {
             ## same number of comma-separated fields in all rows
             ## and at least two comma-separated fields
             TRUE
@@ -38,7 +38,7 @@ function(fPath=".", fNames, fPat, combine=TRUE) {
 
     ## read multiple files, some possibly csv, some possibly whitespace delimited
     DFs <- lapply(files, readMe)
-    names(DFs) <- paste("file", seq_along(DFs), sep="")  # name them
+    names(DFs) <- paste0("file", seq_along(DFs))  # name them
 
     ## build shared set of variable names
     varNameL <- lapply(DFs, names)           # list of variable names
@@ -47,7 +47,9 @@ function(fPath=".", fNames, fPat, combine=TRUE) {
     ## make sure that the data frames all have the correct variables
     ## remove dots from variable names
     wants   <- c("distance", "group", "aimx", "aimy")  # useful
-    vnNoDot <- vapply(strsplit(varNames, "\\."), function(y) { paste0(y, collapse="") }, character(1))
+    vnNoDot <- vapply(strsplit(varNames, "\\."),
+                      function(y) { paste0(y, collapse="") },
+                      character(1))
     has     <- wants %in% vnNoDot
 
     if(!all(has)) {
@@ -56,7 +58,7 @@ function(fPath=".", fNames, fPat, combine=TRUE) {
             "\nthat may be required later by analysis functions"))
     }
 
-    ## make sure each data frame has either X, Y or Point.X, Point.Y
+    ## make sure each data frame has either x, y or point.x, point.y
     replaceXY <- function(x) {
         dfNames  <- names(x)
         needsXY1 <- c("point.x", "point.y")  # coordinates must have this name
@@ -66,13 +68,13 @@ function(fPath=".", fNames, fPat, combine=TRUE) {
         hasXY2   <- needsXY2 %in% dfNames
         hasXY3   <- needsXY3 %in% dfNames
 
-        ## exactly one of X, Y - Point.X, Point.Y - ShotX, ShotY
+        ## exactly one of x, y - point.x, point.y - ShotX, ShotY
         if(sum(c(all(hasXY1), all(hasXY2), all(hasXY3))) != 1) {
-            stop("Coordinates must be named X, Y - Point.X, Point.Y - or ShotX, ShotY")
+            stop("Coordinates must be named x, y - point.x, point.y - or ShotX, ShotY")
         }
 
         if(sum(c("z" %in% dfNames, "point.z" %in% dfNames, "shotz" %in% dfNames)) > 1L) {
-            stop("Coordinates must be named Z, Point.Z, or ShotZ")
+            stop("Coordinates must be named z, point.z, or ShotZ")
         }
 
         ## if X, Y, Z or ShotX, ShotY, ShotZ -> rename to Point.X, Point.Y, Point.Z
@@ -114,8 +116,8 @@ function(fPath=".", fNames, fPat, combine=TRUE) {
     ## assumed variables: Project Title, Group, Ammunition, Distance,
     ## Aim X, Aim Y, Center X, Center Y, Point X, Point Y
     ## 10 fields + trailing tab = 11
-    nFields <- unlist(lapply(files, function(x) count.fields(x, sep="\t")))
-    if(!all(nFields == 11)) {
+    nFields <- unlist(lapply(files, function(x) { count.fields(x, sep="\t") } ))
+    if(!all(nFields == 11L)) {
         stop(c("It appears at least one file does not contain exactly\n",
                "the required set of 10 variables - see help(readDataOT1)\n",
                "maybe you should use readDataMisc() instead"))
@@ -161,10 +163,10 @@ function(fPath=".", fNames, fPat, combine=TRUE) {
     ## Aim X, Aim Y, Center X, Center Y, Point X, Point Y, Velocity (optional)
     ## 10 or 11 fields
     nFields <- unlist(lapply(files, function(x) count.fields(x, sep=",")))
-    colClasses <- if(all(nFields == 10)) {
+    colClasses <- if(all(nFields == 10L)) {
         c("character", "factor", "character", "numeric", "numeric",
           "numeric", "numeric", "numeric", "numeric", "numeric")
-    } else if(all(nFields == 11)) {
+    } else if(all(nFields == 11L)) {
         c("character", "factor", "character", "numeric", "numeric",
           "numeric", "numeric", "numeric", "numeric", "numeric", "numeric")
     } else {

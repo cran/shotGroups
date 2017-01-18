@@ -6,7 +6,7 @@
 \arguments{
   \item{DFs}{ a list of data frames with a shared set of variables.}
 }
-\details{Assumes that the data frames in the list have a non-empty set of shared variables. Among them at least either \code{Point.X}, \code{Point.Y} or \code{X}, \code{Y} defining the bullet holes. To be useful for functions \code{\link[shotGroups]{analyzeGroup}} or \code{\link[shotGroups]{compareGroups}}, the data frames should also have variables \code{Group}, \code{Distance}, \code{Aim.X}, \code{Aim.Y} defining point of aim. If \code{Group} is missing, it is set to 1.}
+\details{Assumes that the data frames in the list have a non-empty set of shared variables. Among them at least either \code{point.x}, \code{point.y} or \code{x}, \code{y} defining the bullet holes. To be useful for functions \code{\link[shotGroups]{analyzeGroup}} or \code{\link[shotGroups]{compareGroups}}, the data frames should also have variables \code{group}, \code{distance}, \code{aim.x}, \code{aim.y} defining point of aim. If \code{group} is missing, it is set to 1.}
 \value{
 A data frame with the shared set of variables. In addition, it also contains factors identifying the original file (\code{file}), and a factor identifying all groups from different data frames (\code{series}).
 \item{\ldots}{the shared set of variables from the the data frames in the list.}

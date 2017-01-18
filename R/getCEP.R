@@ -1,30 +1,32 @@
 ## TODO:
 ## return: CEP is list with one component per CEPlevel
-## check RMSE for 3D data
-## check Valstar
 
 getCEP <-
-function(xy, CEPlevel=0.5, dstTarget=100, conversion="m2cm", accuracy=FALSE,
-         type="CorrNormal", doRob=FALSE) {
+function(xy, CEPlevel=0.5, dstTarget=100, conversion="m2cm",
+         center=FALSE, accuracy=FALSE, type="CorrNormal", doRob=FALSE) {
     UseMethod("getCEP")
 }
 
 getCEP.data.frame <-
-function(xy, CEPlevel=0.5, dstTarget=100, conversion="m2cm", accuracy=FALSE,
-         type="CorrNormal", doRob=FALSE) {
-    xy <- getXYmat(xy, xyTopLeft=FALSE, relPOA=FALSE)
+function(xy, CEPlevel=0.5, dstTarget=100, conversion="m2cm",
+         center=FALSE, accuracy=FALSE, type="CorrNormal", doRob=FALSE) {
+    xy     <- getXYmat(xy, xyTopLeft=FALSE, center=center, relPOA=FALSE)
+    center <- FALSE                   # centering was done in getXYmat()
     NextMethod("getCEP")
 }
 
 getCEP.default <-
-function(xy, CEPlevel=0.5, dstTarget=100, conversion="m2cm", accuracy=FALSE,
-         type="CorrNormal", doRob=FALSE) {
+function(xy, CEPlevel=0.5, dstTarget=100, conversion="m2cm",
+         center=FALSE, accuracy=FALSE, type="CorrNormal", doRob=FALSE) {
     xy <- as.matrix(xy)
     if(!is.numeric(xy))        { stop("xy must be numeric") }
     if(!is.numeric(CEPlevel))  { stop("CEPlevel must be numeric") }
     CEPlevel <- CEPlevel[CEPlevel > 0]
     if(length(CEPlevel) == 0L) { stop("CEPlevel must be > 0") }
-
+    if(center) {
+        warning("Centering only works for data frames, ignored here")
+    }
+    
     CEPlevel <- sort(unique(CEPlevel))
 
     type <- match.arg(type,
@@ -36,7 +38,8 @@ function(xy, CEPlevel=0.5, dstTarget=100, conversion="m2cm", accuracy=FALSE,
     ## check if CEPlevel is given in percent
     CEPlevelBefore <- CEPlevel
     CEPlevel <- vapply(CEPlevel, function(x) {
-        if(x >= 1) { while(x >= 1) { x <- x / 100 } } else { x } }, numeric(1))
+        if(x >= 1) { while(x >= 1) { x <- x / 100 } } else { x }
+    }, numeric(1))
 
     if(any(CEPlevelBefore != CEPlevel)) {
         warning(c("CEPlevel must be in (0,1) and was set to ", CEPlevel))

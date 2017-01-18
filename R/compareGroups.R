@@ -1,7 +1,14 @@
 compareGroups <-
-function(DF, plots=TRUE, xyTopLeft=TRUE, ABalt=c("two.sided", "less", "greater"),
-         Walt=c("two.sided", "less", "greater"), CEPtype="CorrNormal",
-         CEPlevel=0.5, CIlevel=0.95, conversion="m2cm") {
+function(DF,
+         plots=TRUE,
+         xyTopLeft=TRUE,
+         center=FALSE,
+         ABalt=c("two.sided", "less", "greater"),
+         Walt=c("two.sided", "less", "greater"),
+         CEPtype="CorrNormal",
+         CEPlevel=0.5,
+         CIlevel=0.95,
+         conversion="m2cm") {
     if(!is.data.frame(DF))    { stop("DF must be a data frame") }
     if(!is.numeric(CEPlevel)) { stop("CEPlevel must be numeric") }
     if(CEPlevel <= 0)         { stop("CEPlevel must be > 0") }
@@ -79,20 +86,19 @@ function(DF, plots=TRUE, xyTopLeft=TRUE, ABalt=c("two.sided", "less", "greater")
     if(any(xtabs(~ series, data=DF) < 2L)) { stop("We need >= 2 points in each group") }
 
     ## prepare data: get (x,y)-coords relative to point of aim as matrix
-    xy <- getXYmat(DF, xyTopLeft=xyTopLeft)
-    DF <- cbind(DF, xy)
-    dstTarget <- tapply(DF$distance, DF$series, mean)  # distances to target
-
-    ## for each group extract the old (x,y)-coords as a matrix
+    ## for each group extract the (x,y)-coords as a matrix
     extractXY <- function(x) {
-        DFsub <- x[ , which(!(names(x) %in% c("x", "y")))]
-        getXYmat(DFsub, xyTopLeft=xyTopLeft)
+        getXYmat(x, xyTopLeft=xyTopLeft, center=center)
     }
 
-    xyL  <- lapply(split(DF, DF$series), extractXY)
+    xyL  <- lapply(split(DF, DF$series, drop=TRUE), extractXY)
     nS   <- length(xyL)                   # total number of series
     nObs <- vapply(xyL, nrow, integer(1)) # number of obs per series
     names(xyL) <- levels(DF$series)
+
+    ## append (x,y)-coords to data frame
+    DF <- cbind(DF, do.call("rbind", xyL))
+    dstTarget <- tapply(DF$distance, DF$series, mean)  # distances to target
 
     ## to determine axis limits later, collect all results in a vector
     axisLimsX <- numeric(0)
@@ -100,7 +106,7 @@ function(DF, plots=TRUE, xyTopLeft=TRUE, ABalt=c("two.sided", "less", "greater")
 
     #####-----------------------------------------------------------------------
     ## location measures
-    res$ctr <- sapply(xyL, colMeans)     # group centers
+    res$ctr <- vapply(xyL, colMeans, numeric(2))     # group centers
     distPOA <- sqrt(colSums(res$ctr^2))  # distances to point of aim
     distPOAmoa  <- Map(makeMOA, distPOA, dst=dstTarget, conversion=conversion)
     res$distPOA <- do.call("cbind", distPOAmoa)
@@ -144,7 +150,7 @@ function(DF, plots=TRUE, xyTopLeft=TRUE, ABalt=c("two.sided", "less", "greater")
     ## maximum pairwise distance = maximum group spread
     maxPD      <- lapply(xyL, getMaxPairDist)   # max pairwise distance
     maxSpread  <- lapply(maxPD, function(x) { x$d } )
-    maxPDidx   <- sapply(maxPD, function(x) { x$idx } )
+    maxPDidx   <- vapply(maxPD, function(x) { x$idx }, numeric(2))
     maxSpreadL <- Map(makeMOA, maxSpread, dst=dstTarget, conversion=conversion)
     res$maxPairDist <- do.call("cbind", maxSpreadL)
 
@@ -386,7 +392,8 @@ function(DF, plots=TRUE, xyTopLeft=TRUE, ABalt=c("two.sided", "less", "greater")
 }
 
 compareGroupsPlot <-
-function(DF, which=1L, xyTopLeft=TRUE, CEPlevel=0.5, CIlevel=0.95, conversion="m2cm") {
+function(DF, which=1L, xyTopLeft=TRUE, center=FALSE,
+         CEPlevel=0.5, CIlevel=0.95, conversion="m2cm") {
     if(!is.data.frame(DF)) { stop("DF must be a data frame") }
 
     which <- match.arg(as.character(which), choices=1:4)
@@ -443,28 +450,27 @@ function(DF, which=1L, xyTopLeft=TRUE, CEPlevel=0.5, CIlevel=0.95, conversion="m
     if(any(xtabs(~ series, data=DF) < 2L)) { stop("We need >= 2 points in each group") }
 
     ## prepare data: get (x,y)-coords relative to point of aim as matrix
-    xy <- getXYmat(DF, xyTopLeft=xyTopLeft)
-    DF <- cbind(DF, xy)
-    dstTarget <- tapply(DF$distance, DF$series, mean)  # distances to target
-
-    ## for each group extract the new (x,y)-coords as a matrix
+    ## for each group extract the (x,y)-coords as a matrix
     extractXY <- function(x) {
-        DFsub <- x[ , which(!(names(x) %in% c("x", "y")))]
-        getXYmat(DFsub, xyTopLeft=xyTopLeft)
+        getXYmat(x, xyTopLeft=xyTopLeft, center=center)
     }
-
-    xyL  <- lapply(split(DF, DF$series), extractXY)
+    
+    xyL  <- lapply(split(DF, DF$series, drop=TRUE), extractXY)
     nS   <- length(xyL)                   # total number of series
     nObs <- vapply(xyL, nrow, integer(1)) # number of obs per series
     names(xyL) <- levels(DF$series)
-
+    
+    ## append (x,y)-coords to data frame
+    DF <- cbind(DF, do.call("rbind", xyL))
+    dstTarget <- tapply(DF$distance, DF$series, mean)  # distances to target
+    
     ## to determine axis limits later, collect all results in a vector
     axisLimsX <- numeric(0)
     axisLimsY <- numeric(0)
 
     #####-----------------------------------------------------------------------
     ## location measures
-    res$ctr <- sapply(xyL, colMeans)     # group centers
+    res$ctr <- vapply(xyL, colMeans, numeric(2))     # group centers
 
     ## (mean) distances to group center
     dstCtrL    <- lapply(xyL, function(x) getDistToCtr(x))
@@ -473,7 +479,7 @@ function(DF, which=1L, xyTopLeft=TRUE, CEPlevel=0.5, CIlevel=0.95, conversion="m
     ## maximum pairwise distance = maximum group spread
     maxPD     <- lapply(xyL, getMaxPairDist)   # max pairwise distance
     maxSpread <- lapply(maxPD, function(x) { x$d } )
-    maxPDidx  <- sapply(maxPD, function(x) { x$idx } )
+    maxPDidx  <- vapply(maxPD, function(x) { x$idx }, numeric(2))
 
     ## bounding box figure of merit and diagonal
     bbs    <- lapply(xyL, getMinBBox)

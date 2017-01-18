@@ -6,7 +6,8 @@
 ## always <= 1
 c4 <-
 function(n) {
-    stopifnot(all(n >= 2))
+    n <- as.integer(n)
+    stopifnot(all(n >= 2L))
 
     ## use exp(lgamma()) because gamma() will be infinite for large N
     fac <- sqrt(2/(n-1)) * exp(lgamma(n/2) - lgamma((n-1)/2))

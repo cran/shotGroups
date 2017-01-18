@@ -5,8 +5,9 @@ library(shotGroups)
 ## option sets and their respective inverse
 #####---------------------------------------------------------------------------
 
-dataBuiltIn <- c("1"="DF300BLK", "2"="DF300BLKhl", "3"="DFcciHV", "4"="DFcm",
-                 "5"="DFsavage", "6"="DFscar17", "7"="DFtalon")
+dataBuiltIn <- c("1"="DFlandy01", "2"="DFlandy02", "3"="DFlandy03", "4"="DFlandy04",
+                 "5"="DF300BLK", "6"="DF300BLKhl", "7"="DFcciHV", "8"="DFcm",
+                 "9"="DFsavage", "10"="DFscar17", "11"="DFtalon")
 
 dataBuiltInInv <- as.list(names(dataBuiltIn))
 dataBuiltInInv <- setNames(dataBuiltInInv, dataBuiltIn)

@@ -4,16 +4,20 @@
 \alias{getConfEll.default}
 \title{Confidence ellipse}
 \description{Calculates the confidence ellipse for the true mean of shot coordinates under the assumption of multivariate normality. Also includes the ellipse based on a robust estimate for the covariance matrix of the shot coordinates.}
-\usage{getConfEll(xy, level = 0.5, dstTarget = 100, conversion = 'm2cm', doRob=TRUE)
+\usage{getConfEll(xy, level = 0.5, dstTarget = 100, conversion = 'm2cm',
+          center = FALSE, doRob=TRUE)
 
-\method{getConfEll}{data.frame}(xy, level = 0.5, dstTarget = 100, conversion = 'm2cm', doRob=TRUE)
+\method{getConfEll}{data.frame}(xy, level = 0.5, dstTarget = 100, conversion = 'm2cm',
+          center = FALSE, doRob=TRUE)
 
-\method{getConfEll}{default}(xy, level = 0.5, dstTarget = 100, conversion = 'm2cm', doRob=TRUE)}
+\method{getConfEll}{default}(xy, level = 0.5, dstTarget = 100, conversion = 'm2cm',
+          center = FALSE, doRob=TRUE)}
 \arguments{
-  \item{xy}{Shot coordinates of n points: either a numerical (n x p)-matrix (1 row of p coordinates per point), or a data frame with either the variables \code{X}, \code{Y} or \code{Point.X}, \code{Point.Y} (optionally \code{Z} or \code{Point.Z}).}
+  \item{xy}{Shot coordinates of n points: either a numerical (n x p)-matrix (1 row of p coordinates per point), or a data frame with either the variables \code{x}, \code{y} or \code{point.x}, \code{point.y} (optionally \code{z} or \code{point.z}).}
   \item{level}{a numerical value with the coverage for the confidence ellipse.}
   \item{dstTarget}{a numerical value with the distance to the target - used in MOA calculation. See \code{\link[shotGroups]{getMOA}}.}
   \item{conversion}{how to convert the measurement unit for distance to target to that of the shot coordinates - used in MOA calculation. See \code{\link[shotGroups]{getMOA}}.}
+  \item{center}{logical: center groups to mean (0,0) first? If variable \code{series} does not exist, all shots are treated as belonging to the same group. Only available in method \code{getConfEll.data.frame()}.}
   \item{doRob}{logical: should robust covariance matrix estimate be used as well?}
 }
 \details{No coordinate transforms are done (unlike in \code{\link[shotGroups]{groupLocation}}, \code{\link[shotGroups]{groupShape}}, \code{\link[shotGroups]{groupSpread}}), i.e., origin is not assumed to be in top-left corner, and points are not taken relative to point of aim.

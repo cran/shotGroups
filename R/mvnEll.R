@@ -23,7 +23,7 @@ function(r=1, sigma=diag(2), mu, e, x0, lower.tail=TRUE) {
         stop("sigma is numerically not positive definite")
     }
 
-    ## check dimensions match
+    ## check if dimensions match
     stopifnot(length(x0) == length(mu),
               length(x0) == ncol(e),
               length(x0) == ncol(sigma))

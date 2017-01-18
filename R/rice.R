@@ -40,13 +40,13 @@ function(xy, level=0.95, doRob=FALSE, type=c("LiZhangDai", "MOM")) {
     }                                    # if(nrow(xy) < 4L)
 
     ctr <- if(doRob && haveRob) {        # estimated center
-        rob$center                       # robust estimate
+        rob[["center"]]                  # robust estimate
     } else {
         colMeans(xy)                     # coord-wise mean
     }                                    # if(doRob && haveRob)
 
     ## get sigma estimate from Rayleigh distribution
-    sigmaHat <- getRayParam(xy=xy, level=level, doRob=doRob)$sigma
+    sigmaHat <- getRayParam(xy=xy, level=level, doRob=doRob)[["sigma"]]
 
     ## estimate nu^2 -> but E(xBar'xBar) = mu'mu + (p/N)*sigma^2
     N    <- nrow(xy)
@@ -110,9 +110,10 @@ function(nu, sigma) {
     rVar  <- 2*sigma^2 + nu^2 - (pi * sigma^2 / 2) * L05^2
 
     ## for large signal-to-noise ratios, use approximation (Foi, 2011)
-    s2nr <- nu/sigma                           # signal to noise ratio
-    rMean[which(s2nr > 52)] <- nu + sigma^2/(2*nu)
-    rVar[ which(s2nr > 52)] <- sigma^2 - sigma^4/(2*nu^2)
+    s2nr      <- nu/sigma                           # signal to noise ratio
+    idxS2NR52 <- s2nr > 52
+    rMean[idxS2NR52] <- nu[idxS2NR52]      + sigma[idxS2NR52]^2/(2*nu[idxS2NR52])
+    rVar[idxS2NR52]  <- sigma[idxS2NR52]^2 - sigma[idxS2NR52]^4/(2*nu[idxS2NR52]^2)
 
     return(list(mean=rMean, sd=sqrt(rVar)))
 }
@@ -147,8 +148,8 @@ function(x, nu, sigma) {
 
     keepS2NR24 <- keep[keep %in% which(s2nr > 24)]
     keepS2NR52 <- keep[keep %in% which(s2nr > 52)]
-    dens[keepS2NR24] <- dnorm(x[keep], mean=rMSD$mean[keep], sd=rMSD$sd[keep])
-    dens[keepS2NR52] <- dnorm(x[keep], mean=nu[keep],        sd=sigma[keep])
+    dens[keepS2NR24] <- dnorm(x[keepS2NR24], mean=rMSD$mean[keepS2NR24], sd=rMSD$sd[keepS2NR24])
+    dens[keepS2NR52] <- dnorm(x[keepS2NR52], mean=nu[keepS2NR52],        sd=sigma[keepS2NR52])
 
     return(dens)
 }
@@ -187,8 +188,10 @@ function(q, nu, sigma, lower.tail=TRUE) {
 
     keepS2NR24 <- keep[keep %in% which(s2nr > 24)]
     keepS2NR52 <- keep[keep %in% which(s2nr > 52)]
-    pp[keepS2NR24] <- pnorm(q[keep], mean=rMSD$mean[keep], sd=rMSD$sd[keep], lower.tail=lower.tail)
-    pp[keepS2NR52] <- pnorm(q[keep], mean=nu[keep],        sd=sigma[keep],   lower.tail=lower.tail)
+    pp[keepS2NR24] <- pnorm(q[keepS2NR24], mean=rMSD$mean[keepS2NR24],
+                            sd=rMSD$sd[keepS2NR24], lower.tail=lower.tail)
+    pp[keepS2NR52] <- pnorm(q[keepS2NR52], mean=nu[keepS2NR52],
+                            sd=sigma[keepS2NR52],   lower.tail=lower.tail)
 
     return(pp)
 }
@@ -214,8 +217,10 @@ function(p, nu, sigma, lower.tail=TRUE) {
 
     keepS2NR24 <- keep[keep %in% which(s2nr > 24)]
     keepS2NR52 <- keep[keep %in% which(s2nr > 52)]
-    qq[keepS2NR24] <- qnorm(p[keep], mean=rMSD$mean[keep], sd=rMSD$sd[keep], lower.tail=lower.tail)
-    qq[keepS2NR52] <- qnorm(p[keep], mean=nu[keep],        sd=sigma[keep],   lower.tail=lower.tail)
+    qq[keepS2NR24] <- qnorm(p[keepS2NR24], mean=rMSD$mean[keepS2NR24],
+                            sd=rMSD$sd[keepS2NR24], lower.tail=lower.tail)
+    qq[keepS2NR52] <- qnorm(p[keepS2NR52], mean=nu[keepS2NR52],
+                            sd=sigma[keepS2NR52],   lower.tail=lower.tail)
 
     return(qq)
 }

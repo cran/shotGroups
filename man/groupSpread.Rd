@@ -4,19 +4,20 @@
 \alias{groupSpread.default}
 \title{Precision: Spread measures of a single group of bullet holes}
 \description{Provides spread measures and their graphical representations for a single group of bullet holes.}
-\usage{groupSpread(xy, plots = TRUE, CEPlevel = 0.5, CIlevel = 0.95,
-            CEPtype = 'CorrNormal', bootCI = c('basic', 'bca'),
+\usage{groupSpread(xy, center = FALSE, plots = TRUE, CEPlevel = 0.5,
+            CIlevel = 0.95, CEPtype = 'CorrNormal', bootCI = c('basic', 'bca'),
             dstTarget = 100, conversion = 'm2cm')
 
-\method{groupSpread}{data.frame}(xy, plots = TRUE, CEPlevel = 0.5, CIlevel = 0.95,
-            CEPtype = 'CorrNormal', bootCI = c('basic', 'bca'),
+\method{groupSpread}{data.frame}(xy, center = FALSE, plots = TRUE, CEPlevel = 0.5,
+            CIlevel = 0.95, CEPtype = 'CorrNormal', bootCI = c('basic', 'bca'),
             dstTarget = 100, conversion = 'm2cm')
 
-\method{groupSpread}{default}(xy, plots = TRUE, CEPlevel = 0.5, CIlevel = 0.95,
-            CEPtype = 'CorrNormal', bootCI = c('basic', 'bca'),
+\method{groupSpread}{default}(xy, center = FALSE, plots = TRUE, CEPlevel = 0.5,
+            CIlevel = 0.95, CEPtype = 'CorrNormal', bootCI = c('basic', 'bca'),
             dstTarget = 100, conversion = 'm2cm')}
 \arguments{
-  \item{xy}{either a numerical (n x 2)-matrix with the (x,y)-coordinates of n points (1 row of coordinates per point), or a data frame with either the variables \code{X}, \code{Y} or \code{Point.X}, \code{Point.Y} as well as \code{Aim.X}, \code{Aim.Y} giving the point of aim. If missing, point of aim is assumed to be in (0,0).}
+  \item{xy}{either a numerical (n x 2)-matrix with the (x,y)-coordinates of n points (1 row of coordinates per point), or a data frame with either the variables \code{x}, \code{y} or \code{point.x}, \code{point.y} as well as \code{aim.x}, \code{aim.y} giving the point of aim. If missing, point of aim is assumed to be in (0,0).}
+  \item{center}{logical: center groups to mean (0,0) first? If variable \code{series} does not exist, all shots are treated as belonging to the same group. Only available in method \code{groupSpread.data.frame()}.}
   \item{plots}{logical: show diagrams?}
   \item{CEPlevel}{a numerical value giving the coverage for the CEP and for the confidence ellipse.}
   \item{CIlevel}{a numerical value giving the level for the confidence intervals (for standard deviations as well as for Rayleigh sigma, RSD, MR).}

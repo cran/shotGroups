@@ -1,6 +1,21 @@
-$Date: 2016-09-21 10:25:29 +0000 (Wed, 21 Sep 2016) $
+$Date: 2017-01-18 15:57:29 +0000 (Wed, 18 Jan 2017) $
 
 SHOTGROUPS RELEASE VERSIONS at http://cran.r-project.org/
+
+Version 0.7.3 (January 18, 2017)
+    * DFlandy01, DFlandy02, DFlandy03, DFlandy04
+      - new datasets with groups & chronograph readings
+        (905 shots total) from shooting a .22LR rifle at 50m or 50yd
+        thanks: Larry Landercasper & Albert Highe
+    * getXYmat() analyzeGroup(), groupShape(), groupSpread(),
+      compareGroups(), getCEP(), getConfEll(), getHitProb(),
+      drawGroup(), simRingCount()
+      - new option to center groups to mean (0,0) to ignore bias
+    * {d,p,q}rice()
+      - fix bug: recycling for combinations of nu, sigma with
+        signal-to-noise ratio over 24
+    * dHoyt()
+      - fix bug: revert incorrect definition
 
 Version 0.7.2 (September 21, 2016)
     * pmvnEll()

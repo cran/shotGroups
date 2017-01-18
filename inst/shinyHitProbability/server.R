@@ -4,6 +4,7 @@ shinyServer(function(input, output) {
     #####-----------------------------------------------------------------------
     ## provide the data - reactive conductor
     #####-----------------------------------------------------------------------
+
     coords <- reactive({
         ## only change when explicitly applied
         input$applyData
@@ -48,6 +49,7 @@ shinyServer(function(input, output) {
     #####---------------------------------------------------------------------------
     ## provide file information - UI element
     #####---------------------------------------------------------------------------
+
     output$fileInfo <- renderUI({
         xy <- coords()
         dstTrgt <- if(!is.null(xy$distance) && !all(is.na(xy$distance))) {
@@ -98,6 +100,7 @@ shinyServer(function(input, output) {
     #####---------------------------------------------------------------------------
     ## provide short file information - UI element
     #####---------------------------------------------------------------------------
+
     output$fileInfoShort <- renderUI({
         xy <- coords()
 
@@ -126,6 +129,7 @@ shinyServer(function(input, output) {
     #####---------------------------------------------------------------------------
     ## provide file name + ammo information - reactive conductor
     #####---------------------------------------------------------------------------
+
     fileName <- reactive({
         xy <- coords()
         ammo <- if(!is.null(xy$ammunition) && !all(is.na(xy$ammunition)) && !all(xy$ammunition == "")) {
@@ -154,6 +158,7 @@ shinyServer(function(input, output) {
     #####---------------------------------------------------------------------------
     ## distance to target, unit distance, unit xy-coords - UI element
     #####---------------------------------------------------------------------------
+
     output$unitDstXY <- renderUI({
         xy <- coords()
         dstTarget <- if(!is.null(xy$distance) && !all(is.na(xy$distance)) &&
@@ -178,6 +183,7 @@ shinyServer(function(input, output) {
     ## string for conversion argument - unit distance to unit xy-coords
     ## reactive conductor
     #####---------------------------------------------------------------------------
+
     conversionStr <- reactive({
         paste0(unitsDstInv[input$unitDst], "2",
                unitsXYInv[input$unitXY], collapse="")
@@ -186,10 +192,28 @@ shinyServer(function(input, output) {
     #####---------------------------------------------------------------------------
     ## hit probability -> radius
     #####---------------------------------------------------------------------------
+
+    ## output list - reactive conductor
+    output$hitpGroups1 <- renderUI({
+        xy <- coords()
+        if(!is.null(xy)) {
+            choices <- getGroups(xy, choices=TRUE)
+            checkboxGroupInput("hitpGroupSel1",
+                               label=h5("Select groups"),
+                               choices=choices,
+                               selected=seq_along(choices))
+        } else {
+            NULL
+        }
+    })
+
     ## CEP output list - reactive conductor
     CEPListRadius <- reactive({
         xy <- coords()
         if(!is.null(xy)) {
+            groupSel <- getGroups(xy)[input$hitpGroupSel1]
+            xySub    <- xy[xy$series %in% groupSel , , drop=FALSE]
+
             ## if no CEP type is selected -> fall back to default CorrNormal
             CEPtype <- if(!is.null(input$hitpCEPtype1)) {
                 CEPtypesInv[input$hitpCEPtype1]
@@ -198,7 +222,8 @@ shinyServer(function(input, output) {
             }
 
             ## hit probability -> radius
-            x <- getCEP(xy,
+            x <- getCEP(xySub,
+                        center=input$hitpCenter1,
                         CEPlevel=input$hitpLevel,
                         dstTarget=input$dstTrgt,
                         conversion=conversionStr(),
@@ -215,7 +240,10 @@ shinyServer(function(input, output) {
     confEllList <- reactive({
         xy <- coords()
         if(!is.null(xy)) {
-            x <- getConfEll(xy,
+            groupSel <- getGroups(xy)[input$hitpGroupSel1]
+            xySub    <- xy[xy$series %in% groupSel , , drop=FALSE]
+            x <- getConfEll(xySub,
+                            center=input$hitpCenter1,
                             level=input$hitpLevel,
                             dstTarget=input$dstTrgt,
                             conversion=conversionStr(),
@@ -238,6 +266,9 @@ shinyServer(function(input, output) {
     extraListRadius <- reactive({
         xy <- coords()
         if(!is.null(xy)) {
+            groupSel <- getGroups(xy)[input$hitpGroupSel1]
+            xySub    <- xy[xy$series %in% groupSel , , drop=FALSE]
+
             ## if no CEP type is selected -> fall back to default CorrNormal
             CEPtype <- if(!is.null(input$hitpCEPtype1)) {
                 CEPtypesInv[input$hitpCEPtype1]
@@ -246,7 +277,8 @@ shinyServer(function(input, output) {
             }
 
             ## hit probability -> radius
-            res1 <- getCEP(xy,
+            res1 <- getCEP(xySub,
+                           center=input$hitpCenter1,
                            CEPlevel=input$hitpLevel,
                            dstTarget=input$dstTrgt,
                            conversion=conversionStr(),
@@ -254,7 +286,8 @@ shinyServer(function(input, output) {
                            type=CEPtype,
                            doRob=input$hitpDoRob1)$CEP[[1]]["MOA", , drop=FALSE]
 
-            res2 <- getConfEll(xy,
+            res2 <- getConfEll(xySub,
+                               center=input$hitpCenter1,
                                level=input$hitpLevel,
                                dstTarget=input$dstTrgt,
                                conversion=conversionStr(),
@@ -316,10 +349,27 @@ shinyServer(function(input, output) {
     #####---------------------------------------------------------------------------
     ## radius -> hit probability
     #####---------------------------------------------------------------------------
-    ## CEP output list - reactive conductor
+
+    ## CEP output list - reactive conductor    ## output list - reactive conductor
+    output$hitpGroups2 <- renderUI({
+        xy <- coords()
+        if(!is.null(xy)) {
+            choices <- getGroups(xy, choices=TRUE)
+            checkboxGroupInput("hitpGroupSel2",
+                               label=h5("Select groups"),
+                               choices=choices,
+                               selected=seq_along(choices))
+        } else {
+            NULL
+        }
+    })
+
     CEPListHitProb <- reactive({
         xy <- coords()
         if(!is.null(xy)) {
+            groupSel <- getGroups(xy)[input$hitpGroupSel2]
+            xySub    <- xy[xy$series %in% groupSel , , drop=FALSE]
+
             ## if no CEP type is selected -> fall back to default CorrNormal
             CEPtype <- if(!is.null(input$hitpCEPtype2)) {
                 CEPtypesInv[input$hitpCEPtype2]
@@ -327,8 +377,9 @@ shinyServer(function(input, output) {
                 "CorrNormal"
             }
 
-            x <- getHitProb(xy,
+            x <- getHitProb(xySub,
                             r=input$hitpR,
+                            center=input$hitpCenter2,
                             unit=hitpRUnitInv[[input$hitpUnitR]],
                             dstTarget=input$dstTrgt,
                             conversion=conversionStr(),
@@ -345,6 +396,9 @@ shinyServer(function(input, output) {
     extraListHitProb <- reactive({
         xy <- coords()
         if(!is.null(xy)) {
+            groupSel <- getGroups(xy)[input$hitpGroupSel2]
+            xySub    <- xy[xy$series %in% groupSel , , drop=FALSE]
+
             ## if no CEP type is selected -> fall back to default CorrNormal
             CEPtype <- if(!is.null(input$hitpCEPtype2)) {
                 CEPtypesInv[input$hitpCEPtype2]
@@ -357,8 +411,9 @@ shinyServer(function(input, output) {
                           dst=input$hitpExtraDst2,
                           conversion=paste0(unitsDstInv[input$hitpUnitExtraDst2], "2",
                                             unitsXYInv[input$unitXY], collapse=""))
-            x <- getHitProb(xy,
+            x <- getHitProb(xySub,
                             r=MOA,
+                            center=input$hitpCenter2,
                             unit="MOA",
                             dstTarget=input$dstTrgt,
                             conversion=conversionStr(),

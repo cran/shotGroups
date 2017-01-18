@@ -8,7 +8,7 @@ function(conversion="m2cm") {
         idxMM2M  <- conversion ==     "mm2m"
         idxMM2KM <- conversion ==     "mm2km"
         idxMM2IN <- conversion %in% c("mm2in", "mm2inch")
-        idxMM2FT <- conversion %in% c("mm2ft", "mm2feet")
+        idxMM2FT <- conversion %in% c("mm2ft", "mm2feet", "mm2foot")
         idxMM2YD <- conversion %in% c("mm2yd", "mm2yard")
 
         idxCM2MM <- conversion ==     "cm2mm"
@@ -16,7 +16,7 @@ function(conversion="m2cm") {
         idxCM2M  <- conversion ==     "cm2m"
         idxCM2KM <- conversion ==     "cm2km"
         idxCM2IN <- conversion %in% c("cm2in", "cm2inch")
-        idxCM2FT <- conversion %in% c("cm2ft", "cm2feet")
+        idxCM2FT <- conversion %in% c("cm2ft", "cm2feet", "cm2foot")
         idxCM2YD <- conversion %in% c("cm2yd", "cm2yard")
 
         idxM2MM  <- conversion ==     "m2mm"
@@ -24,7 +24,7 @@ function(conversion="m2cm") {
         idxM2M   <- conversion ==     "m2m"
         idxM2KM  <- conversion ==     "m2km"
         idxM2IN  <- conversion %in% c("m2in", "m2inch")
-        idxM2FT  <- conversion %in% c("m2ft", "m2feet")
+        idxM2FT  <- conversion %in% c("m2ft", "m2feet", "cm2foot")
         idxM2YD  <- conversion %in% c("m2yd", "m2yard")
 
         idxKM2MM <- conversion ==     "km2mm"
@@ -32,15 +32,17 @@ function(conversion="m2cm") {
         idxKM2M  <- conversion ==     "km2m"
         idxKM2KM <- conversion ==     "km2km"
         idxKM2IN <- conversion %in% c("km2in", "km2inch")
-        idxKM2FT <- conversion %in% c("km2ft", "km2feet")
+        idxKM2FT <- conversion %in% c("km2ft", "km2feet", "km2foot")
         idxKM2YD <- conversion %in% c("km2yd", "km2yard")
 
         idxIN2MM <- conversion %in% c("in2mm", "inch2mm")
         idxIN2CM <- conversion %in% c("in2cm", "inch2cm")
         idxIN2M  <- conversion %in% c("in2m",  "inch2m")
         idxIN2KM <- conversion %in% c("in2km", "inch2km")
-        idxIN2IN <- conversion %in% c("in2in", "in2inch", "inch2in", "inch2inch")
-        idxIN2FT <- conversion %in% c("in2ft", "in2feet", "inch2ft", "inch2feet")
+        idxIN2IN <- conversion %in% c("in2in",   "in2inch",
+                                      "inch2in", "inch2inch")
+        idxIN2FT <- conversion %in% c("in2ft",   "in2feet",   "in2foot",
+                                      "inch2ft", "inch2feet", "inch2foot")
         idxIN2YD <- conversion %in% c("in2yd", "inch2yard")
 
         idxYD2MM <- conversion %in% c("yd2mm", "yard2mm")
@@ -48,16 +50,23 @@ function(conversion="m2cm") {
         idxYD2M  <- conversion %in% c("yd2m",  "yard2m")
         idxYD2KM <- conversion %in% c("yd2km", "yard2km")
         idxYD2IN <- conversion %in% c("yd2in", "yard2inch")
-        idxYD2FT <- conversion %in% c("yd2ft", "yd2feet", "yard2ft", "yard2feet")
-        idxYD2YD <- conversion %in% c("yd2yd", "yd2yard", "yard2yd", "yard2yard")
+        idxYD2FT <- conversion %in% c("yd2ft",   "yd2feet",   "yd2foot",
+                                      "yard2ft", "yard2feet", "yard2foot")
+        idxYD2YD <- conversion %in% c("yd2yd",   "yd2yard",
+                                      "yard2yd", "yard2yard")
 
         idxFT2MM <- conversion %in% c("ft2mm", "feet2mm")
         idxFT2CM <- conversion %in% c("ft2cm", "feet2cm")
         idxFT2M  <- conversion %in% c("ft2m",  "feet2m")
         idxFT2KM <- conversion %in% c("ft2km", "feet2km")
-        idxFT2IN <- conversion %in% c("ft2in", "ft2inch", "feet2in", "feet2inch")
-        idxFT2FT <- conversion %in% c("ft2ft", "feet2feet")
-        idxFT2YD <- conversion %in% c("ft2yd", "feet2yd", "ft2yard", "feet2yard")
+        idxFT2IN <- conversion %in% c("ft2in",   "ft2inch",
+                                      "feet2in", "feet2inch",
+                                      "foot2in", "foot2inch")
+        idxFT2FT <- conversion %in% c("ft2ft",   "ft2feet",   "ft2foot",
+                                      "feet2ft", "feet2feet", "feet2foot",
+                                      "foot2ft", "foot2feet", "foot2foot")
+        idxFT2YD <- conversion %in% c("ft2yd",   "feet2yd",   "foot2yd",
+                                      "ft2yard", "feet2yard", "foot2yard")
 
         ## did we catch all requested conversion types?
         idxAll <- idxMM2MM | idxMM2CM | idxMM2M | idxMM2KM | idxMM2IN | idxMM2FT | idxMM2YD |
@@ -68,7 +77,7 @@ function(conversion="m2cm") {
                   idxFT2MM | idxFT2CM | idxFT2M | idxFT2KM | idxFT2IN | idxFT2FT | idxFT2YD |
                   idxYD2MM | idxYD2CM | idxYD2M | idxYD2KM | idxYD2IN | idxYD2FT | idxYD2YD
         if(!all(idxAll)) {
-            warning(c('Conversion type(s) "', paste(conversion[!idxAll], collapse=", "),
+            warning(c('Conversion type(s) "', paste(conversion[!idxAll], collapse=" "),
                       '" not found - conversion factor set to 1'))
         }
 
@@ -138,7 +147,7 @@ function(conversion="m2cm") {
         }
         conversion
     } else {
-        stop("Conversion must be a character constant or numeric factor")
+        stop("conversion must be a character constant or numeric factor")
     }                                # if(is.character(conversion))
 
     return(convFac)
@@ -152,14 +161,13 @@ function(x="m2cm", first=TRUE) {
         return(" ")
     }
 
-    units    <- strsplit(x, "2")                  # first and second part of string
-    unitLens <- vapply(units, length, integer(1)) # count parts
-    if(!all(unitLens == 2L)) {                    # check that there are two parts
+    units    <- strsplit(x, "2")        # first and second part of string
+    if(!all(lengths(units) == 2L)) {    # check that there are two parts
         warning("Unit not recognized - input must have form like m2cm")
         return("")
     }
 
-    knownUnits <- c("m", "cm", "mm", "yd", "yard", "ft", "foot", "feet", "in", "inch")
+    knownUnits <- c("km", "m", "cm", "mm", "yd", "yard", "ft", "foot", "feet", "in", "inch")
     isKnown    <- vapply(units, function(x) { all(x %in% knownUnits) }, logical(1))
     if(!all(isKnown)) {
         warning(c("Unit not recognized - needs to be one of\n",

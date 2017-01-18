@@ -74,8 +74,8 @@ rMaxwell <-
 function(n, sigma=1) {
     is.na(sigma) <- (sigma <= 0) | !is.finite(sigma)
 
-    ## simulate coords separately instead of matrix(rnorm(3*n), ncol=3)
+    ## simulate coords separately instead of matrix(rnorm(3L*n), ncol=3L)
     ## for correct cyclic replication of sigma
-    xyz <- replicate(3, rnorm(n, mean=0, sd=sigma))
+    xyz <- replicate(3L, rnorm(n, mean=0, sd=sigma))
     sqrt(rowSums(xyz^2))
 }

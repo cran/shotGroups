@@ -1,25 +1,30 @@
 getHitProb <-
 function(xy, r=1, unit="unit", dstTarget=100, conversion="m2cm",
-         accuracy=FALSE, type="CorrNormal", doRob=FALSE) {
+         center=FALSE, accuracy=FALSE, type="CorrNormal", doRob=FALSE) {
     UseMethod("getHitProb")
 }
 
 getHitProb.data.frame <-
 function(xy, r=1, unit="unit", dstTarget=100, conversion="m2cm",
-         accuracy=FALSE, type="CorrNormal", doRob=FALSE) {
-    xy <- getXYmat(xy, xyTopLeft=FALSE, relPOA=FALSE)
+         center=FALSE, accuracy=FALSE, type="CorrNormal", doRob=FALSE) {
+    xy     <- getXYmat(xy, xyTopLeft=FALSE, center=center, relPOA=FALSE)
+    center <- FALSE                   # centering was done in getXYmat()
+    
     NextMethod("getHitProb")
 }
 
 getHitProb.default <-
 function(xy, r=1, unit="unit", dstTarget=100, conversion="m2cm",
-         accuracy=FALSE, type="CorrNormal", doRob=FALSE) {
+         center=FALSE, accuracy=FALSE, type="CorrNormal", doRob=FALSE) {
     xy <- as.matrix(xy)
     if(!is.numeric(xy)) { stop("xy must be numeric") }
     if(!is.numeric(r))  { stop("r must be numeric") }
     r <- r[r > 0]
     if(length(r) == 0L) { stop("r must be > 0") }
-
+    if(center) {
+        warning("Centering only works for data frames, ignored here")
+    }
+    
     unit <- match.arg(unit,
                       choices=c("unit", "m", "cm", "mm", "yd", "ft", "in",
                                 "deg", "MOA", "SMOA", "rad", "mrad", "mil"))

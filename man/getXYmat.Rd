@@ -2,11 +2,12 @@
 \alias{getXYmat}
 \title{Extract (x,y)-coordinates (relative to point of aim) from a data frame}
 \description{Extracts (x,y)- or (x,y,z)-coordinates of the points of impact (relative to the point of aim) from a data frame and returns them as a matrix.}
-\usage{getXYmat(DF, xyTopLeft = TRUE, relPOA = TRUE)}
+\usage{getXYmat(DF, xyTopLeft = TRUE, relPOA = TRUE, center = FALSE)}
 \arguments{
-  \item{DF}{a data frame containing (at least) either the variables \code{Point.X}, \code{Point.Y} or \code{X}, \code{Y} defining the bullet holes. For three-dimensional data, variables \code{Point.Z} or \code{Z} are recognized. Variables \code{Aim.X}, \code{Aim.Y}, and for three-dimensional data \code{Point.Z} can define the point of aim. If missing, point of aim is assumed to be in the origin 0.}
+  \item{DF}{a data frame containing (at least) either the variables \code{point.x}, \code{point.y} or \code{x}, \code{y} defining the bullet holes. For three-dimensional data, variables \code{point.z} or \code{z} are recognized. Variables \code{aim.x}, \code{aim.y}, and for three-dimensional data \code{point.z} can define the point of aim. If missing, point of aim is assumed to be in the origin 0.}
   \item{xyTopLeft}{logical: is the origin of the absolute coordinate system in the top-left corner? See details.}
   \item{relPOA}{logical: should returned coordinates be relative to the point of aim?}
+  \item{center}{logical: center groups to mean (0,0)? If variable \code{series} does not exist, all shots are treated as belonging to the same group.}
 }
 \seealso{
 \code{\link[shotGroups]{groupLocation}},

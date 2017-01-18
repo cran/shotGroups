@@ -1,23 +1,27 @@
 simRingCount <-
-function(xy, target, caliber, unit="cm") {
+function(xy, center=FALSE, target, caliber, unit="cm") {
     UseMethod("simRingCount")
 }
 
 simRingCount.data.frame <-
-    function(xy, target, caliber, unit="cm") {
-        xy <- getXYmat(xy)
-    NextMethod("simRingCount")
+    function(xy, center=FALSE, target, caliber, unit="cm") {
+        xy     <- getXYmat(xy, center=center)
+        center <- FALSE                   # centering was done in getXYmat()
+        NextMethod("simRingCount")
 }
 
 simRingCount.default <-
-function(xy, target, caliber, unit="cm") {
+function(xy, center=FALSE, target, caliber, unit="cm") {
     if(!is.matrix(xy))       { stop("xy must be a matrix") }
     if(!is.numeric(xy))      { stop("xy must be numeric") }
     if(ncol(xy) != 2L)       { stop("xy must have two columns") }
     if(!is.numeric(caliber)) { stop("caliber must be numeric") }
     if(caliber <= 0)         { stop("caliber must be > 0") }
-
-    unit <- match.arg(unit, choices=c("cm", "mm", "m", "in", "ft", "yd"))
+    if(center) {
+        warning("Centering only works for data frames, ignored here")
+    }
+    
+    unit <- match.arg(unit, choices=c("cm", "mm", "m", "km", "in", "ft", "yd"))
 
     ## prepare data
     ## get target definition in requested unit

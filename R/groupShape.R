@@ -1,22 +1,27 @@
 groupShape <-
-function(xy, plots=TRUE, bandW=0.5, outlier=c("mcd", "pca"),
+function(xy, center=FALSE, plots=TRUE, bandW=0.5, outlier=c("mcd", "pca"),
          dstTarget=100, conversion="m2cm", ...) {
     UseMethod("groupShape")
 }
 
 groupShape.data.frame <-
-function(xy, plots=TRUE, bandW=0.5, outlier=c("mcd", "pca"),
+function(xy, center=FALSE, plots=TRUE, bandW=0.5, outlier=c("mcd", "pca"),
          dstTarget=100, conversion="m2cm", ...) {
-    xy <- getXYmat(xy)
+    xy     <- getXYmat(xy, center=center)
+    center <- FALSE                   # centering was done in getXYmat()
+    
     NextMethod("groupShape")
 }
 
 groupShape.default <-
-function(xy, plots=TRUE, bandW=0.5, outlier=c("mcd", "pca"),
+function(xy, center=FALSE, plots=TRUE, bandW=0.5, outlier=c("mcd", "pca"),
          dstTarget=100, conversion="m2cm", ...) {
     if(!is.matrix(xy))  { stop("xy must be a matrix") }
     if(!is.numeric(xy)) { stop("xy must be numeric") }
     if(ncol(xy) != 2L)  { stop("xy must have two columns") }
+    if(center) {
+        warning("Centering only works for data frames, ignored here")
+    }
 
     outlier <- match.arg(outlier)
 
@@ -252,11 +257,11 @@ function(xy, plots=TRUE, bandW=0.5, outlier=c("mcd", "pca"),
 }
 
 groupShapePlot <-
-function(xy, which=1L, bandW=0.5, outlier=c("mcd", "pca"),
+function(xy, which=1L, center=FALSE, bandW=0.5, outlier=c("mcd", "pca"),
          dstTarget=100, conversion="m2cm", ...) {
 
     if(!is.data.frame(xy)) { stop("xy must be a data.frame") }
-    xy <- getXYmat(xy)
+    xy <- getXYmat(xy, center=center)
     if(!is.numeric(xy))    { stop("xy must be numeric") }
     if(ncol(xy) != 2L)     { stop("xy must have two columns") }
 

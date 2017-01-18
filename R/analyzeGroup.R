@@ -1,5 +1,6 @@
 analyzeGroup <-
-function(DF, xyTopLeft=TRUE, conversion="m2cm", bandW=0.5,
+function(DF, xyTopLeft=TRUE, center=FALSE,
+         conversion="m2cm", bandW=0.5,
          CEPtype="CorrNormal", bootCI=c("basic", "bca")) {
     if(!is.data.frame(DF)) { stop("DF must be a data frame") }
 
@@ -19,7 +20,7 @@ function(DF, xyTopLeft=TRUE, conversion="m2cm", bandW=0.5,
     hasAIM   <- wantsAIM %in% varNames   # useful ones we have
 
     if(!xor(all(hasXY1), all(hasXY2))) {
-        stop("Coordinates must be named either X, Y or Point.X, Point.Y")
+        stop("Coordinates must be named either x, y or point.x, point.y")
     }
 
     if(!all(hasDst)) {
@@ -39,7 +40,7 @@ function(DF, xyTopLeft=TRUE, conversion="m2cm", bandW=0.5,
 
     #####-----------------------------------------------------------------------
     ## prepare data: get (x,y)-coords relative to point of aim as matrix
-    xy <- getXYmat(DF, xyTopLeft=xyTopLeft)
+    xy <- getXYmat(DF, xyTopLeft=xyTopLeft, center=center)
 
     #####-----------------------------------------------------------------------
     ## assess shape, location and spread

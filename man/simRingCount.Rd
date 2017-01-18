@@ -4,14 +4,15 @@
 \alias{simRingCount.default}
 \title{Calculate simulated ring count for a given group and target}
 \description{Calculates the simulated ring count given a group, bullet diameter, and target type.}
-\usage{simRingCount(xy, target, caliber, unit = 'cm')
+\usage{simRingCount(xy, center = FALSE, target, caliber, unit = 'cm')
 
-\method{simRingCount}{data.frame}(xy, target, caliber, unit = 'cm')
+\method{simRingCount}{data.frame}(xy, center = FALSE, target, caliber, unit = 'cm')
 
-\method{simRingCount}{default}(xy, target, caliber, unit='cm')}
+\method{simRingCount}{default}(xy, center = FALSE, target, caliber, unit='cm')}
 \arguments{
-  \item{xy}{either a numerical (n x 2)-matrix with the (x,y)-coordinates of n points (1 row of coordinates per point), or a data frame with either the variables \code{X}, \code{Y} or \code{Point.X}, \code{Point.Y} as well as \code{Aim.X}, \code{Aim.Y} giving the point of aim (= bullseye). If missing, point of aim (bullseye) is assumed to be in (0,0).}
-\item{target}{either a character value with the name of a target in \code{\link[shotGroups]{targets}} or a list with a target definition containing the same components as those in \code{\link[shotGroups]{targets}} (\code{name}, \code{unitTarget}, \code{nRings}, \code{ringD10}, \code{ringD10i}, \code{ringW}, \code{cols}, \code{colsTxt}).}
+  \item{xy}{either a numerical (n x 2)-matrix with the (x,y)-coordinates of n points (1 row of coordinates per point), or a data frame with either the variables \code{x}, \code{y} or \code{point.x}, \code{point.y} as well as \code{aim.x}, \code{aim.y} giving the point of aim (= bullseye). If missing, point of aim (bullseye) is assumed to be in (0,0).}
+  \item{center}{logical: center groups to mean (0,0) first? If variable \code{series} does not exist, all shots are treated as belonging to the same group. Only available in method \code{simRingCount.data.frame()}.}
+  \item{target}{either a character value with the name of a target in \code{\link[shotGroups]{targets}} or a list with a target definition containing the same components as those in \code{\link[shotGroups]{targets}} (\code{name}, \code{unitTarget}, \code{nRings}, \code{ringD10}, \code{ringD10i}, \code{ringW}, \code{cols}, \code{colsTxt}).}
   \item{caliber}{a numerical value indicating the bullet diameter in mm.}
   \item{unit}{measurement unit of the (x,y)-coordinates in \code{xy}. Possible values are \code{'cm', 'mm', 'm', 'in', 'ft', 'yd'}.}
 }

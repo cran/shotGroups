@@ -10,7 +10,7 @@
 
 \method{getMaxPairDist}{default}(xy)}
 \arguments{
-  \item{xy}{either a numerical (n x p)-matrix with the coordinates of n points in p-dimensional space (1 row of coordinates per point), or a data frame with either the variables \code{X}, \code{Y} or \code{Point.X}, \code{Point.Y}.}
+  \item{xy}{either a numerical (n x p)-matrix with the coordinates of n points in p-dimensional space (1 row of coordinates per point), or a data frame with either the variables \code{x}, \code{y} or \code{point.x}, \code{point.y}.}
 }
 \value{
 A list with the following components

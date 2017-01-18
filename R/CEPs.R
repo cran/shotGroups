@@ -82,7 +82,7 @@ function(CEPlevel=0.5, ctr=c(0, 0), sigma=diag(length(ctr)), accuracy=FALSE, doR
             qMaxwell(CEPlevel, sigma=MaxParam$sigma["sigma"])
         }
     } else {
-        warning("Rayleigh CEP with accuracy=TRUE is only available for 2D/3D-data")
+        warning("Rayleigh CEP is only available for 1D/2D/3D-data")
         rep(NA_real_, length(CEPlevel))
     }
 
@@ -129,6 +129,7 @@ function(CEPlevel=0.5, sigma=diag(2), accuracy=FALSE) {
         if(accuracy) {
             warning("Krempasky CEP is only available for accuracy=FALSE")
         }
+
         rep(NA_real_, length(CEPlevel))
     }
 
@@ -144,7 +145,7 @@ function(CEPlevel=0.5, sigma=diag(2), accuracy=FALSE) {
 ## Ignani estimate from van Ignani (2010)
 CEPIgnani <-
 function(CEPlevel=0.5, sigma=diag(2), accuracy=FALSE) {
-    p  <- ncol(sigma)
+    p <- ncol(sigma)
 
     ## make sure eigenvalues >= 0 when very small
     ev      <- eigen(sigma)$values    # eigenvalues
@@ -154,26 +155,24 @@ function(CEPlevel=0.5, sigma=diag(2), accuracy=FALSE) {
     betaVec <- c(1, beta, beta^2, beta^3)
 
     ## coefficients for polynomials in table 1
-    con <- textConnection("coef   R0.5    R0.9   R0.95   R0.99
-                           c11  0.6754  1.6494  1.9626  2.5686
-                           c12 -0.1547  0.0332 -0.0906 -0.1150
-                           c13  0.2616  1.3376  1.3214 -0.3475
-                           c14  1.0489 -0.8445 -0.3994  1.3570
-                           c21 -0.0208 -0.0588  0.0100  0.1479
-                           c22  1.1739 -0.5605  0.2722  0.9950
-                           c23  1.9540 -4.7170 -5.4821  1.3223
-                           c24 -5.5678  5.7135  3.9732 -4.8917
-                           c31  1.1009  0.3996  0.0700 -0.4285
-                           c32 -2.6375  1.5739  0.0462 -1.9795
-                           c33 -1.4838  5.3623  7.1658 -1.1104
-                           c34  6.5837 -7.9347 -5.7194  6.9617
-                           c41 -0.5821  0.1636  0.4092  0.7371
-                           c42  1.5856 -1.0747 -0.1953  1.2495
-                           c43 -0.0678 -1.7785 -3.0134 -0.2061
-                           c44 -2.3324  3.2388  2.4661 -2.8968
-                          ")
-    coefDF <- read.table(con, header=TRUE)
-    close(con)
+    tbl1 <- c("coef   R0.5    R0.9   R0.95   R0.99
+               c11  0.6754  1.6494  1.9626  2.5686
+               c12 -0.1547  0.0332 -0.0906 -0.1150
+               c13  0.2616  1.3376  1.3214 -0.3475
+               c14  1.0489 -0.8445 -0.3994  1.3570
+               c21 -0.0208 -0.0588  0.0100  0.1479
+               c22  1.1739 -0.5605  0.2722  0.9950
+               c23  1.9540 -4.7170 -5.4821  1.3223
+               c24 -5.5678  5.7135  3.9732 -4.8917
+               c31  1.1009  0.3996  0.0700 -0.4285
+               c32 -2.6375  1.5739  0.0462 -1.9795
+               c33 -1.4838  5.3623  7.1658 -1.1104
+               c34  6.5837 -7.9347 -5.7194  6.9617
+               c41 -0.5821  0.1636  0.4092  0.7371
+               c42  1.5856 -1.0747 -0.1953  1.2495
+               c43 -0.0678 -1.7785 -3.0134 -0.2061
+               c44 -2.3324  3.2388  2.4661 -2.8968")
+    coefDF <- read.table(text=tbl1, header=TRUE)
 
     getR <- function(level) {
         column <- paste0("R", level)
@@ -189,7 +188,8 @@ function(CEPlevel=0.5, sigma=diag(2), accuracy=FALSE) {
 
     Ignani <- if((p %in% c(2L, 3L)) && !accuracy) {
         vapply(CEPlevel, function(x) {
-            if(x %in% c(0.5, 0.9, 0.95, 0.99)) { getR(x) } else { NA_real_ } }, numeric(1))
+            if(x %in% c(0.5, 0.9, 0.95, 0.99)) { getR(x) } else { NA_real_ }
+        }, numeric(1))
     } else {
         if(!(p %in% c(2L, 3L))) {
             warning("Ignani CEP is only available for 2D/3D-data")

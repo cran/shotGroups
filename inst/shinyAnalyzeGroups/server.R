@@ -16,6 +16,7 @@ shinyServer(function(input, output) {
     #####-----------------------------------------------------------------------
     ## provide the data - reactive conductor
     #####-----------------------------------------------------------------------
+
     coords <- reactive({
         ## only change when explicitly applied
         input$applyData
@@ -60,6 +61,7 @@ shinyServer(function(input, output) {
     #####---------------------------------------------------------------------------
     ## provide file information - UI element
     #####---------------------------------------------------------------------------
+
     output$fileInfo <- renderUI({
         xy <- coords()
         dstTrgt <- if(!is.null(xy$distance) && !all(is.na(xy$distance))) {
@@ -110,6 +112,7 @@ shinyServer(function(input, output) {
     #####---------------------------------------------------------------------------
     ## provide short file information - UI element
     #####---------------------------------------------------------------------------
+
     output$fileInfoShort <- renderUI({
         xy <- coords()
 
@@ -138,6 +141,7 @@ shinyServer(function(input, output) {
     #####---------------------------------------------------------------------------
     ## provide file name + ammo information - reactive conductor
     #####---------------------------------------------------------------------------
+
     fileName <- reactive({
         xy <- coords()
         ammo <- if(!is.null(xy$ammunition) && !all(is.na(xy$ammunition)) && !all(xy$ammunition == "")) {
@@ -166,6 +170,7 @@ shinyServer(function(input, output) {
     #####---------------------------------------------------------------------------
     ## distance to target, unit distance, unit xy-coords - UI element
     #####---------------------------------------------------------------------------
+
     output$unitDstXY <- renderUI({
         xy <- coords()
         dstTarget <- if(!is.null(xy$distance) && !all(is.na(xy$distance)) &&
@@ -190,6 +195,7 @@ shinyServer(function(input, output) {
     ## string for conversion argument - unit distance to unit xy-coords
     ## reactive conductor
     #####---------------------------------------------------------------------------
+
     conversionStr <- reactive({
         paste0(unitsDstInv[input$unitDst], "2",
                unitsXYInv[input$unitXY], collapse="")
@@ -198,11 +204,37 @@ shinyServer(function(input, output) {
     #####---------------------------------------------------------------------------
     ## group shape
     #####---------------------------------------------------------------------------
+
+    ## output list - reactive conductor
+    output$shapeGroups <- renderUI({
+        xy <- coords()
+        if(!is.null(xy)) {
+            choices <- getGroups(xy, choices=TRUE)
+            #if(length(choices) <= 5L) {
+                checkboxGroupInput("shapeGroupSel",
+                                   label=h5("Select groups"),
+                                   choices=choices,
+                                   selected=seq_along(choices))
+            #} else {
+            #    selectizeInput("shapeGroupSel",
+            #                   label=h5("Select groups"),
+            #                   choices=choices, multiple=TRUE,
+            #                   selected=seq_along(choices),
+            #                   width="100%")
+            #}
+        } else {
+            NULL
+        }
+    })
+
     ## output list - reactive conductor
     shapeList <- reactive({
         xy <- coords()
         if(!is.null(xy)) {
-            groupShape(xy,
+            groupSel <- getGroups(xy)[input$shapeGroupSel]
+            xySub    <- xy[xy$series %in% groupSel , , drop=FALSE]
+            groupShape(xySub,
+                       center=input$shapeCenter,
                        plots=FALSE,
                        dstTarget=input$dstTrgt,
                        conversion=conversionStr(),
@@ -249,8 +281,11 @@ shinyServer(function(input, output) {
             output[[paste0("shapePlot", localI)]] <- renderPlot({
                 xy <- coords()
                 if(!is.null(xy)) {
-                    shotGroups:::groupShapePlot(xy,
+                    groupSel <- getGroups(xy)[input$shapeGroupSel]
+                    xySub    <- xy[xy$series %in% groupSel , , drop=FALSE]
+                    shotGroups:::groupShapePlot(xySub,
                         which=localI,
+                        center=input$shapeCenter,
                         dstTarget=input$dstTrgt,
                         conversion=conversionStr(),
                         bandW=input$shapeBW,
@@ -268,10 +303,13 @@ shinyServer(function(input, output) {
         content=function(file) {
             xy <- coords()
             if(!is.null(xy)) {
+                groupSel <- getGroups(xy)[input$shapeGroupSel]
+                xySub    <- xy[xy$series %in% groupSel , , drop=FALSE]
                 pdf(file)
                 for(i in seq_len(nShapePlots)) {
-                    shotGroups:::groupShapePlot(xy,
+                    shotGroups:::groupShapePlot(xySub,
                         which=i,
+                        center=input$shapeCenter,
                         dstTarget=input$dstTrgt,
                         conversion=conversionStr(),
                         bandW=input$shapeBW,
@@ -288,6 +326,21 @@ shinyServer(function(input, output) {
     #####---------------------------------------------------------------------------
     ## group spread / precision
     #####---------------------------------------------------------------------------
+
+    ## output list - reactive conductor
+    output$spreadGroups <- renderUI({
+        xy <- coords()
+        if(!is.null(xy)) {
+            choices <- getGroups(xy, choices=TRUE)
+            checkboxGroupInput("spreadGroupSel",
+                               label=h5("Select groups"),
+                               choices=choices,
+                               selected=seq_along(choices))
+        } else {
+            NULL
+        }
+    })
+
     ## output list - reactive conductor
     spreadList <- reactive({
         ## if no CEP type is selected -> fall back to default CorrNormal
@@ -305,7 +358,10 @@ shinyServer(function(input, output) {
 
         xy <- coords()
         if(!is.null(xy)) {
-            groupSpread(xy,
+            groupSel <- getGroups(xy)[input$spreadGroupSel]
+            xySub    <- xy[xy$series %in% groupSel , , drop=FALSE]
+            groupSpread(xySub,
+                        center=input$spreadCenter,
                         plots=FALSE,
                         CEPtype=CEPtype,
                         CEPlevel=input$spreadCEPlevel,
@@ -365,8 +421,11 @@ shinyServer(function(input, output) {
             output[[paste0("spreadPlot", localI)]] <- renderPlot({
                 xy <- coords()
                 if(!is.null(xy)) {
-                    shotGroups:::groupSpreadPlot(xy,
+                    groupSel <- getGroups(xy)[input$spreadGroupSel]
+                    xySub    <- xy[xy$series %in% groupSel , , drop=FALSE]
+                    shotGroups:::groupSpreadPlot(xySub,
                         which=localI,
+                        center=input$spreadCenter,
                         CEPlevel=input$spreadCEPlevel,
                         CIlevel=input$spreadCIlevel,
                         dstTarget=as.numeric(input$dstTrgt),
@@ -384,10 +443,13 @@ shinyServer(function(input, output) {
         content=function(file) {
             xy <- coords()
             if(!is.null(xy)) {
+                groupSel <- getGroups(xy)[input$spreadGroupSel]
+                xySub    <- xy[xy$series %in% groupSel , , drop=FALSE]
                 pdf(file)
                 for(i in seq_len(nSpreadPlots)) {
-                    shotGroups:::groupSpreadPlot(xy,
+                    shotGroups:::groupSpreadPlot(xySub,
                         which=i,
+                        center=input$spreadCenter,
                         CEPlevel=input$spreadCEPlevel,
                         CIlevel=input$spreadCIlevel,
                         dstTarget=as.numeric(input$dstTrgt),
@@ -404,6 +466,21 @@ shinyServer(function(input, output) {
     #####---------------------------------------------------------------------------
     ## group location / accuracy
     #####---------------------------------------------------------------------------
+
+    ## output list - reactive conductor
+    output$locGroups <- renderUI({
+        xy <- coords()
+        if(!is.null(xy)) {
+            choices <- getGroups(xy, choices=TRUE)
+            checkboxGroupInput("locGroupSel",
+                               label=h5("Select groups"),
+                               choices=choices,
+                               selected=seq_along(choices))
+        } else {
+            NULL
+        }
+    })
+
     ## output list - reactive conductor
     locationList <- reactive({
         bootCI <- if(!is.null(input$locCItype)) {
@@ -414,7 +491,9 @@ shinyServer(function(input, output) {
 
         xy <- coords()
         if(!is.null(xy)) {
-            groupLocation(xy,
+            groupSel <- getGroups(xy)[input$locGroupSel]
+            xySub    <- xy[xy$series %in% groupSel , , drop=FALSE]
+            groupLocation(xySub,
                           plots=FALSE,
                           level=input$locLevel,
                           bootCI=bootCI,
@@ -457,7 +536,9 @@ shinyServer(function(input, output) {
     output$locationPlot <- renderPlot({
         xy <- coords()
         if(!is.null(xy)) {
-            groupLocation(xy,
+            groupSel <- getGroups(xy)[input$locGroupSel]
+            xySub    <- xy[xy$series %in% groupSel , , drop=FALSE]
+            groupLocation(xySub,
                           plots=TRUE,
                           level=input$locLevel,
                           bootCI="none",
@@ -474,8 +555,10 @@ shinyServer(function(input, output) {
         content=function(file) {
             xy <- coords()
             if(!is.null(xy)) {
+                groupSel <- getGroups(xy)[input$locGroupSel]
+                xySub    <- xy[xy$series %in% groupSel , , drop=FALSE]
                 pdf(file)
-                groupLocation(xy,
+                groupLocation(xySub,
                               plots=TRUE,
                               level=input$locLevel,
                               bootCI="none",
@@ -492,13 +575,15 @@ shinyServer(function(input, output) {
     #####-----------------------------------------------------------------------
     ## compare groups
     #####-----------------------------------------------------------------------
+
     ## output list - reactive conductor
     output$compGroups <- renderUI({
         xy <- coords()
         if(!is.null(xy)) {
+            choices <- getGroups(xy, choices=TRUE)
             checkboxGroupInput("compGroupSel",
                                label=h5("Select groups"),
-                               choices=getGroups(xy, choices=TRUE),
+                               choices=choices,
                                selected=c(1, 2))
         } else {
             NULL
@@ -535,10 +620,11 @@ shinyServer(function(input, output) {
         xy <- coords()
         if(!is.null(xy)) {
             groupSel <- getGroups(xy)[input$compGroupSel]
-            xySub    <- xy[xy$series %in% groupSel , ]
+            xySub    <- xy[xy$series %in% groupSel , , drop=FALSE]
             res <- compareGroups(xySub,
                           plots=FALSE,
                           xyTopLeft=input$cmpXYTL,
+                          center=input$cmpCenter,
 #                          ABalt=c('two.sided', 'less', 'greater'),
 #                          Walt=c('two.sided', 'less', 'greater'),
                           CEPtype=CEPtype,
@@ -610,10 +696,11 @@ shinyServer(function(input, output) {
                 xy <- coords()
                 if(!is.null(xy)) {
                     groupSel <- getGroups(xy)[input$compGroupSel]
-                    xySub    <- xy[(xy$series %in% groupSel), ]
+                    xySub    <- xy[xy$series %in% groupSel , , drop=FALSE]
                     shotGroups:::compareGroupsPlot(xySub,
                         which=localI,
                         xyTopLeft=input$cmpXYTL,
+                        center=input$cmpCenter,
                         CEPlevel=input$compareCEPlevel,
                         CIlevel=input$compareCIlevel,
                         conversion=conversionStr())
@@ -633,10 +720,11 @@ shinyServer(function(input, output) {
                 pdf(file)
                 for(i in seq_len(nComparePlots)) {
                     groupSel <- getGroups(xy)[input$compGroupSel]
-                    xySub    <- xy[(xy$series %in% groupSel), ]
+                    xySub    <- xy[xy$series %in% groupSel , , drop=FALSE]
                     shotGroups:::compareGroupsPlot(xySub,
                         which=i,
                         xyTopLeft=input$cmpXYTL,
+                        center=input$cmpCenter,
                         CEPlevel=input$compareCEPlevel,
                         CIlevel=input$compareCIlevel,
                         conversion=conversionStr())
@@ -653,10 +741,27 @@ shinyServer(function(input, output) {
     ## target plot
     #####---------------------------------------------------------------------------
 
+    ## output list - reactive conductor
+    output$trgtGroups <- renderUI({
+        xy <- coords()
+        if(!is.null(xy)) {
+            choices <- getGroups(xy, choices=TRUE)
+            checkboxGroupInput("trgtGroupSel",
+                               label=h5("Select groups"),
+                               choices=choices,
+                               selected=seq_along(choices))
+        } else {
+            NULL
+        }
+    })
+
     output$targetPlot <- renderPlot({
         xy <- coords()
         if(!is.null(xy)) {
-            drawGroup(xy,
+            groupSel <- getGroups(xy)[input$trgtGroupSel]
+            xySub    <- xy[xy$series %in% groupSel , , drop=FALSE]
+            drawGroup(xySub,
+                      center=input$trgtCenter,
                       xyTopLeft=input$trgtXYTL,
                       bb=input$trgtBB,
                       bbMin=input$trgtBBmin,
@@ -684,10 +789,13 @@ shinyServer(function(input, output) {
     output$simRingCount <- renderPrint({
         xy <- coords()
         if(!is.null(xy)) {
+            groupSel <- getGroups(xy)[input$trgtGroupSel]
+            xySub    <- xy[xy$series %in% groupSel , , drop=FALSE]
             if(grepl("DSU[ab][[:digit:]]+", targetLinv[[input$trgtTarget]])) {
                 "Simulated ring count is not yet available for oval DSU targets"
             } else if(input$trgtTarget != "1") {
-                simRingCount(xy,
+                simRingCount(xySub,
+                             center=input$trgtCenter,
                              caliber=input$trgtCaliber,
                              unit=unitsXYInv[input$unitXY],
                              target=targetLinv[[input$trgtTarget]])
@@ -705,8 +813,11 @@ shinyServer(function(input, output) {
         content=function(file) {
             xy <- coords()
             if(!is.null(xy)) {
+                groupSel <- getGroups(xy)[input$trgtGroupSel]
+                xySub    <- xy[xy$series %in% groupSel , , drop=FALSE]
                 pdf(file)
-                drawGroup(xy,
+                drawGroup(xySub,
+                          center=input$trgtCenter,
                           xyTopLeft=input$trgtXYTL,
                           bb=input$trgtBB,
                           bbMin=input$trgtBBmin,

@@ -13,7 +13,6 @@ range2sigma <-
               nGroups > 0L, nGroups <= max(shotGroups::DFdistr$nGroups),
               CIlevel > 0)
     stat <- match.arg(toupper(stat), choices=c("ES", "FOM", "D"), several.ok=TRUE)
-
     argL <- recycle(x, stat)
     x    <- argL[[1]]
     stat <- argL[[2]]
@@ -34,7 +33,8 @@ range2sigma <-
     ## CI: use lookup table or Grubbs-Patnaik chi^2 approximation
     if(n %in% haveN) {
         ## can use lookup table for sigma estimate
-        idx <- which((shotGroups::DFdistr$n == n) & (shotGroups::DFdistr$nGroups == nGroups))
+        idx <- which((shotGroups::DFdistr$n       == n) &
+                     (shotGroups::DFdistr$nGroups == nGroups))
         M   <- setNames(numeric(length(x)), stat)
         M[names(M) %in% "ES"]  <- shotGroups::DFdistr$ES_M[idx]
         M[names(M) %in% "FOM"] <- shotGroups::DFdistr$FoM_M[idx]
@@ -87,7 +87,6 @@ range2sigma <-
             D_CIlo   <-   xD/shotGroups::DFdistr[[sub("\\.", "", paste0("D_Q",   CIlo))]][idx]
             D_CIhi   <-   xD/shotGroups::DFdistr[[sub("\\.", "", paste0("D_Q",   CIhi))]][idx]
         } else {
-            ## TODO this does not work
             ES_CIlo  <-  xES/splinefun(haveN, shotGroups::DFdistr[[sub("\\.", "", paste0("ES_Q",  CIlo))]][idxGroup],
                                        method="fmm")(n)
             ES_CIhi  <-  xES/splinefun(haveN, shotGroups::DFdistr[[sub("\\.", "", paste0("ES_Q",  CIhi))]][idxGroup],

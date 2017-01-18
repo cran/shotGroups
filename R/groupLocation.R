@@ -14,11 +14,11 @@ function(xy, level=0.95, plots=TRUE, bootCI=c("basic", "bca"),
 groupLocation.default <-
 function(xy, level=0.95, plots=TRUE, bootCI=c("basic", "bca"),
          dstTarget=100, conversion="m2cm") {
-    if(!is.matrix(xy))       { stop("xy must be a matrix") }
-    if(!is.numeric(xy))      { stop("xy must be numeric") }
-    if(ncol(xy) != 2L)       { stop("xy must have two columns") }
-    if(!is.numeric(level))   { stop("level must be numeric") }
-    if(level <= 0)           { stop("level must be > 0") }
+    if(!is.matrix(xy))     { stop("xy must be a matrix") }
+    if(!is.numeric(xy))    { stop("xy must be numeric") }
+    if(ncol(xy) != 2L)     { stop("xy must have two columns") }
+    if(!is.numeric(level)) { stop("level must be numeric") }
+    if(level <= 0)         { stop("level must be > 0") }
 
     bootCI <- match.arg(bootCI, choices=c("none", "norm", "basic", "perc", "bca"), several.ok=TRUE)
 
@@ -87,13 +87,13 @@ function(xy, level=0.95, plots=TRUE, bootCI=c("basic", "bca"),
     if(!("none" %in% bootCI)) {          # do bootstrap CIs
         NrplMin <- 1499L                 # minimum number of replications
         Nrpl <- if("bca" %in% bootCI) {  # number of replications
-            max(NrplMin, Npts+1)         # BCa needs at least number of points
+            max(NrplMin, Npts+1)         # BCa needs at least this number of points
         } else {
             NrplMin
         }
 
         ## group center for one replication
-        getCtr  <- function(x, idx) { colMeans(x[idx, ]) }
+        getCtr  <- function(x, idx) { colMeans(x[idx, , drop=FALSE]) }
         bs      <- boot::boot(xy, statistic=getCtr, R=Nrpl)  # bootstrap centers
         xCIboot <- boot::boot.ci(bs, conf=level, type=bootCI, index=1) # x
         yCIboot <- boot::boot.ci(bs, conf=level, type=bootCI, index=2) # y
@@ -101,12 +101,12 @@ function(xy, level=0.95, plots=TRUE, bootCI=c("basic", "bca"),
         ## CI type names in output structure of boot.ci()
         CInames <- c(basic="basic", norm="normal", perc="percent", bca="bca")
         CItype  <- CInames[bootCI]
-        xCImat  <- sapply(CItype, function(x) {
+        xCImat  <- vapply(CItype, function(x) {
             len <- length(xCIboot[[x]])
-            xCIboot[[x]][(len-1):len] })
-        yCImat  <- sapply(CItype, function(x) {
+            xCIboot[[x]][(len-1):len] }, numeric(2))
+        yCImat  <- vapply(CItype, function(x) {
             len <- length(yCIboot[[x]])
-            yCIboot[[x]][(len-1):len] })
+            yCIboot[[x]][(len-1):len] }, numeric(2))
 
         ## add bootstrap CIs to parametric CI
         ctrXci <- rbind(ctrXci, t(xCImat))

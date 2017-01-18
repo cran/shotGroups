@@ -107,38 +107,10 @@ function(qpar, omega) {
 
 #####---------------------------------------------------------------------------
 ## pdf Hoyt distribution
-## http://reference.wolfram.com/mathematica/ref/HoytDistribution.html
+## http://reference.wolfram.com/language/ref/HoytDistribution.html
 dHoyt <-
 function(x, qpar, omega) {
-    is.na(x)     <- is.nan(x)                # replace NaN with NA
-    is.na(qpar)  <- (qpar  <  0) | (qpar > 1) | !is.finite(qpar)
-    is.na(omega) <- (omega <= 0) | !is.finite(omega)
-
-    argL  <- recycle(x, qpar, omega)
-    x     <- argL[[1]]
-    qpar  <- argL[[2]]
-    omega <- argL[[3]]
-
-    dens <- numeric(length(x))                 # initialize density to 0
-    keep <- which((x >= 0) | !is.finite(x))    # keep non-negative x, NA, -Inf, Inf
-    if(length(keep) < 1L) { return(dens) }     # nothing to do
-
-    ## Hoyt is a special case of the Nakagami-m distribution with Hoyt
-    ## parameter q = m. Squared Nakagami-distributed variable is
-    ## gamma distributed with gamma shape = Nakagami shape,
-    ## gamma scale = Nakagami scale / Nagakami shape
-    dens[keep] <- exp(dgamma(x[keep]^2,
-                      shape=qpar[keep],
-                      scale=omega[keep]/qpar[keep],
-                      log=TRUE) + log(2) + log(x[keep]))
-
-    return(dens)
-}
-
-## equivalent
-dHoyt2 <-
-function(x, qpar, omega) {
-    is.na(x)     <- is.nan(x)                # replace NaN with NA
+    is.na(x)     <- is.nan(x)           # replace NaN with NA
     is.na(qpar)  <- (qpar  <  0) | (qpar > 1) | !is.finite(qpar)
     is.na(omega) <- (omega <= 0) | !is.finite(omega)
 
@@ -229,15 +201,15 @@ function(q, qpar, omega, lower.tail=TRUE) {
                     marcumQ(alphaQ*y,  betaQ*y, nu=1, lower.tail=lower.tail)
 
         ## special cases not caught so far
-        pp[which(q == -Inf)] <- 0
-        pp[which(q ==  Inf)] <- 1
+        pp[q == -Inf] <- 0
+        pp[q ==  Inf] <- 1
     } else {
         pp[keep] <- 1 + marcumQ( betaQ*y, alphaQ*y, nu=1, lower.tail=lower.tail) -
                         marcumQ(alphaQ*y,  betaQ*y, nu=1, lower.tail=lower.tail)
 
         ## special cases not caught so far
-        pp[which(q < 0)]    <- 1
-        pp[which(q == Inf)] <- 0
+        pp[q < 0]    <- 1
+        pp[q == Inf] <- 0
     }
 
     return(pp)
@@ -251,7 +223,7 @@ function(q, qpar, omega, lower.tail=TRUE) {
 #     b  <- abs(diff(ev)) / sum(ev)
 #     S  <- sqrt(sum(ev))
 #     qq <- qq/S                           # rescale
-#
+# 
 #     intFun <- function(r, b) {
 #         fac1 <- r*exp(-(r^2/(1-b^2)))
 #         bArg <- (b*r^2/(1-b^2))
@@ -259,7 +231,7 @@ function(q, qpar, omega, lower.tail=TRUE) {
 #         res  <- fac1*fac2                # this may be NaN
 #         ifelse(is.finite(res), res, 0)   # if so, return 0
 #     }
-#
+# 
 #     pp <- (1/sqrt(1-b^2)) * sapply(qq, function(x) 2*integrate(intFun, 0, x, b=b)$value)
 #     return(pp)
 # }
@@ -277,7 +249,7 @@ function(q, qpar, omega, lower.tail=TRUE) {
 #         res  <- fac1*fac2                        # this may be NaN
 #         return(ifelse(is.finite(res), res, 0))   # if so, return 0
 #     }
-#
+# 
 #     ev <- eigen(sigma)$values
 #     pp <- (1/prod(sqrt(ev))) * sapply(qq, function(x) integrate(intFun, 0, x, ev=ev)$value)
 #     return(pp)
@@ -293,15 +265,15 @@ function(q, qpar, omega, lower.tail=TRUE) {
 #     Hc     <- sqrt(ev[2] / ev[1])
 #     Hbeta  <- 2*Hc / pi
 #     Hgamma <- (Hk/(2*Hc))^2
-#
+# 
 #     Hw <- function(phi, Hc) {
 #         (Hc^2 - 1)*cos(phi) - (Hc^2 + 1)
 #     }
-#
+# 
 #     Hf <- function(phi, Hc, Hgamma) {
 #         (exp(Hgamma*Hw(phi, Hc)) - 1) / Hw(phi, Hc)
 #     }
-#
+# 
 #     Hbeta * integrate(Hf, 0, pi, Hc=Hc, Hgamma=Hgamma)$value
 # }
 
@@ -319,8 +291,8 @@ function(p, qpar, omega, lower.tail=TRUE, loUp=NULL) {
 
     qq   <- rep(NA_real_, length(p))
     keep <- which((p >= 0) & (p < 1))
-    if(length(keep) < 1) { return(qq) }
-
+    if(length(keep) < 1L) { return(qq) }     # nothing to do
+    
     if(is.null(loUp)) {                  # no search interval given
         ## use Grubbs chi^2 quantile for setting root finding interval
         ## Grubbs-Liu chi^2 and Hoyt can diverge

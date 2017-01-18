@@ -4,25 +4,29 @@
 \alias{drawGroup.default}
 \title{Draw a group of bullet holes with additional measures}
 \description{Draws a group with scaled bullet holes on a target background. Spread measures can be selected individually.}
-\usage{drawGroup(xy, xyTopLeft=TRUE, bb = FALSE, bbMin = FALSE, bbDiag = FALSE,
+\usage{drawGroup(xy, center = FALSE, xyTopLeft = TRUE,
+          bb = FALSE, bbMin = FALSE, bbDiag = FALSE,
           minCirc = FALSE, maxSpread = FALSE, meanDist = FALSE, confEll = FALSE,
           CEP = FALSE, ringID = FALSE, doRob = FALSE, level = 0.95, scaled = TRUE,
           caliber = 9, dstTarget = 100, conversion = 'm2cm',
           unit = 'unit', alpha = 0.5, target = 'ISSF_100m')
 
-\method{drawGroup}{data.frame}(xy, xyTopLeft=TRUE, bb = FALSE, bbMin = FALSE, bbDiag = FALSE,
+\method{drawGroup}{data.frame}(xy, center = FALSE, xyTopLeft = TRUE,
+          bb = FALSE, bbMin = FALSE, bbDiag = FALSE,
           minCirc = FALSE, maxSpread = FALSE, meanDist = FALSE, confEll = FALSE,
           CEP = FALSE, ringID = FALSE, doRob = FALSE, level = 0.95, scaled = TRUE,
           caliber = 9, dstTarget = 100, conversion = 'm2cm',
           unit = 'unit', alpha = 0.5, target = 'ISSF_100m')
 
-\method{drawGroup}{default}(xy, xyTopLeft=TRUE, bb = FALSE, bbMin = FALSE, bbDiag = FALSE,
+\method{drawGroup}{default}(xy, center = FALSE, xyTopLeft = TRUE,
+          bb = FALSE, bbMin = FALSE, bbDiag = FALSE,
           minCirc = FALSE, maxSpread = FALSE, meanDist = FALSE, confEll = FALSE,
           CEP = FALSE, ringID = FALSE, doRob = FALSE, level = 0.95, scaled = TRUE,
           caliber = 9, dstTarget = 100, conversion = 'm2cm',
           unit = 'unit', alpha = 0.5, target = 'ISSF_100m')}
 \arguments{
-  \item{xy}{either a numerical (n x 2)-matrix with the (x,y)-coordinates of n points (1 row of coordinates per point), or a data frame with either the variables \code{X}, \code{Y} or \code{Point.X}, \code{Point.Y} as well as \code{Aim.X}, \code{Aim.Y} giving the point of aim. If missing, point of aim is assumed to be in (0,0).}
+  \item{xy}{either a numerical (n x 2)-matrix with the (x,y)-coordinates of n points (1 row of coordinates per point), or a data frame with either the variables \code{x}, \code{y} or \code{point.x}, \code{point.y} as well as \code{aim.x}, \code{aim.y} giving the point of aim. If missing, point of aim is assumed to be in (0,0).}
+  \item{center}{logical: center groups to mean (0,0) first? If variable \code{series} does not exist, all shots are treated as belonging to the same group. Only available in method \code{drawGroup.data.frame()}.}
   \item{xyTopLeft}{logical: is the origin of the absolute coordinate system in the top-left corner? This is the default for data exported by OnTarget PC/TDS. If an (n x 2)-matrix is supplied for \code{xy}, point of aim is assumed to be in (0,0).}
   \item{bb}{logical: draw bounding box?}
   \item{bbMin}{logical: draw minimum-area bounding box?}

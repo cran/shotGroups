@@ -1,22 +1,29 @@
 getConfEll <-
-function(xy, level=0.5, dstTarget=100, conversion="m2cm", doRob=TRUE) {
+function(xy, level=0.5, dstTarget=100, conversion="m2cm",
+         center=FALSE, doRob=TRUE) {
     UseMethod("getConfEll")
 }
 
 getConfEll.data.frame <-
-function(xy, level=0.5, dstTarget=100, conversion="m2cm", doRob=TRUE) {
-    xy <- getXYmat(xy, xyTopLeft=FALSE, relPOA=FALSE)
+function(xy, level=0.5, dstTarget=100, conversion="m2cm",
+         center=FALSE, doRob=TRUE) {
+    xy     <- getXYmat(xy, xyTopLeft=FALSE, center=center, relPOA=FALSE)
+    center <- FALSE                   # centering was done in getXYmat()
     NextMethod("getConfEll")
 }
 
 getConfEll.default <-
-function(xy, level=0.5, dstTarget=100, conversion="m2cm", doRob=TRUE) {
+function(xy, level=0.5, dstTarget=100, conversion="m2cm",
+         center=FALSE, doRob=TRUE) {
     if(!is.matrix(xy))     { stop("xy must be a matrix") }
     if(!is.numeric(xy))    { stop("xy must be numeric") }
     if(nrow(xy) < 2L)      { stop("we need >= 2 points for confidence ellipse") }
     if(!is.numeric(level)) { stop("level must be numeric") }
     if(level <= 0)         { stop("level must be > 0") }
-
+    if(center) {
+        warning("Centering only works for data frames, ignored here")
+    }
+    
     ## check if CI level is given in percent
     if(level >= 1) {
         while(level >= 1) { level <- level / 100 }
@@ -76,7 +83,7 @@ function(xy, level=0.5, dstTarget=100, conversion="m2cm", doRob=TRUE) {
         shapeRob <- NULL
         ctrRob   <- NULL
         covXYrob <- NULL
-    }                                    # if(!(doRob & haveRob))
+    }                                    # if(!(doRob && haveRob))
 
     return(list(ctr=ctr, ctrRob=ctrRob, cov=covXY, covRob=covXYrob,
                 size=size, sizeRob=sizeRob,

@@ -37,17 +37,20 @@ shinyUI(fluidPage(
             ## group shape
             conditionalPanel(condition="input.task == 'Shape'",
                 h4("Group shape"),
+                uiOutput("shapeGroups"),
                 sliderInput("shapeBW", label=h5("2D kernel bandwith"),
                             min=0, max=5, value=0.4, step=0.1),
                 radioButtons("shapeOutlier", h5("Outlier ID method"),
                              list("MCD"=1,
-                                  "PCA"=2))
+                                  "PCA"=2)),
+                checkboxInput("shapeCenter", "Center groups", FALSE)
             ),
 
             #####---------------------------------------------------------------
             ## group spread / precision
             conditionalPanel(condition="input.task == 'Precision'",
                 h4("Precision"),
+                uiOutput("spreadGroups"),
                 sliderInput("spreadCIlevel", label=h5("Confidence interval width"),
                             min=0.5, max=1, value=0.95, step=0.01),
                 sliderInput("spreadCEPlevel", label=h5("CEP / conf. ellipse coverage"),
@@ -55,17 +58,19 @@ shinyUI(fluidPage(
                 checkboxGroupInput("spreadCEPtype", label=h5("CEP type (default: CorrNormal)"),
                                    choices=CEPtypes, selected=c(1, 5)),
                 checkboxGroupInput("spreadCItype", label=h5("Bootstrap CI type"),
-                                   choices=CItypes, selected=c(1, 3))
+                                   choices=CItypes, selected=NULL),
+                checkboxInput("spreadCenter", "Center groups", FALSE)
             ),
 
             #####---------------------------------------------------------------
             ## group location / accuracy
             conditionalPanel(condition="input.task == 'Accuracy'",
                 h4("Accuracy"),
+                uiOutput("locGroups"),
                 sliderInput("locLevel", label=h5("Confidence interval width"),
                             min=0.5, max=1, value=0.95, step=0.01),
                 checkboxGroupInput("locCItype", label=h5("Bootstrap CI type"),
-                                   choices=CItypes, selected=c(1, 3))
+                                   choices=CItypes, selected=NULL)
             ),
 
             #####---------------------------------------------------------------
@@ -79,13 +84,16 @@ shinyUI(fluidPage(
                             min=0.5, max=1, value=0.5, step=0.01),
                 selectInput("cmpCEPtype", label=h5("CEP type"),
                             choices=CEPtypes, selected=1),
-                checkboxInput("cmpXYTL", "XY-origin top-left", TRUE)
+                checkboxInput("cmpXYTL", "XY-origin top-left", TRUE),
+                checkboxInput("cmpCenter", "Center groups", FALSE)
             ),
 
             #####---------------------------------------------------------------
             ## target plot
             conditionalPanel(condition="input.task == 'Target plot'",
                 h4("Target plot"),
+                uiOutput("trgtGroups"),
+                checkboxInput("trgtCenter",    "Center groups", FALSE),
                 checkboxInput("trgtXYTL",      "XY-origin top-left", TRUE),
                 checkboxInput("trgtBB",        "Bounding box", TRUE),
                 checkboxInput("trgtBBmin",     "Min-area bounding box", FALSE),
@@ -306,7 +314,7 @@ shinyUI(fluidPage(
                       uses functionality provided by the R packages boot, coin, CompQuadForm,
                       energy, mvoutlier, and robustbase:"),
 
-                    p("Canty, A., & Ripley, B. D. (2015). boot: Bootstrap R (S-Plus) Functions.", br(),
+                    p("Canty, A., & Ripley, B. D. (2016). boot: Bootstrap R (S-Plus) Functions.", br(),
                       a("http://CRAN.R-project.org/package=boot",
                         href="http://CRAN.R-project.org/package=boot")),
                     p("Duchesne, P., & Lafaye de Micheaux, P. (2010). Computing the distribution
@@ -315,7 +323,7 @@ shinyUI(fluidPage(
                        Analysis, 54 (4), 858-862.", br(),
                       a("http://CRAN.R-project.org/package=CompQuadForm",
                         href="http://CRAN.R-project.org/package=CompQuadForm")),
-                    p("Filzmoser, P., & Gschwandtner, M. (2014). mvoutlier: Multivariate
+                    p("Filzmoser, P., & Gschwandtner, M. (2017). mvoutlier: Multivariate
                        outlier detection based on robust methods.", br(),
                       a("http://CRAN.R-project.org/package=mvoutlier",
                         href="http://CRAN.R-project.org/package=mvoutlier")),
@@ -326,21 +334,21 @@ shinyUI(fluidPage(
                         href="http://www.jstatsoft.org/v28/i08/"), br(),
                       a("http://CRAN.R-project.org/package=coin",
                          href="http://CRAN.R-project.org/package=coin")),
-                    p("R Core Team (2015). R: A language and environment for statistical computing.
+                    p("R Core Team (2016). R: A language and environment for statistical computing.
                        R Foundation for Statistical Computing, Vienna, Austria.", br(),
                        a("http://www.R-project.org/", br(), href="http://www.R-project.org/")),
-                    p("Rizzo, M. L., & Szekely, G. J. (2015). energy: E-statistics
+                    p("Rizzo, M. L., & Szekely, G. J. (2016). energy: E-statistics
                       (energy statistics).", br(),
                       a("http://CRAN.R-project.org/package=energy",
                         href="http://CRAN.R-project.org/package=energy")),
                     p("Rousseeuw, P. J., Croux, C., Todorov, V., Ruckstuhl, A., Salibian-Barrera, M.,
-                       Verbeke, T., & Maechler, M. (2015). robustbase: Basic Robust Statistics.", br(),
+                       Verbeke, T., & Maechler, M. (2016). robustbase: Basic Robust Statistics.", br(),
                       a("http://CRAN.R-project.org/package=robustbase",
                         href="http://CRAN.R-project.org/package=robustbase")),
                     p("RStudio Inc. (2016). shiny: Web Application Framework for R.", br(),
                        a("http://CRAN.R-project.org/package=shiny", href="http://CRAN.R-project.org/package=shiny"), br(),
                        a("http://shiny.rstudio.com/", href="http://shiny.rstudio.com/")),
-                    p("Wollschlaeger, D. (2016). shotGroups: Analyze shot group data.", br(),
+                    p("Wollschlaeger, D. (2017). shotGroups: Analyze shot group data.", br(),
                        a("http://CRAN.R-project.org/package=shotGroups",
                          href="http://CRAN.R-project.org/package=shotGroups"), br(),
                        a("http://github.com/dwoll/shotGroups/",

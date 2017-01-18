@@ -2,8 +2,10 @@
 efficiency <-
 function(n, nGroups, CIlevel=0.95, CIwidth,
          stat=c("Rayleigh", "ES", "FoM", "D")) {
-    stopifnot(is.numeric(n), is.numeric(CIlevel),
-              all(n > 1L), all(n <= max(shotGroups::DFdistr$n)),
+    stopifnot(is.numeric(n),
+              is.numeric(CIlevel),
+              all(n > 1L),
+              all(n <= max(shotGroups::DFdistr$n)),
               all(CIlevel > 0))
     n       <- sort(unique(as.integer(n)))
     CIlevel <- round(CIlevel[1], digits=2)
@@ -17,19 +19,20 @@ function(n, nGroups, CIlevel=0.95, CIwidth,
         warning(c("CIlevel must be in (0,1) and was set to ", CIlevel))
     }
     
-    idx   <- which((shotGroups::DFdistr$n %in% n) & (shotGroups::DFdistr$nGroups == 1L))
-    idx1  <- which(shotGroups::DFdistr$nGroups == 1L)
+    idx   <- which((shotGroups::DFdistr$n       %in% n) &
+                   (shotGroups::DFdistr$nGroups ==   1L))
+    idx1  <- which( shotGroups::DFdistr$nGroups ==   1L)
     n1    <- shotGroups::DFdistr[idx1, "n", drop=TRUE]
     alpha <- 1 - CIlevel
     z     <- qnorm(1-(alpha/2), mean=0, sd=1)
 
     ## can use lookup table for ES_CV and RS_CV or do spline interpolation
     if(all(n %in% n1)) {
-        nActual <- shotGroups::DFdistr$n[idx]
-        ES_CV   <- shotGroups::DFdistr$ES_CV[idx]
-        FoM_CV  <- shotGroups::DFdistr$FoM_CV[idx]
-        D_CV    <- shotGroups::DFdistr$D_CV[idx]
-        RS_CV   <- shotGroups::DFdistr$RS_CV[idx]
+        nActual <- shotGroups::DFdistr[["n"]][idx]
+        ES_CV   <- shotGroups::DFdistr[["ES_CV"]][idx]
+        FoM_CV  <- shotGroups::DFdistr[["FoM_CV"]][idx]
+        D_CV    <- shotGroups::DFdistr[["D_CV"]][idx]
+        RS_CV   <- shotGroups::DFdistr[["RS_CV"]][idx]
     } else {
         ## spline interpolation for ES_CV/FoM_CV/D_CV/RS_CV
         nActual <- n

@@ -13,8 +13,8 @@
 If \code{fNames} is provided, \code{fPat} is ignored. \cr \cr
 If neither \code{fNames} nor \code{fPat} is provided, and we are in interactive mode under Windows, files can be chosen interactively. \cr \cr
 This function is basically a wrapper for \code{\link[utils]{read.csv}}. \cr \cr
-Output files need to be comma-separated files from OnTarget PC v2.* or OnTarget TDS v3.*: 'Tools -> Export Point Data'. Files need to contain exactly the following variable names in this order: \code{Project Title}, \code{Group}, \code{Ammunition}, \code{Distance}, \code{Aim X}, \code{Aim Y}, \code{Center X}, \code{Center Y}, \code{Point X}, \code{Point Y}, and optionally \code{Velocity}. \cr \cr
-Tested with OnTarget PC v2.10, OnTarget TDS v3.71, and OnTarget TDS v3.81.\cr
+Output files need to be comma-separated files (file type \code{.csv}) from OnTarget PC v2.* or OnTarget TDS v3.*: 'Tools -> Export Point Data'. Files need to contain exactly the following variable names in this order: \code{Project Title}, \code{Group}, \code{Ammunition}, \code{Distance}, \code{Aim X}, \code{Aim Y}, \code{Center X}, \code{Center Y}, \code{Point X}, \code{Point Y}, and optionally \code{Velocity}. \cr \cr
+Tested with OnTarget PC v2.10, OnTarget TDS v3.71, and OnTarget TDS v3.89.\cr
 For reading in files exported from OnTarget PC v1.*, see \code{\link[shotGroups]{readDataOT1}}. \cr
 For reading in other text files, see \code{\link[shotGroups]{readDataMisc}}.
 }

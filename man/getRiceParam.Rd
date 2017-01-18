@@ -10,7 +10,7 @@
 
 \method{getRiceParam}{default}(xy, level = 0.95, doRob = FALSE, type=c("LiZhangDai", 'MOM'))}
 \arguments{
-  \item{xy}{either a numerical (n x 2)-matrix with the coordinates of n points (1 row of (x,y)-coordinates per point), or a data frame with either the variables \code{X}, \code{Y} or \code{Point.X}, \code{Point.Y}.}
+  \item{xy}{either a numerical (n x 2)-matrix with the (x,y)-coordinates of n points (1 row of coordinates per point), or a data frame with either the variables \code{x}, \code{y} or \code{point.x}, \code{point.y}.}
   \item{level}{a numerical value with the coverage for the confidence interval for sigma.}
   \item{doRob}{logical: use robust estimation of center and covariance matrix as basis for estimators?}
   \item{type}{The initial biased nu estimate is the Euclidean norm of the group center. For \code{'LiZhangDai'}, the bias-correction from Liu et al., 2009. For \code{'MOM'}, the estimated bias is subtracted. If the estimated bias is larger than the initial estimate, the final estimate is then set to 0.}

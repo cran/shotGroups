@@ -50,11 +50,11 @@ function(DFs) {
         hasXY2   <- needsXY2 %in% dfNames
 
         if(!xor(all(hasXY1), all(hasXY2))) { # not (either X, Y or Point.X, Point.Y)
-            stop("Coordinates must be named either X, Y or Point.X, Point.Y")
+            stop("Coordinates must be named either x, y or point.x, point.y")
         }
 
         if(("z" %in% dfNames) && ("point.z" %in% dfNames)) {
-            stop("Coordinates must be named either Z or Point.Z")
+            stop("Coordinates must be named either z or point.z")
         }
 
         ## if X, Y -> rename to Point.X, Point.Y
@@ -62,7 +62,7 @@ function(DFs) {
             dfNames[dfNames %in% "x"] <- "point.x"
             dfNames[dfNames %in% "y"] <- "point.y"
             dfNames[dfNames %in% "z"] <- "point.z"
-            warning("Variables X, Y were renamed to Point.X, Point.Y")
+            warning("Variables x, y were renamed to point.x, point.y")
             names(x) <- dfNames
         }
 
@@ -112,7 +112,7 @@ function(DFs) {
 
     ## restrict data frames to shared variables variables
     varsNow <- Reduce(intersect, lapply(DFs, names))  # shared set of variables
-    DFrestr <- lapply(DFs, function(x) x[, varsNow])  # select only these
+    DFrestr <- lapply(DFs, function(x) x[, varsNow, drop=FALSE])  # select only these
     nObs    <- vapply(DFrestr, nrow, integer(1))      # number of observations in each data frame
     DFall   <- do.call("rbind", DFrestr)     # combine data frames
     rownames(DFall) <- NULL                  # remove row names

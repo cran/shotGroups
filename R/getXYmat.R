@@ -1,5 +1,8 @@
 getXYmat <-
-function(DF, xyTopLeft=TRUE, relPOA=TRUE) {
+function(DF,
+         xyTopLeft=TRUE,
+         relPOA=TRUE,
+         center=FALSE) {
     if(!is.data.frame(DF)) { stop("DF must be a data frame") }
 
     ## convert DF names to lower case
@@ -16,11 +19,11 @@ function(DF, xyTopLeft=TRUE, relPOA=TRUE) {
     hasAIM   <- wantsAIM %in% dfNames    # useful ones we have
 
     if(!xor(all(hasXY1), all(hasXY2))) {
-       stop("Coordinates must be named either X, Y or Point.X, Point.Y")
+       stop("Coordinates must be named either x, y or point.x, point.y")
     }
 
     if(("z" %in% dfNames) && ("point.z" %in% dfNames)) {
-        stop("Coordinates must be named either Z or Point.Z")
+        stop("Coordinates must be named either z or point.z")
     }
 
     ## analysis should be relative to POA, but POA is missing
@@ -30,15 +33,6 @@ function(DF, xyTopLeft=TRUE, relPOA=TRUE) {
                   "Point of Aim is assumed to be in (0,0)"))
         relPOA <- FALSE
     }
-
-    if(!relPOA) {                        # coords not relative to POA
-        DF$aim.x <- 0                    # -> set POA to (0,0)
-        DF$aim.y <- 0
-
-        if(("z" %in% dfNames) || ("point.z" %in% dfNames)) {
-            DF$aim.z <- 0
-        }
-    }
     
     ## if names are X, Y, Z rename to Point.X, Point.Y, Point.Z
     if(all(hasXY2)) {
@@ -46,8 +40,47 @@ function(DF, xyTopLeft=TRUE, relPOA=TRUE) {
         dfNames[dfNames %in% "x"] <- "point.x"
         dfNames[dfNames %in% "y"] <- "point.y"
         dfNames[dfNames %in% "z"] <- "point.z"
-        warning("Variables X, Y were renamed to Point.X, Point.Y")
+        warning("Variables x, y were renamed to point.x, point.y")
         names(DF) <- dfNames
+    }
+    
+    ## center shots?
+    ## set point of aim to mean -> later used to center to (0,0)
+    centerOne <- function(x) {
+        x$aim.x <- mean(x$point.x)
+        x$aim.y <- mean(x$point.y)
+        if("point.z" %in% names(x)) {
+            x$aim.z <- mean(x$point.z)
+        }
+        x
+    }
+    
+    DF <- if(center) {
+        if(!is.null(DF$series)) {        # center per group
+            DFspl <- split(DF, DF$series, drop=TRUE)
+            DFL   <- lapply(DFspl, centerOne)
+            do.call("rbind", DFL)
+        } else {                         # center overall
+            centerOne(DF)
+        }
+    } else {
+        DF
+    }
+    
+    ## coords not relative to POA
+    if(!relPOA && !center) {
+        DF$aim.x <- 0                    # -> set POA to (0,0)
+        DF$aim.y <- 0
+
+        if("point.z" %in% dfNames) {
+            DF$aim.z <- 0
+        }
+    }
+    
+    ## POA may still be missing (relPOA=TRUE, center=FALSE) -> set to (0,0)
+    if(is.null(DF$aim.x) || is.null(DF$aim.y)) {
+        DF$aim.x <- 0
+        DF$aim.y <- 0
     }
     
     ## coords relative to point of aim
@@ -59,7 +92,7 @@ function(DF, xyTopLeft=TRUE, relPOA=TRUE) {
           DF$point.y - DF$aim.y
     }
 
-    z <- if(("z" %in% dfNames) || ("point.z" %in% dfNames)) {
+    z <- if("point.z" %in% dfNames) {
         DF$point.z - DF$aim.z            # z-coords
     } else {
         NULL

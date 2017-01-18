@@ -76,6 +76,7 @@ function(x, unit="cm", dstTarget=100, conversion="m2cm", add=FALSE, cex=par("cex
             xLims <- c(-1, 1)
             yLims <- c(-1, 1)
         }
+
         plot(0, 0, type="n", xlim=xLims, ylim=yLims, xlab=NA, ylab=NA, asp=1)
     }                                    # if(add)
 
@@ -309,15 +310,17 @@ function(x, cex=par("cex")) {
 drawTarget_DSUb <-
 function(x, cex=par("cex")) {
     ## draw circle sectors first, start from the outside
-    sapply(rev(seq_along(x$inUnit$ringR)), function(i) {
+    drawOval <- function(i) {
         ang <- (180/pi)*with(x$inUnit, atan((ringRV-ringR) / ringR))
         with(x$inUnit, drawDSUOval(c(0, 0),
-                            h=ringRV[i]-ringR[i],
-                            radius=ringR[i],
-                            angle=ang[i],
-                            fg=x$colsTxt[i],
-                            bg=x$cols[i]))
-    })
+                                   h=ringRV[i]-ringR[i],
+                                   radius=ringR[i],
+                                   angle=ang[i],
+                                   fg=x$colsTxt[i],
+                                   bg=x$cols[i]))
+    }
+
+    lapply(rev(seq_along(x$inUnit$ringR)), drawOval)
 
     rings1 <- with(x, seq(from=maxVal-nRings+1, to=maxVal-1, length.out=nRings-1)) # left side of center
     rings2 <- c(rings1, rev(rings1))                         # both sides

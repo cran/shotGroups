@@ -1,19 +1,27 @@
 groupSpread <-
-function(xy, plots=TRUE, CEPlevel=0.5, CIlevel=0.95, CEPtype="CorrNormal",
-         bootCI=c("basic", "bca"), dstTarget=100, conversion="m2cm") {
+function(xy, center=FALSE, plots=TRUE, CEPlevel=0.5, CIlevel=0.95,
+         CEPtype="CorrNormal",
+         bootCI=c("basic", "bca"),
+         dstTarget=100, conversion="m2cm") {
     UseMethod("groupSpread")
 }
 
 groupSpread.data.frame <-
-function(xy, plots=TRUE, CEPlevel=0.5, CIlevel=0.95, CEPtype="CorrNormal",
-         bootCI=c("basic", "bca"), dstTarget=100, conversion="m2cm") {
-    xy <- getXYmat(xy)
+function(xy, center=FALSE, plots=TRUE, CEPlevel=0.5, CIlevel=0.95,
+         CEPtype="CorrNormal",
+         bootCI=c("basic", "bca"),
+         dstTarget=100, conversion="m2cm") {
+    xy     <- getXYmat(xy, center=center)
+    center <- FALSE                   # centering was done in getXYmat()
+
     NextMethod("groupSpread")
 }
 
 groupSpread.default <-
-function(xy, plots=TRUE, CEPlevel=0.5, CIlevel=0.95, CEPtype="CorrNormal",
-         bootCI=c("basic", "bca"), dstTarget=100, conversion="m2cm") {
+function(xy, center=FALSE, plots=TRUE, CEPlevel=0.5, CIlevel=0.95,
+         CEPtype="CorrNormal",
+         bootCI=c("basic", "bca"),
+         dstTarget=100, conversion="m2cm") {
     if(!is.matrix(xy))        { stop("xy must be a matrix") }
     if(!is.numeric(xy))       { stop("xy must be numeric") }
     if(ncol(xy) != 2L)        { stop("xy must have two columns") }
@@ -21,6 +29,9 @@ function(xy, plots=TRUE, CEPlevel=0.5, CIlevel=0.95, CEPtype="CorrNormal",
     if(CEPlevel <= 0)         { stop("CEPlevel must be > 0") }
     if(!is.numeric(CIlevel))  { stop("CIlevel must be numeric") }
     if(CIlevel <= 0)          { stop("CIlevel must be > 0") }
+    if(center) {
+        warning("Centering only works for data frames, ignored here")
+    }
 
     bootCI <- match.arg(bootCI, choices=c("none", "norm", "basic", "perc", "bca"), several.ok=TRUE)
 
@@ -86,21 +97,21 @@ function(xy, plots=TRUE, CEPlevel=0.5, CIlevel=0.95, CEPtype="CorrNormal",
         ## CI type names in output structure of boot.ci()
         CInames <- c(basic="basic", norm="normal", perc="percent", bca="bca")
         CItype  <- CInames[bootCI]
-        sdXciBoot <- c(sapply(CItype, function(x) {
+        sdXciBoot <- c(vapply(CItype, function(x) {
             len <- length(sdXciBoot[[x]])
-            sdXciBoot[[x]][(len-1):len] }))
-        sdYciBoot <- c(sapply(CItype, function(x) {
+            sdXciBoot[[x]][(len-1):len] }, numeric(2)))
+        sdYciBoot <- c(vapply(CItype, function(x) {
             len <- length(sdYciBoot[[x]])
-            sdYciBoot[[x]][(len-1):len] }))
-        sigCIboot <- c(sapply(CItype, function(x) {
+            sdYciBoot[[x]][(len-1):len] }, numeric(2)))
+        sigCIboot <- c(vapply(CItype, function(x) {
             len <- length(sigCIboot[[x]])
-            sigCIboot[[x]][(len-1):len] }))
-        RSDciBoot <- c(sapply(CItype, function(x) {
+            sigCIboot[[x]][(len-1):len] }, numeric(2)))
+        RSDciBoot <- c(vapply(CItype, function(x) {
             len <- length(RSDciBoot[[x]])
-            RSDciBoot[[x]][(len-1):len] }))
-         MRciBoot <- c(sapply(CItype, function(x) {
+            RSDciBoot[[x]][(len-1):len] }, numeric(2)))
+         MRciBoot <- c(vapply(CItype, function(x) {
             len <- length(MRciBoot[[x]])
-            MRciBoot[[x]][(len-1):len] }))
+            MRciBoot[[x]][(len-1):len] }, numeric(2)))
 
         names(sdXciBoot) <- paste("sdX",   rep(bootCI, each=2), c("(", ")"))
         names(sdYciBoot) <- paste("sdY",   rep(bootCI, each=2), c("(", ")"))
@@ -360,11 +371,10 @@ function(xy, plots=TRUE, CEPlevel=0.5, CIlevel=0.95, CEPtype="CorrNormal",
 }
 
 groupSpreadPlot <-
-function(xy, which=1L, CEPlevel=0.5, CIlevel=0.95, dstTarget=100, conversion="m2cm") {
+function(xy, which=1L, center=FALSE, CEPlevel=0.5, CIlevel=0.95,
+         dstTarget=100, conversion="m2cm") {
     if(!is.data.frame(xy))    { stop("xy must be a data.frame") }
-    xy <- getXYmat(xy)
-    if(!is.numeric(xy))       { stop("xy must be numeric") }
-    if(ncol(xy) != 2L)        { stop("xy must have two columns") }
+    xy <- getXYmat(xy, center=center)
     if(!is.numeric(CEPlevel)) { stop("CEPlevel must be numeric") }
     if(CEPlevel <= 0)         { stop("CEPlevel must be > 0") }
     if(!is.numeric(CIlevel))  { stop("CIlevel must be numeric") }

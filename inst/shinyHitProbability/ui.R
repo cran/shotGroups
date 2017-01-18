@@ -35,10 +35,12 @@ shinyUI(fluidPage(
             #####---------------------------------------------------------------
             ## hit probability -> radius
             conditionalPanel(condition="/region/.test(input.task)",
+                uiOutput("hitpGroups1"),
                 sliderInput("hitpLevel", label=h5("Hit probability"),
                             min=0, max=1, value=0.5, step=0.05),
                 checkboxGroupInput("hitpCEPtype1", label=h5("CEP type (default: CorrNormal)"),
                                    choices=CEPtypes, selected=c(1, 5)),
+                checkboxInput("hitpCenter1", "Center groups", FALSE),
                 checkboxInput("hitpAcc", label="CEP w/ accuracy", FALSE),
                 checkboxInput("hitpDoRob1", label="Robust estimate", FALSE)
             ),
@@ -46,12 +48,14 @@ shinyUI(fluidPage(
             #####---------------------------------------------------------------
             ## radius -> hit probability
             conditionalPanel(condition="/Region/.test(input.task)",
+                uiOutput("hitpGroups2"),
                 numericInput("hitpR", h5("Radius for circular region"),
                              min=0, step=0.1, value=1),
                 selectInput("hitpUnitR", h5("Measurement unit radius"),
                             choices=hitpRUnit, selected=1),
                 checkboxGroupInput("hitpCEPtype2", label=h5("CEP type (default: CorrNormal)"),
                                    choices=CEPtypes[1:5], selected=c(1, 5)),
+                checkboxInput("hitpCenter2", "Center groups", FALSE),
                 checkboxInput("hitpDoRob2", label="Robust estimate", FALSE)
             ),
 
