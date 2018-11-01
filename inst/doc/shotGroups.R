@@ -15,23 +15,24 @@ options(replace.assign=TRUE, width=75, digits=4, useFancyQuotes=FALSE, show.sign
 
 ## ----cAnalyzeGroup, eval=FALSE-------------------------------------------
 #  library(shotGroups, verbose=FALSE)       # load shotGroups package
-#  analyzeGroup(DFtalon, conversion="m2mm")
+#  analyzeGroup(DFtalon, dstTarget=10, conversion="m2mm")
 #  
 #  ## output not shown, see following sections for results
 
 ## ----cGroupShape, out.width='3in'----------------------------------------
 library(shotGroups, verbose=FALSE)       # load shotGroups package
-groupShape(DFtalon, bandW=0.4, outlier="mcd")
+groupShape(DFtalon, bandW=0.4, outlier="mcd",
+           dstTarget=10, conversion="mm2m")
 
 ## ----cGroupSpread, out.width='3in'---------------------------------------
 library(shotGroups, verbose=FALSE)       # load shotGroups package
 groupSpread(DFtalon, CEPtype=c("CorrNormal", "GrubbsPatnaik", "Rayleigh"),
-            CEPlevel=0.5, CIlevel=0.95, bootCI="basic", dstTarget=10,
-            conversion="m2mm")
+            CEPlevel=0.5, CIlevel=0.95, bootCI="basic",
+            dstTarget=10, conversion="m2mm")
 
 ## ----cGroupLocation, out.width='3in'-------------------------------------
 library(shotGroups, verbose=FALSE)       # load shotGroups package
-groupLocation(DFtalon, dstTarget=10, conversion="m2cm",
+groupLocation(DFtalon, dstTarget=10, conversion="m2mm",
               level=0.95, plots=FALSE, bootCI="basic")
 
 ## ----cCmpGr, eval=FALSE--------------------------------------------------
@@ -42,7 +43,7 @@ library(shotGroups, verbose=FALSE)       # load shotGroups package
 
 ## only use first 3 groups of DFtalon
 DFsub <- subset(DFtalon, series %in% 1:3)
-compareGroups(DFsub, conversion="m2mm")
+compareGroups(DFsub, dstTarget=10, conversion="m2mm")
 
 ## ----cDescPrecMeas, out.width='3in'--------------------------------------
 library(shotGroups, verbose=FALSE)       # load shotGroups package
@@ -150,6 +151,17 @@ hp  <- getHoytParam(c(sdX^2, sdY^2))  # convert to Hoyt parameters
 pHoyt(1.5, qpar=hp$q, omega=hp$omega)
 pmvnEll(1.5, sigma=diag(c(sdX^2, sdY^2)), mu=c(0, 0), e=diag(2), x0=c(0, 0))
 
+## ----cRangeDistrib1------------------------------------------------------
+# cumulative probability of extreme spread (ES) 4 and 5 with true
+# sigma 1.5, and ES averaged over 3 groups with 5 shots each
+(q45 <- pRangeStat(c(4, 5), sigma=1.5, n=5, nGroups=3, stat="ES"))
+
+# quantiles for the returned probabilities, should be exactly 4 and 5
+qRangeStat(q45, sigma=1.5, n=5, nGroups=3, stat="ES")
+
+# random deviates
+rRangeStat(5, sigma=2, nPerGroup=5, nGroups=3, stat="D")
+
 ## ----cRange1-------------------------------------------------------------
 # get range statistics from DFscar17 data
 es  <- getMaxPairDist(DFscar17)$d      # extreme spread
@@ -158,7 +170,8 @@ d   <- getBoundingBox(DFscar17)$diag   # bounding box diagonal
 
 # estimate Rayleigh sigma from each statistic
 range2sigma(c(es, fom, d), stat=c("ES", "FoM", "D"),
-            n=nrow(DFscar17), nGroups=1, CIlevel=0.9)
+            n=nrow(DFscar17), nGroups=1, CIlevel=0.9,
+            dstTarget=100, conversion="yd2in")
 
 ## ----cRange2-------------------------------------------------------------
 getRayParam(DFscar17, level=0.9)$sigma
@@ -212,7 +225,7 @@ library(shotGroups, verbose=FALSE)       # load shotGroups package
 simRingCount(DFscar17, target="ISSF_100m", caliber=7.62, unit="in")
 
 ## ----cMOAcenter1---------------------------------------------------------
-## convert object sizes in cm to MOA, distance in m
+## convert object sizes in cm to MOA, distance given in m
 getMOA(c(1, 2, 10), dst=100, conversion="m2cm", type="MOA")
 
 ## ----cMOAcenter2---------------------------------------------------------

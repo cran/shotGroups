@@ -1,19 +1,36 @@
 getConfEll <-
-function(xy, level=0.5, dstTarget=100, conversion="m2cm",
+function(xy, level=0.5, dstTarget, conversion,
          center=FALSE, doRob=TRUE) {
     UseMethod("getConfEll")
 }
 
 getConfEll.data.frame <-
-function(xy, level=0.5, dstTarget=100, conversion="m2cm",
+function(xy, level=0.5, dstTarget, conversion,
          center=FALSE, doRob=TRUE) {
+    ## distance to target from override or from data
+    if(missing(dstTarget)) {
+        dstTarget <- if(hasName(xy, "distance")) {
+            xy[["distance"]]
+        } else {
+            NA_real_
+        }
+    }
+    
+    ## determine conversion factor from data if override is not given
+    if(missing(conversion)) {
+        conversion <- determineConversion(xy)
+    }
+
     xy     <- getXYmat(xy, xyTopLeft=FALSE, center=center, relPOA=FALSE)
     center <- FALSE                   # centering was done in getXYmat()
-    NextMethod("getConfEll")
+
+    getConfEll(xy, level=level, dstTarget=dstTarget, conversion=conversion,
+               center=center, doRob=doRob)
+    # NextMethod("getConfEll")
 }
 
 getConfEll.default <-
-function(xy, level=0.5, dstTarget=100, conversion="m2cm",
+function(xy, level=0.5, dstTarget, conversion,
          center=FALSE, doRob=TRUE) {
     if(!is.matrix(xy))     { stop("xy must be a matrix") }
     if(!is.numeric(xy))    { stop("xy must be numeric") }
@@ -30,6 +47,22 @@ function(xy, level=0.5, dstTarget=100, conversion="m2cm",
         warning(c("level must be in (0,1) and was set to ", level))
     }
 
+    dstTarget <- if(missing(dstTarget)    ||
+                    all(is.na(dstTarget)) ||
+                    (length(unique(dstTarget)) > 1L)) {
+        NA_real_
+    } else {
+        mean(dstTarget)
+    }
+    
+    conversion <- if(missing(conversion)    ||
+                     all(is.na(conversion)) ||
+                     (length(unique(conversion)) > 1L)) {
+        NA_character_
+    } else {
+        unique(conversion)
+    }
+    
     ## group center and covariance matrix
     ctr    <- colMeans(xy)               # group center
     covXY  <- cov(xy)                    # covariance matrix (x,y)-coords
@@ -42,6 +75,7 @@ function(xy, level=0.5, dstTarget=100, conversion="m2cm",
     dfn <- ncol(xy)                      # numerator df
     dfd <- N-1                           # denominator df
     mag <- sqrt(dfn*qf(level, dfn, dfd)) # magnification factor = t-value
+    
     ## radii confidence ellipse
     size <- makeMOA(mag*ellRad, dst=dstTarget, conversion=conversion)
     colnames(size) <- if(dfn == 2L) {

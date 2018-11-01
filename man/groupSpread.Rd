@@ -5,16 +5,16 @@
 \title{Precision: Spread measures of a single group of bullet holes}
 \description{Provides spread measures and their graphical representations for a single group of bullet holes.}
 \usage{groupSpread(xy, center = FALSE, plots = TRUE, CEPlevel = 0.5,
-            CIlevel = 0.95, CEPtype = 'CorrNormal', bootCI = c('basic', 'bca'),
-            dstTarget = 100, conversion = 'm2cm')
+            CIlevel = 0.95, CEPtype = 'CorrNormal', bootCI = 'none',
+            dstTarget, conversion)
 
 \method{groupSpread}{data.frame}(xy, center = FALSE, plots = TRUE, CEPlevel = 0.5,
-            CIlevel = 0.95, CEPtype = 'CorrNormal', bootCI = c('basic', 'bca'),
-            dstTarget = 100, conversion = 'm2cm')
+            CIlevel = 0.95, CEPtype = 'CorrNormal', bootCI = 'none',
+            dstTarget, conversion)
 
 \method{groupSpread}{default}(xy, center = FALSE, plots = TRUE, CEPlevel = 0.5,
-            CIlevel = 0.95, CEPtype = 'CorrNormal', bootCI = c('basic', 'bca'),
-            dstTarget = 100, conversion = 'm2cm')}
+            CIlevel = 0.95, CEPtype = 'CorrNormal', bootCI = 'none',
+            dstTarget, conversion)}
 \arguments{
   \item{xy}{either a numerical (n x 2)-matrix with the (x,y)-coordinates of n points (1 row of coordinates per point), or a data frame with either the variables \code{x}, \code{y} or \code{point.x}, \code{point.y} as well as \code{aim.x}, \code{aim.y} giving the point of aim. If missing, point of aim is assumed to be in (0,0).}
   \item{center}{logical: center groups to mean (0,0) first? If variable \code{series} does not exist, all shots are treated as belonging to the same group. Only available in method \code{groupSpread.data.frame()}.}
@@ -23,8 +23,8 @@
   \item{CIlevel}{a numerical value giving the level for the confidence intervals (for standard deviations as well as for Rayleigh sigma, RSD, MR).}
   \item{CEPtype}{string indicating which CEP estimate to report from \code{\link[shotGroups]{getCEP}}.}
   \item{bootCI}{a character vector to select which bootstrap confidence interval type to report. Possible types are \code{'none'} (no bootstrap CI), \code{'norm'}, \code{'basic'}, \code{'perc'}, \code{'bca'}. See \code{\link[boot]{boot.ci}}.}
-  \item{dstTarget}{a numerical value giving the distance to the target - used in MOA calculation. See \code{\link[shotGroups]{getMOA}}.}
-  \item{conversion}{how to convert the measurement unit for distance to target to that of the (x,y)-coordinates - used in MOA calculation. See \code{\link[shotGroups]{getMOA}}.}
+  \item{dstTarget}{a numerical value giving the distance to the target - used in MOA calculation. Acts as override if variable \code{distance} is already included in \code{xy}. See \code{\link[shotGroups]{getMOA}}.}
+  \item{conversion}{how to convert the measurement unit for distance to target to that of the (x,y)-coordinates in MOA calculation. Acts as override if variables \code{dist.unit} and \code{point.unit} are already included in \code{xy}. Example \code{'m2cm'}. See \code{\link[shotGroups]{getMOA}}.}
 }
 \details{
 Explanations and formula for many reported precision measures like CEP, sigma, RSD, MR, FoM can be found in the references.\cr

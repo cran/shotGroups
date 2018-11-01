@@ -2,21 +2,38 @@
 ## return: CEP is list with one component per CEPlevel
 
 getCEP <-
-function(xy, CEPlevel=0.5, dstTarget=100, conversion="m2cm",
+function(xy, CEPlevel=0.5, dstTarget, conversion,
          center=FALSE, accuracy=FALSE, type="CorrNormal", doRob=FALSE) {
     UseMethod("getCEP")
 }
 
 getCEP.data.frame <-
-function(xy, CEPlevel=0.5, dstTarget=100, conversion="m2cm",
+function(xy, CEPlevel=0.5, dstTarget, conversion,
          center=FALSE, accuracy=FALSE, type="CorrNormal", doRob=FALSE) {
+    ## distance to target from override or from data
+    if(missing(dstTarget)) {
+        dstTarget <- if(hasName(xy, "distance")) {
+            xy[["distance"]]
+        } else {
+            NA_real_
+        }
+    }
+    
+    ## determine conversion factor from data if override is not given
+    if(missing(conversion)) {
+        conversion <- determineConversion(xy)
+    }
+
     xy     <- getXYmat(xy, xyTopLeft=FALSE, center=center, relPOA=FALSE)
     center <- FALSE                   # centering was done in getXYmat()
-    NextMethod("getCEP")
+
+    getCEP(xy, CEPlevel=CEPlevel, dstTarget=dstTarget, conversion=conversion,
+           center=center, accuracy=accuracy, type=type, doRob=doRob)
+    # NextMethod("getCEP")
 }
 
 getCEP.default <-
-function(xy, CEPlevel=0.5, dstTarget=100, conversion="m2cm",
+function(xy, CEPlevel=0.5, dstTarget, conversion,
          center=FALSE, accuracy=FALSE, type="CorrNormal", doRob=FALSE) {
     xy <- as.matrix(xy)
     if(!is.numeric(xy))        { stop("xy must be numeric") }
@@ -35,6 +52,22 @@ function(xy, CEPlevel=0.5, dstTarget=100, conversion="m2cm",
                                 "Ignani", "RMSE", "Ethridge", "RAND", "Valstar"),
                       several.ok=TRUE)
 
+    dstTarget <- if(missing(dstTarget)    ||
+                    all(is.na(dstTarget)) ||
+                    (length(unique(dstTarget)) > 1L)) {
+        NA_real_
+    } else {
+        mean(dstTarget)
+    }
+    
+    conversion <- if(missing(conversion)    ||
+                     all(is.na(conversion)) ||
+                     (length(unique(conversion)) > 1L)) {
+        NA_character_
+    } else {
+        unique(conversion)
+    }
+    
     ## check if CEPlevel is given in percent
     CEPlevelBefore <- CEPlevel
     CEPlevel <- vapply(CEPlevel, function(x) {
@@ -148,11 +181,13 @@ function(xy, CEPlevel=0.5, dstTarget=100, conversion="m2cm",
                         Valstar=Valstar)[type]
 
     CEPL <- setNames(split(data.matrix(CEPDF), CEPlevel), paste0("CEP", CEPlevel))
-    CEP  <- lapply(CEPL, function(x) {
-        M <- as.matrix(makeMOA(x, dst=dstTarget, conversion=conversion))
+    getCEPMOA <- function(y) {
+        M <- as.matrix(makeMOA(y, dst=dstTarget, conversion=conversion))
         colnames(M) <- type
         M
-    })
+    }
+
+    CEP <- lapply(CEPL, getCEPMOA)
 
     return(c(CEP=list(CEP),
              ellShape=list(c(aspectRatio=aspRat, flattening=flat)),

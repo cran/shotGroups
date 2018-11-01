@@ -2,7 +2,7 @@
 \alias{getMOA}
 \title{Conversion of absolute size to angular diameter}
 \description{Converts object size to angular diameter (degree, radian, minute of angle MOA = arcminute, Shooter's MOA SMOA, milliradian mrad, NATO mil).}
-\usage{getMOA(x, dst, conversion = 'm2cm',
+\usage{getMOA(x, dst, conversion,
        type = c('deg', 'rad', 'MOA', 'SMOA', 'mrad', 'mil'))}
 \arguments{
   \item{x}{a numerical vector of object sizes.}

@@ -225,9 +225,11 @@ HTML("<ul>
                       to group shape, precision, and accuracy. This includes graphical methods,
                       descriptive statistics, and inference tests using standard, but also
                       non-parametric and robust statistical methods. The data can be imported
-                      from files produced by", a("OnTarget PC and OnTarget TDS",
-                                                 href="http://ontargetshooting.com/tds/"), ", ",
-                      a("TARAN", href="http://taran.ptosis.ch/"),
+                      from files produced by",
+                      a("OnTarget PC and OnTarget TDS", href="http://ontargetshooting.com/tds/"), ", ",
+                      a("TARAN", href="http://taran.ptosis.ch/"), ", ",
+                      a("ShotMarker e-target", href="https://www.autotrickler.com/shotmarker.html"), ", ",
+                      a("Silver Mountain e-target", href="https://www.silvermountaintargets.com/"), ", ",
                       "or from custom data files in text format with a similar structure.
                       For further explanations and an example walkthrough, see the",
                       a("package vignette",
@@ -245,15 +247,15 @@ HTML("<ul>
 
                     h6("More shotGroups web applications"),
                     p("Comprehensive shot group analysis:",
-                      a("http://dwoll.shinyapps.io/shotGroupsApp/",
-                        href="http://dwoll.shinyapps.io/shotGroupsApp/"), br(),
+                      a("http://shiny.imbei.uni-mainz.de:3838/shotGroups_AnalyzeGroups",
+                        href="http://shiny.imbei.uni-mainz.de:3838/shotGroups_AnalyzeGroups/"), br(),
                       "Region", icon("resize-horizontal", lib="glyphicon"),
                       "hit probability calculations:",
-                      a("http://dwoll.shinyapps.io/shotGroupsHitProb/",
-                        href="http://dwoll.shinyapps.io/shotGroupsHitProb/"), br(),
+                      a("http://shiny.imbei.uni-mainz.de:3838/shotGroups_HitProb/",
+                        href="http://shiny.imbei.uni-mainz.de:3838/shotGroups_HitProb/"), br(),
                       "Estimate Rayleigh \\(\\sigma\\) from range statistics:",
-                      a("http://dwoll.shinyapps.io/shotGroupsRangeStat/",
-                        href="http://dwoll.shinyapps.io/shotGroupsRangeStat/")),
+                      a("http://shiny.imbei.uni-mainz.de:3838/shotGroups_RangeStat/",
+                        href="http://shiny.imbei.uni-mainz.de:3838/shotGroups_RangeStat/")),
 
                     h6("Calculations"),
                     p("For details of the calculations used in this app, see the documentation for",

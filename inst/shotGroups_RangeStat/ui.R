@@ -14,12 +14,17 @@ shinyUI(fluidPage(
            conditionalPanel(condition="/Range statistics/.test(input.task)",
                 radioButtons("rangeStatType1", label=h5("Range statistic"),
                              rangeStat, selected="1"),
-                textInput("rangeStatStats", h5("Measured values"),
+                textInput("rangeStatStats", h5("Measured values (average if > 1 group)"),
                           value=c("1 2 3")),
                 numericInput("rangeStatN", h5("Shots per group"),
                              min=2, max=100, step=1, value=5),
                 numericInput("rangeStatNGroups", h5("Number of groups"),
                              min=1, max=10, step=1, value=1),
+                radioButtons("rangeStatSigmaCEP", label=h5("Estimate \\(\\sigma\\) or CEP?"),
+                             c("Rayleigh \\(\\sigma\\)"="1", "Rayleigh CEP"="2"), selected="1"),
+                conditionalPanel(condition="(input.rangeStatSigmaCEP == '2')",
+                                 sliderInput("rangeStatCEPLevel", label=h5("CEP level"),
+                                 min=0, max=1, value=0.5, step=0.05)),
                 sliderInput("rangeStatCILevel", label=h5("CI level"),
                             min=0, max=1, value=0.9, step=0.05),
                 numericInput("dstTrgt1", h5("Distance to target"),
@@ -82,7 +87,7 @@ shinyUI(fluidPage(
                       "Distance to target, and information on the measurement
                       unit for distance and range statistic is only used for
                       the conversion to",
-                      a("angular size", href="http://dwoll.shinyapps.io/shotGroupsAngular"),
+                      a("angular size", href="http://shiny.imbei.uni-mainz.de:3838/shotGroups_AngularSize/"),
                       "."),
                     verbatimTextOutput("range2sigma"),
                     p("Based on a Monte Carlo simulation with 2 million repetions of
@@ -161,9 +166,11 @@ shinyUI(fluidPage(
                       to group shape, precision, and accuracy. This includes graphical methods,
                       descriptive statistics, and inference tests using standard, but also
                       non-parametric and robust statistical methods. The data can be imported
-                      from files produced by", a("OnTarget PC and OnTarget TDS",
-                                                 href="http://ontargetshooting.com/tds/"), ", ",
-                      a("TARAN", href="http://taran.ptosis.ch/"),
+                      from files produced by",
+                      a("OnTarget PC and OnTarget TDS", href="http://ontargetshooting.com/tds/"), ", ",
+                      a("TARAN", href="http://taran.ptosis.ch/"), ", ",
+                      a("ShotMarker e-target", href="https://www.autotrickler.com/shotmarker.html"), ", ",
+                      a("Silver Mountain e-target", href="https://www.silvermountaintargets.com/"), ", ",
                       "or from custom data files in text format with a similar structure.
                       For further explanations and an example walkthrough, see the",
                       a("package vignette",
@@ -181,16 +188,16 @@ shinyUI(fluidPage(
 
                     h6("More shotGroups web applications"),
                     p("Comprehensive shot group analysis:",
-                      a("http://dwoll.shinyapps.io/shotGroupsApp/",
-                        href="http://dwoll.shinyapps.io/shotGroupsApp/"), br(),
+                      a("http://shiny.imbei.uni-mainz.de:3838/shotGroups_AnalyzeGroups/",
+                        href="http://shiny.imbei.uni-mainz.de:3838/shotGroups_AnalyzeGroups/"), br(),
                       "Absolute", icon("resize-horizontal", lib="glyphicon"),
                       "angular size conversion:",
-                      a("http://dwoll.shinyapps.io/shotGroupsAngular/",
-                        href="http://dwoll.shinyapps.io/shotGroupsAngular/"), br(),
+                      a("http://shiny.imbei.uni-mainz.de:3838/shotGroups_AngularSize/",
+                        href="http://shiny.imbei.uni-mainz.de:3838/shotGroups_AngularSize/"), br(),
                       "Region", icon("resize-horizontal", lib="glyphicon"),
                       "hit probability calculations:",
-                      a("http://dwoll.shinyapps.io/shotGroupsHitProb/",
-                        href="http://dwoll.shinyapps.io/shotGroupsHitProb/")),
+                      a("http://shiny.imbei.uni-mainz.de:3838/shotGroups_HitProb/",
+                        href="http://shiny.imbei.uni-mainz.de:3838/shotGroups_HitProb/")),
 
                     h6("Acknowledgements"),
                     p("Thanks to David Bookstaber for testing, feedback and data.")

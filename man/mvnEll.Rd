@@ -16,12 +16,12 @@ rmvnEll(n,   sigma = diag(2), mu, e, x0,
         method = c('eigen', 'chol', 'cdf'), loUp=NULL)
 }
 \arguments{
-  \item{r}{vector of radii for the offset ellipse.}
+  \item{r}{vector of radii for the offset ellipse defined by \code{e}.}
   \item{p}{vector of probabilities.}
   \item{n}{number of observations. If \code{length(n) > 1}, the length is taken to be the number required.}
   \item{sigma}{true positive definite covariance matrix of multivariate normal distribution.}
   \item{mu}{true center of multivariate normal distribution.}
-  \item{e}{positive definite matrix characterizing the offset ellipse defined by (x-x0)' e (x-x0) < r^2. If the matrix has semi-axis lengths equal to the square root of the eigenvalues of a matrix S, and is oriented along the eigenvectors of S, then e = S^-1. By default a circle.}
+  \item{e}{positive definite matrix characterizing the offset ellipse defined by (x-x0)' e (x-x0) < r^2. If the ellipse defined by \code{e} has semi-axis lengths equal to the square root of the eigenvalues of a matrix S, and is oriented along the eigenvectors of S, then e = S^-1. By default a circle.}
   \item{x0}{center of the offset ellipse.}
   \item{method}{string indicating which method to use for generating random deviates. See details.}
   \item{loUp}{search interval for numerical root finding. Either a vector with the lower and upper interval boundary, a list of such vectors, or an (n x 2)-matrix. See details.}

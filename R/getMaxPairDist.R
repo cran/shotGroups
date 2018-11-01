@@ -18,6 +18,12 @@ function(xy) {
         warning("Maximum pairwise distance needs >= 2 points")
         return(list(d=0, idx=nrow(xy)))
     }
+    
+    xy <- na.omit(xy)
+    if(nrow(xy) < 2L) {
+        warning("Maximum pairwise distance needs >= 2 non missing points")
+        return(list(d=NA_real_, idx=NA_integer_))
+    }
 
     if(ncol(xy) == 1L) {        # 1D
         mPts <- c(which.min(xy), which.max(xy))  # rows with max distance

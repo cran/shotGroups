@@ -20,7 +20,10 @@ Example of a combined data frame from several files exported by OnTarget PC/TDS,
     \item{\code{point.y}}{a numerical vector of absolute y-coordinates of bullet holes.}
     \item{\code{origin}}{a factor with levels \code{1} \code{2} \code{3}. This factor codes from which original output file the data is.}
     \item{\code{orgser}}{a factor with levels \code{1.1} \code{2.1} \code{3.1} \code{1.2} \code{2.2} \code{3.2} \code{1.3} \code{2.3} \code{3.3}. This factor results from \code{\link{droplevels}(\link{interaction}(origin, group))}, and codes each separate group across original files. The order of the factor levels is alphabetical.}
-    \item{\code{series}}{a factor with levels \code{1} \code{2} \code{3} \code{4} \code{5} \code{6} \code{7} \code{8} \code{9}. This factor codes each separate group as defined by \code{orgSer}, but more conveniently as a number that runs consecutively across original files.}
+    \item{\code{series}}{a factor with levels \code{1} \code{2} \code{3} \code{4} \code{5} \code{6} \code{7} \code{8} \code{9}. This factor codes each separate group as defined by \code{orgser}, but more conveniently as a number that runs consecutively across original files.}
+    \item{\code{distance.unit}}{Measurement unit distance to target}
+    \item{\code{point.unit}}{Measurement unit (x,y)-coordinates}
+    \item{\code{target}}{Character string \code{"BDS9"} indicating the target face. See \code{\link[shotGroups]{targets}}.}
  }
 }
 \details{

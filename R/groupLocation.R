@@ -1,19 +1,35 @@
 groupLocation <-
-function(xy, level=0.95, plots=TRUE, bootCI=c("basic", "bca"),
-         dstTarget=100, conversion="m2cm") {
+function(xy, level=0.95, plots=TRUE, bootCI="none",
+         dstTarget, conversion) {
     UseMethod("groupLocation")
 }
 
 groupLocation.data.frame <-
-function(xy, level=0.95, plots=TRUE, bootCI=c("basic", "bca"),
-         dstTarget=100, conversion="m2cm") {
+function(xy, level=0.95, plots=TRUE, bootCI="none",
+         dstTarget, conversion) {
+    ## distance to target from override or from data
+    if(missing(dstTarget)) {
+        dstTarget <- if(hasName(xy, "distance")) {
+            xy[["distance"]]
+        } else {
+            NA_real_
+        }
+    }
+    
+    ## determine conversion factor from data if override is not given
+    if(missing(conversion)) {
+        conversion <- determineConversion(xy)
+    }
+
     xy <- getXYmat(xy)
-    NextMethod("groupLocation")
+    
+    groupLocation(xy, level=level, plots=plots, bootCI=bootCI,
+                  dstTarget=dstTarget, conversion=conversion)
 }
 
 groupLocation.default <-
-function(xy, level=0.95, plots=TRUE, bootCI=c("basic", "bca"),
-         dstTarget=100, conversion="m2cm") {
+function(xy, level=0.95, plots=TRUE, bootCI="none",
+         dstTarget, conversion) {
     if(!is.matrix(xy))     { stop("xy must be a matrix") }
     if(!is.numeric(xy))    { stop("xy must be numeric") }
     if(ncol(xy) != 2L)     { stop("xy must have two columns") }
@@ -28,6 +44,22 @@ function(xy, level=0.95, plots=TRUE, bootCI=c("basic", "bca"),
         warning(c("level must be in (0,1) and was set to ", level))
     }
 
+    dstTarget <- if(missing(dstTarget)    ||
+                    all(is.na(dstTarget)) ||
+                    (length(unique(dstTarget)) > 1L)) {
+        NA_real_
+    } else {
+        mean(dstTarget)
+    }
+    
+    conversion <- if(missing(conversion)    ||
+                     all(is.na(conversion)) ||
+                     (length(unique(conversion)) > 1L)) {
+        NA_character_
+    } else {
+        unique(conversion)
+    }
+    
     #####-----------------------------------------------------------------------
     ## prepare data
     X    <- xy[ , 1]                     # x-coords
@@ -120,15 +152,18 @@ function(xy, level=0.95, plots=TRUE, bootCI=c("basic", "bca"),
 
     if(plots) {
         ## infer (x,y)-coord units from conversion
-        unitXY  <- getUnits(conversion, first=FALSE)
-        unitDst <- getUnits(conversion, first=TRUE)
+        unitXY  <- na.omit(getUnits(conversion, first=FALSE))
+        unitDst <- na.omit(getUnits(conversion, first=TRUE))
         devNew  <- getDevice()           # platform-dependent window open
 
+        ## distance to target may be heterogeneous
+        dstTargetPlot <- paste(unique(round(na.omit(dstTarget))), collapse=", ")
+        
         #####-------------------------------------------------------------------
         ## diagram: 2D-scatter plot for the (x,y)-distribution
         devNew()                         # open new diagram
         plot(Y ~ X, asp=1, main="Group (x,y)-coordinates", pch=16,
-             sub=paste("distance:", dstTarget, unitDst),
+             sub=paste("distance:", dstTargetPlot, unitDst),
              xlab=paste0("X [", unitXY, "]"), ylab=paste0("Y [", unitXY, "]"))
         abline(v=0, h=0, col="gray")     # add point of aim
 

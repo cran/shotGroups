@@ -25,6 +25,7 @@ Lookup table for the distribution of range statistics and Rayleigh sigma from a 
   \item{ES_Q050}{Extreme spread 5\% quantile over all Monte Carlo simulations}
   \item{ES_Q100}{Extreme spread 10\% quantile over all Monte Carlo simulations}
   \item{ES_Q250}{Extreme spread 25\% quantile over all Monte Carlo simulations}
+  \item{ES_Q500}{Extreme spread 50\% quantile (median) over all Monte Carlo simulations}
   \item{ES_Q750}{Extreme spread 75\% quantile over all Monte Carlo simulations}
   \item{ES_Q900}{Extreme spread 90\% quantile over all Monte Carlo simulations}
   \item{ES_Q950}{Extreme spread 95\% quantile over all Monte Carlo simulations}
@@ -42,6 +43,7 @@ Lookup table for the distribution of range statistics and Rayleigh sigma from a 
   \item{FoM_Q050}{Figure of merit 0.25\% quantile over all Monte Carlo simulations}
   \item{FoM_Q100}{Figure of merit 10\% quantile over all Monte Carlo simulations}
   \item{FoM_Q250}{Figure of merit 25\% quantile over all Monte Carlo simulations}
+  \item{FoM_Q500}{Figure of merit 50\% quantile (median) over all Monte Carlo simulations}
   \item{FoM_Q750}{Figure of merit 75\% quantile over all Monte Carlo simulations}
   \item{FoM_Q900}{Figure of merit 90\% quantile over all Monte Carlo simulations}
   \item{FoM_Q950}{Figure of merit 95\% quantile over all Monte Carlo simulations}
@@ -59,6 +61,7 @@ Lookup table for the distribution of range statistics and Rayleigh sigma from a 
   \item{D_Q050}{Bounding box diagonal 5\% quantile over all Monte Carlo simulations}
   \item{D_Q100}{Bounding box diagonal 10\% quantile over all Monte Carlo simulations}
   \item{D_Q250}{Bounding box diagonal 25\% quantile over all Monte Carlo simulations}
+  \item{D_Q500}{Bounding box diagonal 50\% quantile (median) over all Monte Carlo simulations}
   \item{D_Q750}{Bounding box diagonal 75\% quantile over all Monte Carlo simulations}
   \item{D_Q900}{Bounding box diagonal 90\% quantile over all Monte Carlo simulations}
   \item{D_Q950}{Bounding box diagonal 95\% quantile over all Monte Carlo simulations}
@@ -76,6 +79,7 @@ Lookup table for the distribution of range statistics and Rayleigh sigma from a 
   \item{RS_Q050}{Rayleigh sigma 5\% quantile over all Monte Carlo simulations}
   \item{RS_Q100}{Rayleigh sigma 10\% quantile over all Monte Carlo simulations}
   \item{RS_Q250}{Rayleigh sigma 25\% quantile over all Monte Carlo simulations}
+  \item{RS_Q500}{Rayleigh sigma 50\% quantile (median) over all Monte Carlo simulations}
   \item{RS_Q750}{Rayleigh sigma 75\% quantile over all Monte Carlo simulations}
   \item{RS_Q900}{Rayleigh sigma 90\% quantile over all Monte Carlo simulations}
   \item{RS_Q950}{Rayleigh sigma 95\% quantile over all Monte Carlo simulations}

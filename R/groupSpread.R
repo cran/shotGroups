@@ -1,27 +1,38 @@
 groupSpread <-
 function(xy, center=FALSE, plots=TRUE, CEPlevel=0.5, CIlevel=0.95,
-         CEPtype="CorrNormal",
-         bootCI=c("basic", "bca"),
-         dstTarget=100, conversion="m2cm") {
+         CEPtype="CorrNormal", bootCI="none", dstTarget, conversion) {
     UseMethod("groupSpread")
 }
 
 groupSpread.data.frame <-
 function(xy, center=FALSE, plots=TRUE, CEPlevel=0.5, CIlevel=0.95,
-         CEPtype="CorrNormal",
-         bootCI=c("basic", "bca"),
-         dstTarget=100, conversion="m2cm") {
+         CEPtype="CorrNormal", bootCI="none", dstTarget, conversion) {
+    ## distance to target from override or from data
+    if(missing(dstTarget)) {
+        dstTarget <- if(hasName(xy, "distance")) {
+            xy[["distance"]]
+        } else {
+            NA_real_
+        }
+    }
+    
+    ## determine conversion factor from data if override is not given
+    if(missing(conversion)) {
+        conversion <- determineConversion(xy)
+    }
+    
     xy     <- getXYmat(xy, center=center)
     center <- FALSE                   # centering was done in getXYmat()
 
-    NextMethod("groupSpread")
+    groupSpread(xy, center=center, plots=plots, CEPlevel=CEPlevel,
+                CIlevel=CIlevel, CEPtype=CEPtype, bootCI=bootCI,
+                dstTarget=dstTarget, conversion=conversion)
+    # NextMethod("groupSpread")
 }
 
 groupSpread.default <-
 function(xy, center=FALSE, plots=TRUE, CEPlevel=0.5, CIlevel=0.95,
-         CEPtype="CorrNormal",
-         bootCI=c("basic", "bca"),
-         dstTarget=100, conversion="m2cm") {
+         CEPtype="CorrNormal", bootCI="none", dstTarget, conversion) {
     if(!is.matrix(xy))        { stop("xy must be a matrix") }
     if(!is.numeric(xy))       { stop("xy must be numeric") }
     if(ncol(xy) != 2L)        { stop("xy must have two columns") }
@@ -46,6 +57,22 @@ function(xy, center=FALSE, plots=TRUE, CEPlevel=0.5, CIlevel=0.95,
         warning(c("CIlevel must be in (0,1) and was set to ", CIlevel))
     }
 
+    dstTarget <- if(missing(dstTarget)    ||
+                    all(is.na(dstTarget)) ||
+                    (length(unique(dstTarget)) > 1L)) {
+        NA_real_
+    } else {
+        mean(dstTarget)
+    }
+    
+    conversion <- if(missing(conversion)    ||
+                     all(is.na(conversion)) ||
+                     (length(unique(conversion)) > 1L)) {
+        NA_character_
+    } else {
+        unique(conversion)
+    }
+    
     #####-----------------------------------------------------------------------
     ## prepare data
     X    <- xy[ , 1]                     # x-coords
@@ -233,7 +260,8 @@ function(xy, center=FALSE, plots=TRUE, CEPlevel=0.5, CIlevel=0.95,
 
     #####-----------------------------------------------------------------------
     ## confidence ellipse measures
-    confEll     <- getConfEll(xy, CEPlevel, dstTarget, conversion, doRob=haveRob)
+    confEll     <- getConfEll(xy, CEPlevel, dstTarget=dstTarget,
+                              conversion=conversion, doRob=haveRob)
     res$confEll <- confEll$size
 
     ## for axis limits
@@ -271,9 +299,12 @@ function(xy, center=FALSE, plots=TRUE, CEPlevel=0.5, CIlevel=0.95,
     ## plotting
     if(plots) {
         ## infer (x,y)-coord units from conversion
-        unitXY  <- getUnits(conversion, first=FALSE)
-        unitDst <- getUnits(conversion, first=TRUE)
+        unitXY  <- na.omit(getUnits(conversion, first=FALSE))
+        unitDst <- na.omit(getUnits(conversion, first=TRUE))
         devNew  <- getDevice()           # platform-dependent window open
+
+        ## distance to target may be heterogeneous
+        dstTargetPlot <- paste(unique(round(na.omit(dstTarget))), collapse=", ")
 
         #####-------------------------------------------------------------------
         ## diagram: histogram for distances to group center
@@ -287,7 +318,7 @@ function(xy, center=FALSE, plots=TRUE, CEPlevel=0.5, CIlevel=0.95,
         h <- hist(dstCtr, breaks="FD", plot=FALSE)
         plot(h, freq=FALSE,
              main="Histogram distances to center w/ kernel density estimate",
-             sub=paste("distance:", dstTarget, unitDst),
+             sub=paste("distance:", dstTargetPlot, unitDst),
              xlab=paste0("distance [", unitXY, "]"),
              ylim=c(0, max(c(h$density, yRayleigh, yKDE$y))))
 
@@ -309,7 +340,7 @@ function(xy, center=FALSE, plots=TRUE, CEPlevel=0.5, CIlevel=0.95,
         devNew()                           # open new diagram
         plot(Y ~ X, asp=1, xlim=xLims, ylim=yLims, pch=20,
              main="Group (x,y)-coordinates",
-             sub=paste("distance:", dstTarget, unitDst),
+             sub=paste("distance:", dstTargetPlot, unitDst),
              xlab=paste0("X [", unitXY, "]"), ylab=paste0("Y [", unitXY, "]"))
         abline(v=0, h=0, col="lightgray")  # add point of aim
 
@@ -342,7 +373,7 @@ function(xy, center=FALSE, plots=TRUE, CEPlevel=0.5, CIlevel=0.95,
         devNew()                         # open new diagram
         plot(Y ~ X, asp=1, xlim=xLims, ylim=yLims, pch=20,
              main="Group (x,y)-coordinates",
-             sub=paste("distance:", dstTarget, unitDst),
+             sub=paste("distance:", dstTargetPlot, unitDst),
              xlab=paste0("X [", unitXY, "]"), ylab=paste0("Y [", unitXY, "]"))
         abline(v=0, h=0, col="lightgray")                            # add point of aim
         points(ctr[1], ctr[2], col="gray40", pch=4, lwd=4, cex=2.5)  # add group center
@@ -372,7 +403,7 @@ function(xy, center=FALSE, plots=TRUE, CEPlevel=0.5, CIlevel=0.95,
 
 groupSpreadPlot <-
 function(xy, which=1L, center=FALSE, CEPlevel=0.5, CIlevel=0.95,
-         dstTarget=100, conversion="m2cm") {
+         dstTarget, conversion) {
     if(!is.data.frame(xy))    { stop("xy must be a data.frame") }
     xy <- getXYmat(xy, center=center)
     if(!is.numeric(CEPlevel)) { stop("CEPlevel must be numeric") }
@@ -393,6 +424,22 @@ function(xy, which=1L, center=FALSE, CEPlevel=0.5, CIlevel=0.95,
         warning(c("CEPlevel must be in (0,1) and was set to ", CEPlevel))
     }
 
+    dstTarget <- if(missing(dstTarget)    ||
+                    all(is.na(dstTarget)) ||
+                    (length(unique(dstTarget)) > 1L)) {
+        NA_real_
+    } else {
+        mean(dstTarget)
+    }
+    
+    conversion <- if(missing(conversion)    ||
+                     all(is.na(conversion)) ||
+                     (length(unique(conversion)) > 1L)) {
+        NA_character_
+    } else {
+        unique(conversion)
+    }
+    
     #####-----------------------------------------------------------------------
     ## prepare data
     X    <- xy[ , 1]                     # x-coords
@@ -471,7 +518,8 @@ function(xy, which=1L, center=FALSE, CEPlevel=0.5, CIlevel=0.95,
 
     #####-----------------------------------------------------------------------
     ## confidence ellipse measures
-    confEll <- getConfEll(xy, CEPlevel, dstTarget, conversion, doRob=haveRob)
+    confEll <- getConfEll(xy, CEPlevel, dstTarget=dstTarget,
+                          conversion=conversion, doRob=haveRob)
 
     ## for axis limits
     axesCollX <- c(axesCollX, confEll$ctr[1] + confEll$size["unit", "semi-major"],
@@ -492,13 +540,16 @@ function(xy, which=1L, center=FALSE, CEPlevel=0.5, CIlevel=0.95,
     #####-----------------------------------------------------------------------
     ## plotting
     ## infer (x,y)-coord units from conversion
-    unitXY  <- getUnits(conversion, first=FALSE)
-    unitDst <- getUnits(conversion, first=TRUE)
+    unitXY  <- na.omit(getUnits(conversion, first=FALSE))
+    unitDst <- na.omit(getUnits(conversion, first=TRUE))
 
     ## determine axis limits
     xLims <- range(c(X, axesCollX))
     yLims <- range(c(Y, axesCollY))
 
+    ## distance to target may be heterogeneous
+    dstTargetPlot <- paste(unique(round(na.omit(dstTarget))), collapse=", ")
+    
     if(which == 1L) {
         #####-------------------------------------------------------------------
         ## diagram: histogram for distances to group center
@@ -510,7 +561,7 @@ function(xy, which=1L, center=FALSE, CEPlevel=0.5, CIlevel=0.95,
         h <- hist(dstCtr, breaks="FD", plot=FALSE)
         plot(h, freq=FALSE,
              main="Histogram distances to center w/ kernel density estimate",
-             sub=paste("distance:", dstTarget, unitDst),
+             sub=paste("distance:", dstTargetPlot, unitDst),
              xlab=paste0("distance [", unitXY, "]"),
              ylim=c(0, max(c(h$density, yRayleigh, yKDE$y))))
 
@@ -529,7 +580,7 @@ function(xy, which=1L, center=FALSE, CEPlevel=0.5, CIlevel=0.95,
         ## diagram: 2D-scatter plot for the (x,y)-distribution
         plot(Y ~ X, asp=1, xlim=xLims, ylim=yLims, pch=20,
              main="Group (x,y)-coordinates",
-             sub=paste("distance:", dstTarget, unitDst),
+             sub=paste("distance:", dstTargetPlot, unitDst),
              xlab=paste0("X [", unitXY, "]"), ylab=paste0("Y [", unitXY, "]"))
         abline(v=0, h=0, col="lightgray")  # add point of aim
 
@@ -563,7 +614,7 @@ function(xy, which=1L, center=FALSE, CEPlevel=0.5, CIlevel=0.95,
         ## diagram: 2D-scatter plot for the (x,y)-distribution
         plot(Y ~ X, asp=1, xlim=xLims, ylim=yLims, pch=20,
              main="Group (x,y)-coordinates",
-             sub=paste("distance:", dstTarget, unitDst),
+             sub=paste("distance:", dstTargetPlot, unitDst),
              xlab=paste0("X [", unitXY, "]"), ylab=paste0("Y [", unitXY, "]"))
         abline(v=0, h=0, col="lightgray")                            # add point of aim
         points(ctr[1], ctr[2], col="gray40", pch=4, lwd=4, cex=2.5)  # add group center

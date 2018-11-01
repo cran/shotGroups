@@ -5,13 +5,15 @@ function(app=c("analyze", "hitprob", "range", "angular"), ...) {
                      several.ok=FALSE)
 
     appDir <- if(app == "ANALYZE") {
-        system.file("shinyAnalyzeGroups", package="shotGroups")
+        system.file("shotGroups_AnalyzeGroups", package="shotGroups")
     } else if(app == "HITPROB") {
-        system.file("shinyHitProbability", package="shotGroups")
+        system.file("shotGroups_HitProb", package="shotGroups")
     } else if(app == "RANGE") {
-        system.file("shinyRangeStatistics", package="shotGroups")
+        system.file("shotGroups_RangeStat", package="shotGroups")
     } else if(app == "ANGULAR") {
-        system.file("shinyAngularSize", package="shotGroups")
+        system.file("shotGroups_AngularSize", package="shotGroups")
+    } else {
+    	""
     }
 
     if(!nzchar(appDir)) {

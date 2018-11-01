@@ -2,7 +2,7 @@ import(graphics)
 import(stats)
 import(grDevices)
 import(utils)
-importFrom(tools, file_path_sans_ext)
+importFrom(tools, file_path_sans_ext, file_ext)
 
 importFrom(boot, boot, boot.ci)
 importFrom(coin, ansari_test, fligner_test, kruskal_test, wilcox_test)
@@ -18,15 +18,18 @@ export(analyzeGroup,
        dRayleigh, pRayleigh, qRayleigh, rRayleigh,
        dRice, pRice, qRice, rRice,
        pmvnEll, qmvnEll, rmvnEll,
+       pRangeStat, qRangeStat, rRangeStat,
        getHoytParam, getRayParam, getRiceParam,
        getDistance, getMOA, fromMOA,
        getCEP, getHitProb,
+       getRangeStat,
        getBoundingBox, getConfEll, getDistToCtr,
        getMaxPairDist, getMinBBox, getMinCircle, getXYmat,
        groupLocation, groupShape, groupSpread,
-       readDataMisc, readDataOT1, readDataOT2,
+       readDataMisc, readDataOT1, readDataOT2, readDataSMT, readDataShotMarker,
        runGUI,
-       simRingCount, range2sigma, efficiency)
+       simRingCount,
+       range2sigma, range2CEP, efficiency)
 
 S3method(getBoundingBox, data.frame)
 S3method(getBoundingBox, default)
@@ -58,6 +61,8 @@ S3method(getMinBBox, data.frame)
 S3method(getMinBBox, default)
 S3method(getMinCircle, data.frame)
 S3method(getMinCircle, default)
+S3method(getRangeStat, data.frame)
+S3method(getRangeStat, default)
 S3method(getRayParam, data.frame)
 S3method(getRayParam, default)
 S3method(getRiceParam, data.frame)

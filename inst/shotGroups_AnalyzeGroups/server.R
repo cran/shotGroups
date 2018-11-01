@@ -12,7 +12,9 @@ library(shotGroups)
 
 source("helper.R")
 
-shinyServer(function(input, output) {
+shinyServer(function(input, output, session) {
+    session$onSessionEnded(stopApp)
+
     #####-----------------------------------------------------------------------
     ## provide the data - reactive conductor
     #####-----------------------------------------------------------------------
@@ -35,7 +37,11 @@ shinyServer(function(input, output) {
                         readDataOT1(fPath=dirname(fPath),  fNames=basename(fPath))
                     } else if(input$fileType == '2') {   ## OnTarget 2.*, 3.*
                         readDataOT2(fPath=dirname(fPath),  fNames=basename(fPath))
-                    } else if(input$fileType == '3') {   ## other
+                    } else if(input$fileType == '3') {   ## Silver Mountain e-target
+                        readDataSMT(fPath=dirname(fPath),  fNames=basename(fPath))
+                    } else if(input$fileType == '4') {   ## ShotMarker e-target
+                        readDataShotMarker(fPath=dirname(fPath),  fNames=basename(fPath))
+                    } else if(input$fileType == '5') {   ## other
                         readDataMisc(fPath=dirname(fPath), fNames=basename(fPath))
                     }
                 } else {
@@ -49,13 +55,40 @@ shinyServer(function(input, output) {
                     readDataOT1(dirname(fPath),  fNames=basename(fPath))
                 } else if(input$fileType == '2') {   ## OnTarget 2.*, 3.*
                     readDataOT2(dirname(fPath),  fNames=basename(fPath))
-                } else if(input$fileType == '3') {   ## other
+                } else if(input$fileType == '3') {   ## Silver Mountain e-target
+                    readDataSMT(dirname(fPath),  fNames=basename(fPath))
+                } else if(input$fileType == '4') {   ## ShotMarker e-target
+                    readDataShotMarker(dirname(fPath),  fNames=basename(fPath))
+                } else if(input$fileType == '5') {   ## other
                     readDataMisc(dirname(fPath), fNames=basename(fPath))
                 }
             } else {
                 NULL
             }
         })
+    })
+
+    getXYsub <- reactive({
+        xy <- coords()
+        if(!is.null(xy)) {
+            groupSel <- if(input$task == 'Shape') {
+                getGroups(xy)[input$shapeGroupSel]
+            } else if(input$task == 'Precision') {
+                getGroups(xy)[input$spreadGroupSel]
+            } else if(input$task == 'Accuracy') {
+                getGroups(xy)[input$locGroupSel]
+            } else if(input$task == 'Compare groups') {
+                getGroups(xy)[input$compGroupSel]
+            } else if(input$task == 'Target plot') {
+                getGroups(xy)[input$trgtGroupSel]
+            } else {
+                getGroups(xy)
+            }
+            
+            xySub <- xy[xy$series %in% groupSel, , drop=FALSE]
+        } else {
+            NULL
+        }
     })
 
     #####---------------------------------------------------------------------------
@@ -65,9 +98,21 @@ shinyServer(function(input, output) {
     output$fileInfo <- renderUI({
         xy <- coords()
         dstTrgt <- if(!is.null(xy$distance) && !all(is.na(xy$distance))) {
-            xy$distance[1]
+            paste(round(sort(unique(xy$distance))), collapse=", ")
         } else {
             "not available"
+        }
+        
+        unit_distance <- if(!is.null(xy$distance.unit)) {
+            paste(unique(xy$distance.unit), collapse=", ")
+        } else {
+            NULL
+        }
+
+        unit_xy <- if(!is.null(xy$point.unit)) {
+            paste(unique(xy$point.unit), collapse=", ")
+        } else {
+            NULL
         }
 
         nGroups <- if(!is.null(xy$series) && !all(is.na(xy$series))) {
@@ -77,7 +122,9 @@ shinyServer(function(input, output) {
         }
 
         comment <- attributes(xy)$comment
-        ammo <- if(!is.null(xy$ammunition) && !all(is.na(xy$ammunition)) && !all(xy$ammunition == "")) {
+        ammo    <- if(!is.null(xy$ammunition)    &&
+                      !all(is.na(xy$ammunition)) &&
+                      !all(xy$ammunition == "")) {
             paste(unique(xy$ammunition), collapse=", ")
         } else {
             NULL
@@ -102,6 +149,8 @@ shinyServer(function(input, output) {
 
             y <- paste0(x, "Number of shots: ", nrow(xy),
                    "<br />Distance to target ", dstTrgt,
+                   ifelse(!is.null(unit_distance), paste0(" [", unit_distance, "]"), ""),
+                   ifelse(!is.null(unit_xy), "<br />Measurement unit coordinates: ", ""), unit_xy,
                    "<br />Number of groups: ", nGroups,
                    ifelse(!is.null(comment), "<br />Additional information: ", ""), comment,
                    ifelse(!is.null(ammo),    "<br />Ammunition: ", ""), ammo, "</p>")
@@ -144,7 +193,9 @@ shinyServer(function(input, output) {
 
     fileName <- reactive({
         xy <- coords()
-        ammo <- if(!is.null(xy$ammunition) && !all(is.na(xy$ammunition)) && !all(xy$ammunition == "")) {
+        ammo <- if(!is.null(xy$ammunition)    &&
+                   !all(is.na(xy$ammunition)) &&
+                   !all(xy$ammunition == "")) {
             paste(unique(xy$ammunition), collapse=", ")
         } else {
             NULL
@@ -171,24 +222,112 @@ shinyServer(function(input, output) {
     ## distance to target, unit distance, unit xy-coords - UI element
     #####---------------------------------------------------------------------------
 
-    output$unitDstXY <- renderUI({
-        xy <- coords()
-        dstTarget <- if(!is.null(xy$distance) && !all(is.na(xy$distance)) &&
-                        !all(xy$distance == "")) {
-            ## distance to target is given in input data
-            xy$distance[1]
-        } else {
-            ## default distance to target
-            100
+    dst_current <- reactiveValues(d=-1)
+    setCurrentDst <- reactive({
+        xySub <- getXYsub()
+        if(!is.null(xySub) && hasName(xySub, "distance")) {
+            if(length(unique(xySub$distance)) == 1L) {
+                ## distance to target is given in input data and unique
+                dst_old <- dst_current$d
+                dst_new <- round(unique(xySub$distance))
+                if(is.na(dst_old) || (dst_old != dst_new)) {
+                    dst_current$d <- dst_new
+                }
+            } else {
+                # browser()
+                dst_current$d <- -1
+            }
         }
+    })
 
-        ## dst to target, unit dst, unit xy
-        inputPanel(numericInput("dstTrgt", h5("Distance to target"),
-                                min=0, step=1, value=dstTarget),
-                   selectInput("unitDst", h5("Measurement unit distance"),
-                               choices=unitsDst, selected=2),
-                   selectInput("unitXY", h5("Measurement unit coordinates"),
-                               choices=unitsXY, selected=3))
+    observeEvent(input$task,               { setCurrentDst() })
+    observeEvent(input$shapeGroupSel, {
+        if(input$task == 'Shape')          { setCurrentDst() } })
+
+    observeEvent(input$spreadGroupSel, {
+        if(input$task == 'Precision')      { setCurrentDst() } })
+
+    observeEvent(input$locGroupSel, {
+        if(input$task == 'Accuracy')       { setCurrentDst() } })
+
+    observeEvent(input$compGroupSel, {
+        if(input$task == 'Compare groups') { setCurrentDst() } })
+
+    observeEvent(input$trgtGroupSel, {
+        if(input$task == 'Target plot')    { setCurrentDst() } })
+
+    getUnitDstXY <- reactive({
+        dst_current$d
+        input$applyData
+        
+        ## isolate against changes in input$task
+        ## only needs to change when new data is applied
+        ## or when distance to target changes
+        isolate({
+            xySub <- getXYsub()
+            if(!is.null(xySub)) {
+                dstTarget <- if(hasName(xySub, "distance") &&
+                                (length(unique(xySub$distance)) == 1L)) {
+                    ## distance to target is given in input data and unique
+                    round(unique(xySub$distance))
+                } else {
+                    ## default distance to target
+                    NA_real_
+                }
+                
+                unitDst <- if(hasName(xySub, "distance.unit") &&
+                              (length(unique(xySub$distance.unit)) == 1L)) {
+                    unit <- unique(xySub$distance.unit)
+                    if(unit == "(unknown)") {
+                        NA_character_
+                    } else if(unit == "m") {
+                        2
+                    } else if(unit %in% c("y", "yd", "yard")) {
+                        3
+                    } else if(unit %in% c("f", "ft", "feet", "foot")) {
+                        4
+                    } else {
+                        NA_character_
+                    }
+                } else {
+                    NA_character_
+                }
+                
+                unitXY <- if(hasName(xySub, "point.unit") &&
+                             (length(unique(xySub$point.unit)) == 1L)) {
+                    unit <- unique(xySub$point.unit)
+                    if(unit == "(unknown)") {
+                        NA_character_
+                    } else if(unit == "cm") {
+                        2
+                    } else if(unit == "mm") {
+                        3
+                    } else if(unit %in% c("in", "inch")) {
+                        4
+                    }
+                } else {
+                    NA_character_
+                }
+                
+                list(dstTarget=dstTarget, unitDst=unitDst, unitXY=unitXY)
+            } else {
+                NULL
+            }
+        })
+    })
+
+    output$unitDstXY <- renderUI({
+        unitDstXY <- getUnitDstXY()
+        if(!is.null(unitDstXY)) {
+            dst_current$d <- unitDstXY$dstTarget
+            ## dst to target, unit dst, unit xy
+            inputPanel(numericInput("dstTrgt", h5("Distance to target"),
+                                    min=0, step=1, value=unitDstXY$dstTarget),
+                       selectInput("unitDst", h5("Measurement unit distance"),
+                                   choices=unitsDst, selected=unitDstXY$unitDst),
+                       selectInput("unitXY", h5("Measurement unit coordinates"),
+                                   choices=unitsXY, selected=unitDstXY$unitXY))
+        }
     })
 
     #####---------------------------------------------------------------------------
@@ -214,7 +353,7 @@ shinyServer(function(input, output) {
                 checkboxGroupInput("shapeGroupSel",
                                    label=h5("Select groups"),
                                    choices=choices,
-                                   selected=seq_along(choices))
+                                   selected=seq_len(min(length(choices), 2L)))
             #} else {
             #    selectizeInput("shapeGroupSel",
             #                   label=h5("Select groups"),
@@ -229,10 +368,8 @@ shinyServer(function(input, output) {
 
     ## output list - reactive conductor
     shapeList <- reactive({
-        xy <- coords()
-        if(!is.null(xy)) {
-            groupSel <- getGroups(xy)[input$shapeGroupSel]
-            xySub    <- xy[xy$series %in% groupSel , , drop=FALSE]
+        xySub <- getXYsub()
+        if(!is.null(xySub)) {
             groupShape(xySub,
                        center=input$shapeCenter,
                        plots=FALSE,
@@ -248,7 +385,9 @@ shinyServer(function(input, output) {
     ## output - only selected list components
     output$shape <- renderPrint({
         out <- shapeList()
-        out[shapeOutInv[input$shapeOut]]
+        ## some requested stats may be missing because package is not installed
+        req <- shapeOutInv[input$shapeOut]
+        out[req[hasName(out, req)]]
     })
 
     ## save output to file
@@ -279,10 +418,8 @@ shinyServer(function(input, output) {
         local({
             localI <- i
             output[[paste0("shapePlot", localI)]] <- renderPlot({
-                xy <- coords()
-                if(!is.null(xy)) {
-                    groupSel <- getGroups(xy)[input$shapeGroupSel]
-                    xySub    <- xy[xy$series %in% groupSel , , drop=FALSE]
+                xySub <- getXYsub()
+                if(!is.null(xySub)) {
                     shotGroups:::groupShapePlot(xySub,
                         which=localI,
                         center=input$shapeCenter,
@@ -301,10 +438,8 @@ shinyServer(function(input, output) {
     output$saveShapePDF <- downloadHandler(
         filename=function() { "groupShape.pdf" },
         content=function(file) {
-            xy <- coords()
-            if(!is.null(xy)) {
-                groupSel <- getGroups(xy)[input$shapeGroupSel]
-                xySub    <- xy[xy$series %in% groupSel , , drop=FALSE]
+            xySub <- getXYsub()
+            if(!is.null(xySub)) {
                 pdf(file)
                 for(i in seq_len(nShapePlots)) {
                     shotGroups:::groupShapePlot(xySub,
@@ -335,7 +470,7 @@ shinyServer(function(input, output) {
             checkboxGroupInput("spreadGroupSel",
                                label=h5("Select groups"),
                                choices=choices,
-                               selected=seq_along(choices))
+                               selected=seq_len(min(length(choices), 2L)))
         } else {
             NULL
         }
@@ -356,10 +491,8 @@ shinyServer(function(input, output) {
             "none"
         }
 
-        xy <- coords()
-        if(!is.null(xy)) {
-            groupSel <- getGroups(xy)[input$spreadGroupSel]
-            xySub    <- xy[xy$series %in% groupSel , , drop=FALSE]
+        xySub <- getXYsub()
+        if(!is.null(xySub)) {
             groupSpread(xySub,
                         center=input$spreadCenter,
                         plots=FALSE,
@@ -367,7 +500,7 @@ shinyServer(function(input, output) {
                         CEPlevel=input$spreadCEPlevel,
                         CIlevel=input$spreadCIlevel,
                         bootCI=bootCI,
-                        dstTarget=as.numeric(input$dstTrgt),
+                        dstTarget=input$dstTrgt,
                         conversion=conversionStr())
         }
     })
@@ -419,16 +552,14 @@ shinyServer(function(input, output) {
         local({
             localI <- i
             output[[paste0("spreadPlot", localI)]] <- renderPlot({
-                xy <- coords()
-                if(!is.null(xy)) {
-                    groupSel <- getGroups(xy)[input$spreadGroupSel]
-                    xySub    <- xy[xy$series %in% groupSel , , drop=FALSE]
+                xySub <- getXYsub()
+                if(!is.null(xySub)) {
                     shotGroups:::groupSpreadPlot(xySub,
                         which=localI,
                         center=input$spreadCenter,
                         CEPlevel=input$spreadCEPlevel,
                         CIlevel=input$spreadCIlevel,
-                        dstTarget=as.numeric(input$dstTrgt),
+                        dstTarget=input$dstTrgt,
                         conversion=conversionStr())
                 } else {
                     NULL
@@ -441,10 +572,8 @@ shinyServer(function(input, output) {
     output$saveSpreadPDF <- downloadHandler(
         filename=function() { "groupPrecision.pdf" },
         content=function(file) {
-            xy <- coords()
-            if(!is.null(xy)) {
-                groupSel <- getGroups(xy)[input$spreadGroupSel]
-                xySub    <- xy[xy$series %in% groupSel , , drop=FALSE]
+            xySub <- getXYsub()
+            if(!is.null(xySub)) {
                 pdf(file)
                 for(i in seq_len(nSpreadPlots)) {
                     shotGroups:::groupSpreadPlot(xySub,
@@ -452,7 +581,7 @@ shinyServer(function(input, output) {
                         center=input$spreadCenter,
                         CEPlevel=input$spreadCEPlevel,
                         CIlevel=input$spreadCIlevel,
-                        dstTarget=as.numeric(input$dstTrgt),
+                        dstTarget=input$dstTrgt,
                         conversion=conversionStr())
                 }
                 dev.off()
@@ -475,7 +604,7 @@ shinyServer(function(input, output) {
             checkboxGroupInput("locGroupSel",
                                label=h5("Select groups"),
                                choices=choices,
-                               selected=seq_along(choices))
+                               selected=seq_len(min(length(choices), 2L)))
         } else {
             NULL
         }
@@ -489,15 +618,13 @@ shinyServer(function(input, output) {
             "none"
         }
 
-        xy <- coords()
-        if(!is.null(xy)) {
-            groupSel <- getGroups(xy)[input$locGroupSel]
-            xySub    <- xy[xy$series %in% groupSel , , drop=FALSE]
+        xySub <- getXYsub()
+        if(!is.null(xySub)) {
             groupLocation(xySub,
                           plots=FALSE,
                           level=input$locLevel,
                           bootCI=bootCI,
-                          dstTarget=as.numeric(input$dstTrgt),
+                          dstTarget=input$dstTrgt,
                           conversion=conversionStr())
         } else {
             NULL
@@ -534,15 +661,13 @@ shinyServer(function(input, output) {
 
     ## show diagram
     output$locationPlot <- renderPlot({
-        xy <- coords()
-        if(!is.null(xy)) {
-            groupSel <- getGroups(xy)[input$locGroupSel]
-            xySub    <- xy[xy$series %in% groupSel , , drop=FALSE]
+        xySub <- getXYsub()
+        if(!is.null(xySub)) {
             groupLocation(xySub,
                           plots=TRUE,
                           level=input$locLevel,
                           bootCI="none",
-                          dstTarget=as.numeric(input$dstTrgt),
+                          dstTarget=input$dstTrgt,
                           conversion=conversionStr())
         } else {
             NULL
@@ -553,16 +678,14 @@ shinyServer(function(input, output) {
     output$saveLocationPDF <- downloadHandler(
         filename=function() { "groupAccuracy.pdf" },
         content=function(file) {
-            xy <- coords()
-            if(!is.null(xy)) {
-                groupSel <- getGroups(xy)[input$locGroupSel]
-                xySub    <- xy[xy$series %in% groupSel , , drop=FALSE]
+            xySub <- getXYsub()
+            if(!is.null(xySub)) {
                 pdf(file)
                 groupLocation(xySub,
                               plots=TRUE,
                               level=input$locLevel,
                               bootCI="none",
-                              dstTarget=as.numeric(input$dstTrgt),
+                              dstTarget=input$dstTrgt,
                               conversion=conversionStr())
                 dev.off()
             } else {
@@ -617,10 +740,9 @@ shinyServer(function(input, output) {
         } else {
             "CorrNormal"
         }
-        xy <- coords()
-        if(!is.null(xy)) {
-            groupSel <- getGroups(xy)[input$compGroupSel]
-            xySub    <- xy[xy$series %in% groupSel , , drop=FALSE]
+        xySub <- getXYsub()
+        if(!is.null(xySub)) {
+            groupSel <- getGroups(xySub)
             res <- compareGroups(xySub,
                           plots=FALSE,
                           xyTopLeft=input$cmpXYTL,
@@ -693,10 +815,8 @@ shinyServer(function(input, output) {
         local({
             localI <- i
             output[[paste0("comparePlot", localI)]] <- renderPlot({
-                xy <- coords()
-                if(!is.null(xy)) {
-                    groupSel <- getGroups(xy)[input$compGroupSel]
-                    xySub    <- xy[xy$series %in% groupSel , , drop=FALSE]
+                xySub <- getXYsub()
+                if(!is.null(xySub)) {
                     shotGroups:::compareGroupsPlot(xySub,
                         which=localI,
                         xyTopLeft=input$cmpXYTL,
@@ -715,12 +835,10 @@ shinyServer(function(input, output) {
     output$saveComparePDF <- downloadHandler(
         filename=function() { "groupCompare.pdf" },
         content=function(file) {
-            xy <- coords()
-            if(!is.null(xy)) {
+            xySub <- getXYsub()
+            if(!is.null(xySub)) {
                 pdf(file)
                 for(i in seq_len(nComparePlots)) {
-                    groupSel <- getGroups(xy)[input$compGroupSel]
-                    xySub    <- xy[xy$series %in% groupSel , , drop=FALSE]
                     shotGroups:::compareGroupsPlot(xySub,
                         which=i,
                         xyTopLeft=input$cmpXYTL,
@@ -749,17 +867,44 @@ shinyServer(function(input, output) {
             checkboxGroupInput("trgtGroupSel",
                                label=h5("Select groups"),
                                choices=choices,
-                               selected=seq_along(choices))
+                               selected=seq_len(min(length(choices), 2L)))
         } else {
             NULL
         }
     })
 
+    output$trgtTargetSel <- renderUI({
+        selected <- 16
+        xySub    <- getXYsub()
+        if(!is.null(xySub)) {
+            if(hasName(xySub, "target") &&
+               length(unique(xySub[["target"]])) == 1L) {
+                trgt <- unique(xySub[["target"]])
+                if(hasName(targetL, trgt)) {
+                    selected <- targetL[trgt]
+                }
+            }
+        }
+        selectInput("trgtTarget", "Target type", choices=targetL,
+                    selected=selected)
+    })
+    
+    output$trgtCaliberSel <- renderUI({
+        caliber <- 9
+        xySub   <- getXYsub()
+        if(!is.null(xySub)) {
+            if(hasName(xySub, "caliber") &&
+               length(unique(xySub[["caliber"]])) == 1L) {
+                caliber <- unique(xySub[["caliber"]])
+            }
+        }
+        numericInput("trgtCaliber", "Caliber [mm]",
+                     min=0, step=1, value=caliber)
+    })
+    
     output$targetPlot <- renderPlot({
-        xy <- coords()
-        if(!is.null(xy)) {
-            groupSel <- getGroups(xy)[input$trgtGroupSel]
-            xySub    <- xy[xy$series %in% groupSel , , drop=FALSE]
+        xySub <- getXYsub()
+        if(!is.null(xySub)) {
             drawGroup(xySub,
                       center=input$trgtCenter,
                       xyTopLeft=input$trgtXYTL,
@@ -787,13 +932,9 @@ shinyServer(function(input, output) {
 
     ## simulated ring count output
     output$simRingCount <- renderPrint({
-        xy <- coords()
-        if(!is.null(xy)) {
-            groupSel <- getGroups(xy)[input$trgtGroupSel]
-            xySub    <- xy[xy$series %in% groupSel , , drop=FALSE]
-            if(grepl("DSU[ab][[:digit:]]+", targetLinv[[input$trgtTarget]])) {
-                "Simulated ring count is not yet available for oval DSU targets"
-            } else if(input$trgtTarget != "1") {
+        xySub <- getXYsub()
+        if(!is.null(xySub)) {
+            if(input$trgtTarget != "1") {
                 simRingCount(xySub,
                              center=input$trgtCenter,
                              caliber=input$trgtCaliber,
@@ -811,10 +952,8 @@ shinyServer(function(input, output) {
     output$saveTargetPDF <- downloadHandler(
         filename=function() { "groupTarget.pdf" },
         content=function(file) {
-            xy <- coords()
-            if(!is.null(xy)) {
-                groupSel <- getGroups(xy)[input$trgtGroupSel]
-                xySub    <- xy[xy$series %in% groupSel , , drop=FALSE]
+            xySub <- getXYsub()
+            if(!is.null(xySub)) {
                 pdf(file)
                 drawGroup(xySub,
                           center=input$trgtCenter,

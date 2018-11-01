@@ -20,9 +20,12 @@ Example of a data frame from one file with one group of bullet holes.}
     \item{\code{groupVerb}}{a character vector designating the group by combining the original file name and ammunition.}
     \item{\code{series}}{a character vector that codes each separate group in an alternative way.}
     \item{\code{seriesNum}}{like \code{series} but numeric.}
+    \item{\code{distance.unit}}{Measurement unit distance to target}
+    \item{\code{point.unit}}{Measurement unit (x,y)-coordinates}
 }}
 \details{
-6 groups with 25 shots each (groups 1-5) or 50 shots (group 6) of .22LR shot at a distance of 50yd. Groups 1-3 shot with a Stiller Copperhead action with Shilen Octagon Barrel. Group 4-5 shot with a Baity Falcon action with Shilen Ratchet Barrel. Group 6 shot with a Stiller 2500X action with Shilen Octagon Barrel. \cr
+6 groups with 25 shots each (groups 1-5) or 50 shots (group 6) of .22LR shot at a distance of 50yd. The measurement unit for coordinates is inch, for distance yards. \cr
+Groups 1-3 shot with a Stiller Copperhead action with Shilen Octagon Barrel. Group 4-5 shot with a Baity Falcon action with Shilen Ratchet Barrel. Group 6 shot with a Stiller 2500X action with Shilen Octagon Barrel. \cr
 This data frame is like those returned by \code{\link[shotGroups]{readDataOT1}}, \code{\link[shotGroups]{readDataOT2}}, or \code{\link[shotGroups]{readDataMisc}} with option \code{combine=TRUE}. \cr
 Data courtesy of Larry Landercasper, 2017.
 }

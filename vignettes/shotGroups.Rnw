@@ -82,9 +82,9 @@ The \texttt{shotGroups} package adds functionality to the open source statistica
 
 \begin{itemize}
 \item The functionality includes graphical methods, descriptive statistics, and inference tests using standard, but also non-parametric and robust statistical techniques (section \ref{sec:analysisSteps}).
-\item The package includes limited support for the analysis of three-dimensional data (see sections \ref{sec:CEP}, \ref{sec:CEPinv}).
+\item The package includes limited support for the analysis of three-dimensional data (sections \ref{sec:CEP}, \ref{sec:CEPinv}).
 \item Inference from range statistics like extreme spread is also supported (section \ref{sec:rangeStat}).
-\item The data can be imported from files produced by OnTarget PC and OnTarget TDS \cite{Block2014}, Taran \cite{Trofimov2015}, or from custom data files in text format with a similar structure.
+\item The data can be imported from files produced by OnTarget PC and OnTarget TDS \cite{Block2014}, Silver Mountain e-target \cite{SilverMountain2018}, ShotMarker e-target \cite{MacDonald2018}, Taran \cite{Trofimov2015}, or from custom data files in text format with a similar structure.
 \end{itemize}
 
 Use \verb+help(package="shotGroups")+ for a list of all functions and links to the detailed help pages with information on options, usage and output.
@@ -92,10 +92,10 @@ Use \verb+help(package="shotGroups")+ for a list of all functions and links to t
 For users who are unfamiliar with \textsf{R}, \texttt{shotGroups} includes a set of \texttt{shiny}-based web applications \cite{RStudioShiny2014} running locally that eliminate the need to use \textsf{R} syntax. The applications implement different aspects of the functionality of \texttt{shotGroups}:
 
 \begin{itemize}
-\item \texttt{runGUI("analyze")} -- Comprehensive shot group analysis and visualization (sections \ref{sec:groupShape}, \ref{sec:groupSpread}, \ref{sec:groupLocation}, \ref{sec:drawGroup})\footnote{\url{http://dwoll.shinyapps.io/shotGroupsApp/}}
-\item \texttt{runGUI("hitprob")} -- Region $\leftrightarrow$ hit probability calculations (sections \ref{sec:CEPinv}, \ref{sec:CEPinv})\footnote{\url{http://dwoll.shinyapps.io/shotGroupsHitProb/}}
-\item \texttt{runGUI("range")} -- Estimate Rayleigh $\sigma$ from range statistics and do efficiency calculations for group statistics (section \ref{sec:rangeStat})\footnote{\url{http://dwoll.shinyapps.io/shotGroupsRange/}}
-\item \texttt{runGUI("angular")} -- Absolute $\leftrightarrow$ angular size conversions (section \ref{sec:unitConversion})\footnote{\url{http://dwoll.shinyapps.io/shotGroupsAngular/}}
+\item \texttt{runGUI("analyze")} -- Comprehensive shot group analysis and visualization (sections \ref{sec:groupShape}, \ref{sec:groupSpread}, \ref{sec:groupLocation}, \ref{sec:drawGroup})\footnote{\url{http://shiny.imbei.uni-mainz.de:3838/shotGroups_AnalyzeGroups/}}
+\item \texttt{runGUI("hitprob")} -- Region $\leftrightarrow$ hit probability calculations (sections \ref{sec:CEPinv}, \ref{sec:CEPinv})\footnote{\url{http://shiny.imbei.uni-mainz.de:3838/shotGroups_HitProb/}}
+\item \texttt{runGUI("range")} -- Estimate Rayleigh $\sigma$ from range statistics and do efficiency calculations for group statistics (section \ref{sec:rangeStat})\footnote{\url{http://shiny.imbei.uni-mainz.de:3838/shotGroups_RangeStat/}}
+\item \texttt{runGUI("angular")} -- Absolute $\leftrightarrow$ angular size conversions (section \ref{sec:unitConversion})\footnote{\url{http://shiny.imbei.uni-mainz.de:3838/shotGroups_AngularSize/}}
 \end{itemize}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -107,10 +107,10 @@ Analyzing shot groups usually takes the following steps:
 
 \begin{itemize}
 \item Read in data (section \ref{sec:readData})
-\item Perform either a comprehensive numerical as well as graphical analysis of a group's shape, location (accuracy), and spread (precision) with \texttt{analyzeGroup()} (section \ref{sec:analyzeGroup}) \ldots
+\item Perform either a comprehensive numerical as well as graphical analysis of a group's shape, spread (precision), and location (accuracy) with \texttt{analyzeGroup()} (section \ref{sec:analyzeGroup}) \ldots
 \item \ldots or analyze these aspects of a group separately with \texttt{groupShape()} (section \ref{sec:groupShape}), \texttt{groupSpread()} (section \ref{sec:groupSpread}), \texttt{groupLocation()} (section \ref{sec:groupLocation})
 \item Numerically and visually compare different groups in terms of their shape, location (accuracy), and spread (precision) with \texttt{compareGroups()} (section \ref{sec:compareGroups})
-\item Use additional utility functions (section \ref{sec:addFunc}) to individually explore different aspects of a given group
+\item Use additional utility functions to individually explore different aspects of a given group (section \ref{sec:addFunc})
 \end{itemize}
 
 \citeA{Grubbs1964b} and \url{http://ballistipedia.com/} are good sources for statistical methods for analyzing shot groups.
@@ -123,10 +123,12 @@ Analyzing shot groups usually takes the following steps:
 To import data into R, it should be saved as a text file with the following format:
 \begin{itemize}
 \item The file should have one row for each shot, and one column for each coordinate as well as for any other variable such as distance to target, point-of-aim coordinates.
-\item Columns should be separated by commas, tabs or other whitespace. This type of text file can be exported from OnTarget PC/TDS, Taran, or from a spreadsheet application like Excel or Calc.
+\item Columns should be separated by commas, tabs or other whitespace. This type of text file can be exported from OnTarget PC/TDS, Silver Mountain e-target, ShotMarker e-target, Taran, or from a spreadsheet application like Excel or Calc.
 \item The file needs a header in the first line giving the variable names, and should contain at least the coordinates of points of impact, either with variable names \texttt{Point.X}, \texttt{Point.Y} or just \texttt{X}, \texttt{Y}.
 \item For several analysis functions, the following additional variables are useful: \texttt{Group} (group number), \texttt{Distance} (distance to target), and \texttt{Aim.X}, \texttt{Aim.Y} (point of aim). If these variables are missing, default values are assumed with a warning.
-\item If you have output files from OnTarget PC/TDS, you can read multiple files with \texttt{readDataOT1()} (for OnTarget PC v1.*), or with \texttt{readDataOT2()} (for OnTarget PC v2.* and OnTarget TDS v3.*).
+\item If you have output files from OnTarget PC/TDS, you can read multiple files with \texttt{readDataOT1()} (for OnTarget PC v1.*, tested with v1.10), or with \texttt{readDataOT2()} (for OnTarget PC v2.* - tested with v2.28, and OnTarget TDS - tested with v3.71, v3.89, v6.09).
+\item If you have output files from the Silver Mountain e-target system, you can read multiple files with \texttt{readDataSMT()}.
+\item If you have CSV output files or .tar backup files from the ShotMarker e-target system, you can read multiple files with \texttt{readDataShotMarker()}.
 \item If you have other whitespace or comma-separated text files with the structure outlined above (e.\,g.\ from Taran), you can read multiple files with \texttt{readDataMisc()}. For three-dimensional data, this function also recognizes variables \texttt{Point.Z} or \texttt{Z} and \texttt{Aim.Z}.
 \item If your data is saved in some other text file format, consult the help for \texttt{read.table()} or the \textsf{R} import/export manual \cite{RDevelopmentCoreTeam2008b}.
 \end{itemize}
@@ -153,7 +155,7 @@ When analyzing different aspects of a group separately using \texttt{groupShape(
 
 <<cAnalyzeGroup, eval=FALSE>>=
 library(shotGroups, verbose=FALSE)       # load shotGroups package
-analyzeGroup(DFtalon, conversion="m2mm")
+analyzeGroup(DFtalon, dstTarget=10, conversion="m2mm")
 
 ## output not shown, see following sections for results
 @
@@ -169,9 +171,9 @@ Reported statistical parameters and tests:
 
 \begin{itemize}
 \item Correlation matrix including a robust estimate using the MCD method (from package \texttt{robustbase}; \citeNP{Rousseeuw2009}).
-\item Outlier identification requires installing package \texttt{mvoutlier}: Either using squared robust Mahalanobis distances and adjusted quantiles from the $\chi^{2}$-distribution, or using robust principal components analysis (PCA) with options to tune the sensitivity.
+\item Outlier identification -- requires installing package \texttt{mvoutlier} \cite{Filzmoser2011b} first: Either using squared robust Mahalanobis distances and adjusted quantiles from the $\chi^{2}$-distribution, or using robust principal components analysis (PCA) with options to tune the sensitivity.
 \item Shapiro-Wilk normality tests for the distribution of $x$- and $y$-coordinates. For more than 5000 observations, the drop-in Kolmogorov-Smirnov-test is reported instead.
-\item Energy test for bivariate normality of $(x,y)$-coordinates requires installing package \texttt{energy} \cite{Rizzo2013}.
+\item Energy test for bivariate normality of $(x,y)$-coordinates -- requires installing package \texttt{energy} \cite{Rizzo2013} first.
 \end{itemize}
 
 Plots:
@@ -187,7 +189,8 @@ Plots:
 %%<<cGroupShape, fig=FALSE, out.width='3in'>>=
 <<cGroupShape, out.width='3in'>>=
 library(shotGroups, verbose=FALSE)       # load shotGroups package
-groupShape(DFtalon, bandW=0.4, outlier="mcd")
+groupShape(DFtalon, bandW=0.4, outlier="mcd",
+           dstTarget=10, conversion="mm2m")
 @
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -208,7 +211,7 @@ Reported statistical parameters and tests:
 \item Radius for the minimum enclosing circle (in original measurement units, MOA, SMOA, mrad)
 \item Length of semi-major and semi-minor axis of the (robust) confidence ellipse (in original measurement units, MOA, SMOA, mrad)
 \item Aspect ratio $\sqrt{\kappa}$ (with condition index $\kappa$) and flattening $1-\frac{1}{\sqrt{\kappa}}$ of the (robust) confidence ellipse as well as the trace and determinant of the covariance matrix
-\item Estimate for the circular error probable CEP (see section \ref{sec:CEP}; in original measurement units, MOA, SMOA, mrad)
+\item Estimate for the circular error probable CEP (section \ref{sec:CEP}; in original measurement units, MOA, SMOA, mrad)
 \end{itemize}
 
 Plots:
@@ -223,8 +226,8 @@ Plots:
 <<cGroupSpread, out.width='3in'>>=
 library(shotGroups, verbose=FALSE)       # load shotGroups package
 groupSpread(DFtalon, CEPtype=c("CorrNormal", "GrubbsPatnaik", "Rayleigh"),
-            CEPlevel=0.5, CIlevel=0.95, bootCI="basic", dstTarget=10,
-            conversion="m2mm")
+            CEPlevel=0.5, CIlevel=0.95, bootCI="basic",
+            dstTarget=10, conversion="m2mm")
 @
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -252,7 +255,7 @@ Plots:
 %%<<cGroupLocation, fig=FALSE, out.width='3in'>>=
 <<cGroupLocation, out.width='3in'>>=
 library(shotGroups, verbose=FALSE)       # load shotGroups package
-groupLocation(DFtalon, dstTarget=10, conversion="m2cm",
+groupLocation(DFtalon, dstTarget=10, conversion="m2mm",
               level=0.95, plots=FALSE, bootCI="basic")
 @
 
@@ -263,7 +266,7 @@ groupLocation(DFtalon, dstTarget=10, conversion="m2cm",
 
 \texttt{compareGroups()}: Compare two or more groups with regard to their precision and accuracy using empirical measures and statistical tests.
 
-\texttt{compareGroups()} requires that the data includes a variable \texttt{series} that identifies shot groups. OnTarget PC/TDS' variable \texttt{Group} identifies groups just within one file, \texttt{series} should number groups also across different original files. When you read in data with \texttt{readDataOT1()}, \texttt{series} is added automatically (same for \texttt{readDataOT2()} and \texttt{readDataMisc()}). For data from just one file, you can otherwise copy variable \texttt{group} to \texttt{series} in a data frame called \texttt{shots} with
+\texttt{compareGroups()} requires that the data includes a variable \texttt{series} that identifies shot groups. OnTarget PC/TDS' variable \texttt{group} identifies groups just within one file, \texttt{series} should number groups also across different original files. When you read in data with \texttt{readDataOT1()}, \texttt{series} is added automatically (same for \texttt{readDataOT2()}, \texttt{readDataSMT()}, \texttt{readDataShotMarker()}, and \texttt{readDataMisc()}). For data from just one file, you can otherwise copy variable \texttt{group} to \texttt{series} in a data frame called \texttt{shots} with
 
 <<cCmpGr, eval=FALSE>>=
 shots$series <- shots$group
@@ -284,7 +287,7 @@ Reported statistical parameters and tests:
 \item Estimated Rayleigh parameter $\sigma$ (precision) for each group (in original measurement units, MOA, SMOA, mrad)
 \item Estimated Rayleigh mean radius MR for each group (in original measurement units, MOA, SMOA, mrad)
 \item Parametric $\chi^{2}$ confidence intervals for Rayleigh $\sigma$ and MR (in original measurement units, MOA, SMOA, mrad)
-\item Estimate for the 50\% circular error probable (CEP) in each group (see section \ref{sec:CEP}; in original measurement units, MOA, SMOA, mrad)
+\item Estimate for the 50\% circular error probable (CEP) in each group (section \ref{sec:CEP}; in original measurement units, MOA, SMOA, mrad)
 \item Ansari-Bradley-test results from testing equality of group variances for $x$- and $y$-coordinates -- when two groups are compared. With more than two groups, the Fligner-Killeen-test is used
 \item Wilcoxon-Rank-Sum-test (= Mann-Whitney-$U$-test) result from testing equality of average point distances to their respective group center -- when two groups are compared. With more than two groups, the Kruskal-Wallis-test is used
 \end{itemize}
@@ -307,7 +310,7 @@ library(shotGroups, verbose=FALSE)       # load shotGroups package
 
 ## only use first 3 groups of DFtalon
 DFsub <- subset(DFtalon, series %in% 1:3)
-compareGroups(DFsub, conversion="m2mm")
+compareGroups(DFsub, dstTarget=10, conversion="m2mm")
 @
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -371,7 +374,7 @@ Beyond calculating decriptive/geometric precision measures, \texttt{shotGroups} 
 The following functions estimate the region that is expected to contain a given fraction of shots (bullet hole centers) under different assumptions. The given fraction of shots is the same as the probability for one shot to lie within the calculated region. The functions can use the MCD method for a robust estimate of the group center and covariance matrix (from package \texttt{robustbase}).
 
 \begin{itemize}
-\item \texttt{getCEP()}: Calculates estimates for the Circular Error Probable CEP. For three-dimensional data, the Spherical Error Probable SEP is returned. The CEP/SEP estimate is the radius of the circle/sphere around the point of aim (POA) that is expected to cover a certain fraction of points. If systematic accuracy bias is ignored, the POA is assumed to coincide with the true group center. If systematic accuracy bias is taken into account, the POA is in the origin $0$, possibly offset from the true group center. The following estimates are available:
+\item \texttt{getCEP()}: Calculates estimates for the Circular Error Probable CEP. For three-dimensional data, the Spherical Error Probable SEP is returned. The CEP/SEP estimate is the radius of the circle/sphere around the point of aim (POA) that is expected to cover a certain fraction of points. If systematic accuracy bias is ignored, the POA is assumed to coincide with the true group center. If systematic accuracy bias is taken into account, the POA is in the origin $(0,0)$, possibly offset from the true group center. The following estimates are available:
 \begin{itemize}
 \item \texttt{CorrNormal}: If systematic accuracy bias is ignored, and for two-dimensional data, this estimate is based on the Hoyt distribution for radial error in correlated bivariate normal variables re-written in polar coordinates (radius and angle; \citeNP{Hoyt1947,Paris2009a,Paris2009b}). If systematic accuracy bias is taken into account, package \texttt{CompQuadForm} \cite{Duchesne2010} is used to calculate the cdf of radial error using numerical integration of the multivariate normal distribution over an offset disc \cite{DiDonato1961a,Evans1985} or sphere \cite{DiDonato1988}. The \texttt{CorrNormal} estimate is available for all probability levels.
 \begin{itemize}
@@ -602,7 +605,26 @@ pmvnEll(1.5, sigma=diag(c(sdX^2, sdY^2)), mu=c(0, 0), e=diag(2), x0=c(0, 0))
 
 When it seems too costly to collect $(x,y)$-coordinates of all shots, range statistics like extreme spread, figure of merit, or the length of the bounding box diagonal are often measured instead (section \ref{sec:descPrecMeas}). The statistical distribution of these measures depends on the number of shots per group $n$, and on the true spread of the distribution, but its exact form is unknown \cite{Taylor1975b}. Nevertheless, it is possible to use range statistics for inference on the true spread of the distribution (Rayleigh parameter $\sigma$, section \ref{sec:CEP}) when assuming a circular bivariate normal shot distribution with 0 mean.
 
-Following the approach from \citeA{Taylor1975b}, a Monte Carlo simulation of circular bivariate normal shot groups with 0 mean and variance 1 in both directions was carried out. The result is a lookup table for the distribution of extreme spread, figure of merit, bounding box diagonal, and Rayleigh $\sigma$. The table records the first four moments (mean, variance, skewness, kurtosis), the coefficient of variation, as well as the median and other major quantiles of the Monte Carlo distribution over 2 million repetitions in each scenario. One scenario was a combination of the $n$ shots in each group, and the $n_{g}$ groups over which individual range statistics were averaged. Values for $n$ were 2, 3, \ldots, 49, 50, 55, \ldots, 95, 100. Values for $n_{g}$ were 1, 2, \ldots, 9, 10. The lookup table with the simulation results is available as data frame \texttt{DFdistr}.
+Following the approach from \citeA{Taylor1975b}, a Monte Carlo simulation of circular bivariate normal shot groups with 0 mean and standard deviation 1 in both directions was carried out, see also \citeA{Gammon2017}. The result is a lookup table for the distribution of extreme spread, figure of merit, bounding box diagonal, and Rayleigh $\sigma$. The table records the first four moments (mean, variance, skewness, kurtosis), the coefficient of variation, as well as the median and other major quantiles of the Monte Carlo distribution over 2 million repetitions in each scenario. One scenario was a combination of the $n$ shots in each group, and the $n_{g}$ groups over which individual range statistics were averaged. Values for $n$ were 2, 3, \ldots, 49, 50, 55, \ldots, 95, 100. Values for $n_{g}$ were 1, 2, \ldots, 9, 10. The lookup table with the simulation results is available as data frame \texttt{DFdistr}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Distribution of range statistics}
+\label{sec:rangeDistrib}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Based on the lookup table \texttt{DFdistr}, functions \texttt{pRangeStat()} and \texttt{qRangeStat()} give the approximate cumulative distribution function and the quantile function of range statistics within the parameter space covered by \texttt{DFdistr} (number of shots, number of groups, probabilities). For parameter combinations that were not simulated, interpolation between the supporting points is carried out. \texttt{rRangeStat()} generates random deviates.
+
+<<cRangeDistrib1>>=
+# cumulative probability of extreme spread (ES) 4 and 5 with true
+# sigma 1.5, and ES averaged over 3 groups with 5 shots each
+(q45 <- pRangeStat(c(4, 5), sigma=1.5, n=5, nGroups=3, stat="ES"))
+
+# quantiles for the returned probabilities, should be exactly 4 and 5
+qRangeStat(q45, sigma=1.5, n=5, nGroups=3, stat="ES")
+
+# random deviates
+rRangeStat(5, sigma=2, nPerGroup=5, nGroups=3, stat="D")
+@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsubsection{Estimate Rayleigh $\sigma$ from range statistics}
@@ -611,7 +633,7 @@ Following the approach from \citeA{Taylor1975b}, a Monte Carlo simulation of cir
 
 Based on the lookup table from the Monte Carlo simulation, function \texttt{range2sigma()} estimates the Rayleigh $\sigma$ parameter from measured range statistics -- extreme spread, figure of merit, and the bounding box diagonal, assuming a circular bivariate normal shot distribution with 0 mean. This is possible because, conditional on $n$ and $n_{g}$, range statistics directly scale with $\sigma$. Dividing the simulated mean range statistic for $\sigma = 1$ and the given $n$ as well as $n_{g}$ by the empirically measured range statistic therefore estimates $\sigma$. Confidence intervals can be inferred from the corresponding quantiles of the Monte Carlo distribution.
 
-If $\sigma$ should be estimated for a value of $n$ that was not simulated (but is less than 100), a spline interpolation between the neighboring simulated values is used. If the desired coverage probability for the confidence interval corresponds to quantiles that were not calculated, the Monte Carlo distribution of squared extreme spread is approximated by a Patnaik $\chi^{2}$ distribution as suggested by \citeA{Taylor1975b}.\footnote{Fort details, see \url{http://ballistipedia.com/index.php?title=Range_Statistics}}
+If $\sigma$ should be estimated for a value of $n$ that was not simulated (but is less than 100), a monotonic spline interpolation between the neighboring supporting points is used. If the desired coverage probability for the confidence interval corresponds to quantiles that were not calculated, the Monte Carlo distribution of squared extreme spread is approximated by a Patnaik $\chi^{2}$ distribution as suggested by \citeA{Taylor1975b}.\footnote{Fort details, see \url{http://ballistipedia.com/index.php?title=Range_Statistics}}
 
 <<cRange1>>=
 # get range statistics from DFscar17 data
@@ -621,7 +643,8 @@ d   <- getBoundingBox(DFscar17)$diag   # bounding box diagonal
 
 # estimate Rayleigh sigma from each statistic
 range2sigma(c(es, fom, d), stat=c("ES", "FoM", "D"),
-            n=nrow(DFscar17), nGroups=1, CIlevel=0.9)
+            n=nrow(DFscar17), nGroups=1, CIlevel=0.9,
+            dstTarget=100, conversion="yd2in")
 @
 
 Compare the results with estimating Rayleigh $\sigma$ from using $(x,y)$-coordinates of all shots.
@@ -672,7 +695,7 @@ Function \texttt{drawGroup()} serves to illustrate a group of bullet holes by dr
 
 \begin{itemize}
 \item The diagram can be drawn in original measurement units, in absolute size units m, cm, mm, yd, ft, in, or in angular measures deg, MOA, SMOA, rad, mrad, mil.
-\item A target background can be selected from a number of pre-defined circular target types from different shooting federations (ISSF, DSB, BDS, BDMP, DSU, see \texttt{help(targets)}). Targets can also be plotted just by themselves using \texttt{drawTarget()}.
+\item A target background can be selected from a number of pre-defined circular target types from different shooting federations (ISSF, NRA, DSB, BDS, BDMP, DSU, see \texttt{help(targets)}). Targets can also be plotted just by themselves using \texttt{drawTarget()}.
 \item Precision indicators can be added to the plot individually:
 \begin{itemize}
 \item (Minimum-area) bounding box with diagonal
@@ -682,7 +705,7 @@ Function \texttt{drawGroup()} serves to illustrate a group of bullet holes by dr
 \item (Robust) confidence ellipse
 \item Circular error probable CEP
 \end{itemize}
-\item If a known target is supplied, the simulated ring value for each shot can be displayed (see section \ref{sec:simRingCount})
+\item If a known target is supplied, the simulated ring value for each shot can be displayed (section \ref{sec:simRingCount})
 \end{itemize}
 
 \texttt{drawGroup()} invisibly returns all the information that is shown in the diagram converted to the requested measurement unit. In the following example, the original measurement unit for $(x,y)$-coordinates was inch, the group is here drawn converted to cm. The second example shows how to plot a CEP estimator for multiple levels.
@@ -707,7 +730,7 @@ dg2 <- drawGroup(DFcciHV, xyTopLeft=TRUE, CEP="GrubbsPatnaik", scaled=TRUE,
 dg2$CEP
 @
 
-Now draw the group with coordinates converted to MOA, add the minimum-area bounding box, 50\%-confidence ellipse, use the ISSF 100\,yd target, and show the ring value for each shot (see section \ref{sec:simRingCount}).
+Now draw the group with coordinates converted to MOA, add the minimum-area bounding box, 50\%-confidence ellipse, use the ISSF 100\,yd target, and show the ring value for each shot (section \ref{sec:simRingCount}).
 
 %%<<cDrawGroup2, fig=TRUE, out.width='3in'>>=
 <<cDrawGroup2, out.width='3in'>>=
@@ -809,7 +832,7 @@ Assuming that the argument for $\tan(\cdot)$ and the result from $\arctan(\cdot)
 \end{itemize}
 
 <<cMOAcenter1>>=
-## convert object sizes in cm to MOA, distance in m
+## convert object sizes in cm to MOA, distance given in m
 getMOA(c(1, 2, 10), dst=100, conversion="m2cm", type="MOA")
 @
 
@@ -900,6 +923,7 @@ If size $s$ is small compared to distance $d$, the difference between the actual
 The \texttt{shotGroups} package includes a number of empirical data sets with shooting results:
 
 \begin{itemize}
+\item \texttt{DFlandy01}, \texttt{DFlandy02}, \texttt{DFlandy03}, \texttt{DFlandy04}: Groups and chronograph readings from shooting a .22LR rifle at 50\,m or 50\,yd (905 observations)\footnote{Thanks: Larry Landercasper \& Albert Highe.}
 \item \texttt{DF300BLK}: One group of shooting a Noveske AR-15 rifle in 300BLK at 100\,yd with factory ammunition (20 observations)\footnote{\label{ftn:DF300BLK}Thanks: David Bookstaber \url{http://ballistipedia.com/}}
 \item \texttt{DF300BLKhl}: Three groups of shooting a Noveske AR-15 rifle in 300BLK at 100\,yd with handloaded ammunition (60 observations, see footnote \ref{ftn:DF300BLK})
 \item \texttt{DFcciHV}: Two groups of shooting a PWS T3 rifle in .22LR at 100\,yd (40 observations, see footnote \ref{ftn:DF300BLK})

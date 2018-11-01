@@ -22,11 +22,11 @@ dataBuiltIn <- c("1"="DFlandy01", "2"="DFlandy02", "3"="DFlandy03", "4"="DFlandy
 dataBuiltInInv <- as.list(names(dataBuiltIn))
 dataBuiltInInv <- setNames(dataBuiltInInv, dataBuiltIn)
 
-unitsDst    <- c("m"="1",  "yard"="2", "feet"="3")
-unitsDstInv <- c("1"="m",  "2"="yd", "3"="ft")
+unitsDst    <- c("(unknown)"="1",   "m"="2",  "yard"="3", "feet"="4")
+unitsDstInv <- c("1"=NA_character_, "2"="m",  "3"="yd",   "4"="ft")
 
-unitsXY     <- c("cm"="1", "mm"="2", "inch"="3")
-unitsXYInv  <- c("1"="cm", "2"="mm", "3"="in")
+unitsXY     <- c("(unknown)"="1",   "cm"="2", "mm"="3", "inch"="4")
+unitsXYInv  <- c("1"=NA_character_, "2"="cm", "3"="mm", "4"="in")
 
 unitsAbs    <- c("m"="1", "cm"="2", "mm"="3", "yard"="4", "feet"="5", "inch"="6")
 unitsAbsInv <- c("1"="m", "2"="cm", "3"="mm", "4"="yd", "5"="ft", "6"="in")
@@ -102,9 +102,13 @@ compOut3plusInv <- c("1"="ctr", "2"="distPOA", "3"="MANOVA", "4"="corXY", "5"="s
                      "14"="sigmaMRci", "15"="CEP", "16"="FlignerX",
                      "17"="FlignerY", "18"="Kruskal")
 
+f    <- system.file("targets_add.rda", package="shotGroups")
+trgt <- readRDS(file=f)
+targets <- c(targets, trgt)
+
 targetL    <- as.list(c(1, seq_along(targets)+1))
 targetL    <- setNames(targetL, c("none", names(targets)))
-targetLinv <- as.list(c(NA, names(targets)))
+targetLinv <- as.list(c("none", names(targets)))
 targetLinv <- setNames(targetLinv, c(1, seq_along(targets)+1))
 
 ## function to extract group names and make them an option set

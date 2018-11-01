@@ -2,7 +2,7 @@
 \alias{getDistance}
 \title{Get distance based on absolute and angular size}
 \description{Calculates the distance to an object based on the object's absolute and angular size.}
-\usage{getDistance(x, angular, conversion = 'm2cm',
+\usage{getDistance(x, angular, conversion,
             type = c('deg', 'rad', 'MOA', 'SMOA', 'mrad', 'mil'))}
 \arguments{
   \item{x}{a numerical vector of absolute object sizes.}

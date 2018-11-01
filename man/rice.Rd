@@ -33,7 +33,7 @@ In \code{dRice}, \code{pRice} and \code{qRice}, the numerical parameters are rec
 \details{
 \code{dRice} involves the modified Bessel function of the first kind and order 0. \code{pRice} and \code{qRice} are implemented using the Marcum Q-function. The Marcum Q-function is the cdf of a non-central chi^2 variable (Nuttall, 1975).
 
-\code{rRice} with \code{method='eigen'} or with \code{method='chol'} simulates 2D normal deviates based on the covariance matrix corresponding to parameter \code{sigma}, and then determines the radius. \code{rRice} with \code{method='cdf'} uses \code{qRice} with simulated quantiles from a uniform random variable in (0,1).
+\code{rRice} with \code{method='eigen'} or with \code{method='chol'} simulates 2D normal deviates based on the diagonal covariance matrix with entries \code{sigma}^2, and then determines the radius. \code{rRice} with \code{method='cdf'} uses \code{qRice} with simulated quantiles from a uniform random variable in (0,1).
 
 See \code{\link[shotGroups]{Hoyt}} for the distribution of radial error around the true center of correlated bivariate normal variables with unequal variances. See \code{\link[shotGroups]{Rayleigh}} for the distribution of radial error around the true center of uncorrelated bivariate normal variables with equal variances. See \code{\link[shotGroups]{mvnEll}} for the distribution of radial error around an offset center for correlated normal variables with unequal variances.
 

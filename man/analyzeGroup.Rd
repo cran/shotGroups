@@ -3,13 +3,14 @@
 \title{Analysis for a single group of bullet holes}
 \description{Performs a comprehensive numerical and graphical analysis of a single group of bullet holes.}
 \usage{analyzeGroup(DF, xyTopLeft = TRUE, center = FALSE,
-             conversion = 'm2cm', bandW = 0.5,
-             CEPtype = 'CorrNormal', bootCI = c('basic', 'bca'))}
+             dstTarget, conversion, bandW = 0.5,
+             CEPtype = 'CorrNormal', bootCI = 'none')}
 \arguments{
   \item{DF}{a data frame containing (at least) either the variables \code{point.x}, \code{point.y} or \code{x}, \code{y} defining the bullet holes. Variables \code{distance} (distance to target), \code{aim.x}, \code{aim.y} (point of aim) are useful - if they are missing, a warning is given and a default assumed.}
   \item{xyTopLeft}{logical: is the origin of the absolute coordinate system in the top-left corner? See details.}
   \item{center}{logical: center groups to mean (0,0) first? If variable \code{series} does not exist, all shots are treated as belonging to the same group.}
-  \item{conversion}{how to convert the measurement unit for distance to target to that of the (x,y)-coordinates in MOA calculation. See \code{\link[shotGroups]{getMOA}}.}
+  \item{dstTarget}{a numerical value giving the distance to the target - used in MOA calculation. Acts as override if variable \code{distance} is already included in \code{DF}. See \code{\link[shotGroups]{getMOA}}.}
+  \item{conversion}{how to convert the measurement unit for distance to target to that of the (x,y)-coordinates in MOA calculation. Acts as override if variables \code{dist.unit} and \code{point.unit} are already included in \code{DF}. Example \code{'m2cm'}. See \code{\link[shotGroups]{getMOA}}.}
   \item{bandW}{for argument \code{bandwith} of \code{\link[graphics]{smoothScatter}}.}
   \item{CEPtype}{string vector indicating which CEP estimate to report in \code{\link[shotGroups]{getCEP}}.}
   \item{bootCI}{a character vector to select which bootstrap confidence interval type to report. Possible types are \code{'none'} (no bootstrap CI), \code{'norm'}, \code{'basic'}, \code{'perc'}, \code{'bca'}. See \code{\link[boot]{boot.ci}}.}

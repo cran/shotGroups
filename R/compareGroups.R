@@ -8,7 +8,7 @@ function(DF,
          CEPtype="CorrNormal",
          CEPlevel=0.5,
          CIlevel=0.95,
-         conversion="m2cm") {
+         dstTarget, conversion) {
     if(!is.data.frame(DF))    { stop("DF must be a data frame") }
     if(!is.numeric(CEPlevel)) { stop("CEPlevel must be numeric") }
     if(CEPlevel <= 0)         { stop("CEPlevel must be > 0") }
@@ -40,12 +40,12 @@ function(DF,
     needsSer <- "series"                 # required
     needsXY1 <- c("point.x", "point.y")  # coordinates must have this name
     needsXY2 <- c("x", "y")              # or this
-    wantsDst <- "distance"               # useful
+    # wantsDst <- "distance"               # useful
     wantsAIM <- c("aim.x", "aim.y")      # useful
     hasSer   <- needsSer %in% varNames   # required ones we have
     hasXY1   <- needsXY1 %in% varNames   # coordinates we have
     hasXY2   <- needsXY2 %in% varNames
-    hasDst   <- wantsDst %in% varNames   # useful ones we have
+    # hasDst   <- wantsDst %in% varNames   # useful ones we have
     hasAIM   <- wantsAIM %in% varNames   # useful ones we have
 
     if(!all(hasSer)) {
@@ -57,12 +57,12 @@ function(DF,
         stop("Coordinates must be named either X, Y or Point.X, Point.Y")
     }
 
-    if(!all(hasDst)) {
-        warning(c("The data frame is missing variable\n",
-                  paste(wantsDst[!hasDst], collapse=" "), "\n",
-                  "Distance is assumed to be 100"))
-        DF$distance <- 100
-    }
+    # if(!all(hasDst)) {
+    #     warning(c("The data frame is missing variable\n",
+    #               paste(wantsDst[!hasDst], collapse=" "), "\n",
+    #               "Distance is assumed to be 100"))
+    #     DF$distance <- 100
+    # }
 
     if(!all(hasAIM)) {
         warning(c("The data frame is missing variable(s)\n",
@@ -72,6 +72,20 @@ function(DF,
         DF$aim.y <- 0
     }
 
+    ## distance to target from override or from data
+    if(missing(dstTarget)) {
+        dstTarget <- if(hasName(DF, "distance")) {
+            DF[["distance"]]
+        } else {
+            NA_real_
+        }
+    }
+
+    ## determine conversion factor from data if override is not given
+    if(missing(conversion)) {
+        conversion <- determineConversion(DF)
+    }
+    
     #####-----------------------------------------------------------------------
     ## prepare data
     res <- vector("list", 0)               # empty list to later collect the results
@@ -81,9 +95,25 @@ function(DF,
         DF$series <- droplevels(DF$series) # remove all non-used factor levels
     }
 
-    ## check if we have enough groups and points per group
-    if(nlevels(DF$series) < 2L)            { stop("We need >= 2 groups for a comparison") }
-    if(any(xtabs(~ series, data=DF) < 2L)) { stop("We need >= 2 points in each group") }
+    ## check if we have enough groups
+    if(nlevels(DF$series) < 2L) {
+        stop("We need >= 2 groups for a comparison")
+    }
+
+    ## check if we have enough points per group
+    cTab <- xtabs(~ series, data=DF)
+    if(any(cTab < 2L)) {
+        ## remove series with too few points
+        rem <- names(cTab[cTab < 2L])
+        idx <- DF[["series"]] %in% rem
+        DF  <- droplevels(DF[!idx, , drop=FALSE])
+        if(length(dstTarget == nrow(DF))) {
+            dstTarget <- dstTarget[!idx]
+        }
+        warning(paste0("Removed series ",
+                       paste(rem, collapse=", "),
+                       " with < 2 points per group"))
+    }
 
     ## prepare data: get (x,y)-coords relative to point of aim as matrix
     ## for each group extract the (x,y)-coords as a matrix
@@ -98,7 +128,38 @@ function(DF,
 
     ## append (x,y)-coords to data frame
     DF <- cbind(DF, do.call("rbind", xyL))
-    dstTarget <- tapply(DF$distance, DF$series, mean)  # distances to target
+
+    ## distances to target per group
+    dstTargetGrp <- if(length(dstTarget) == nrow(DF)) {
+        ## check that distance is homogeneous per group
+        groupVar <- tapply(dstTarget, DF[["series"]], var)
+        if(sum(groupVar) < sqrt(.Machine$double.eps)) {
+            tapply(dstTarget, DF[["series"]], mean)
+        } else {
+            setNames(rep(NA_real_, nlevels(DF[["series"]])), levels(DF[["series"]]))
+        }
+    } else {
+        if(length(dstTarget) == 1L) {
+            setNames(rep(dstTarget, nlevels(DF[["series"]])), levels(DF[["series"]]))
+        } else {
+            setNames(rep(NA_real_, nlevels(DF[["series"]])), levels(DF[["series"]]))
+        }
+    }
+    
+    conversionGrp <- if(length(conversion) == nrow(DF)) {
+        groupConv <- tapply(conversion, DF[["series"]], function(conv) { length(unique(conv)) })
+        if(all(groupConv) == 1L) {
+            tapply(conversion, DF[["series"]], unique)
+        } else {
+            setNames(rep(NA_character_, nlevels(DF[["series"]])), levels(DF[["series"]]))
+        }
+    } else {
+        if(length(conversion) == 1L) {
+            setNames(rep(conversion, nlevels(DF[["series"]])), levels(DF[["series"]]))
+        } else {
+            setNames(rep(NA_character_, nlevels(DF[["series"]])), levels(DF[["series"]]))
+        }
+    }
 
     ## to determine axis limits later, collect all results in a vector
     axisLimsX <- numeric(0)
@@ -108,7 +169,7 @@ function(DF,
     ## location measures
     res$ctr <- vapply(xyL, colMeans, numeric(2))     # group centers
     distPOA <- sqrt(colSums(res$ctr^2))  # distances to point of aim
-    distPOAmoa  <- Map(makeMOA, distPOA, dst=dstTarget, conversion=conversion)
+    distPOAmoa  <- Map(makeMOA, distPOA, dst=dstTargetGrp, conversion=conversionGrp)
     res$distPOA <- do.call("cbind", distPOAmoa)
 
     ## multivariate location test for equal group centers (relative to POA)
@@ -138,20 +199,20 @@ function(DF,
     ## sd and sd CIs as separate lists for unit of measurement MOA, SMOA, mrad
     sdXY       <- lapply(xyL, function(x) sqrt(diag(cov(x)))) # standard deviations
     sdXYci     <- lapply(xyL, getSDxyCI) # confidence intervals
-    res$sdXY   <- Map(makeMOA, sdXY,   dst=dstTarget, conversion=conversion)
-    res$sdXYci <- Map(makeMOA, sdXYci, dst=dstTarget, conversion=conversion)
+    res$sdXY   <- Map(makeMOA, sdXY,   dst=dstTargetGrp, conversion=conversionGrp)
+    res$sdXYci <- Map(makeMOA, sdXYci, dst=dstTargetGrp, conversion=conversionGrp)
 
     ## (mean) distances to group center
     dstCtrL    <- lapply(xyL, getDistToCtr) # distances to group center
     meanDstCtr <- lapply(dstCtrL, mean)
-    meanDstCtrMOA <- Map(makeMOA, meanDstCtr, dst=dstTarget, conversion=conversion)
+    meanDstCtrMOA <- Map(makeMOA, meanDstCtr, dst=dstTargetGrp, conversion=conversionGrp)
     res$meanDistToCtr <- do.call("cbind", meanDstCtrMOA)
 
     ## maximum pairwise distance = maximum group spread
     maxPD      <- lapply(xyL, getMaxPairDist)   # max pairwise distance
     maxSpread  <- lapply(maxPD, function(x) { x$d } )
     maxPDidx   <- vapply(maxPD, function(x) { x$idx }, numeric(2))
-    maxSpreadL <- Map(makeMOA, maxSpread, dst=dstTarget, conversion=conversion)
+    maxSpreadL <- Map(makeMOA, maxSpread, dst=dstTargetGrp, conversion=conversionGrp)
     res$maxPairDist <- do.call("cbind", maxSpreadL)
 
     ## bounding box figure of merit and diagonal
@@ -159,8 +220,8 @@ function(DF,
     bbs     <- lapply(xyL, getMinBBox)
     bbFoM   <- lapply(bbs, function(x) { x$FoM } )
     bbDiag  <- lapply(bbs, function(x) { x$diag } )
-    bbFoML  <- Map(makeMOA, bbFoM,  dst=dstTarget, conversion=conversion)
-    bbDiagL <- Map(makeMOA, bbDiag, dst=dstTarget, conversion=conversion)
+    bbFoML  <- Map(makeMOA, bbFoM,  dst=dstTargetGrp, conversion=conversionGrp)
+    bbDiagL <- Map(makeMOA, bbDiag, dst=dstTargetGrp, conversion=conversionGrp)
     res$bbFoM  <- do.call("cbind", bbFoML)
     res$bbDiag <- do.call("cbind", bbDiagL)
 
@@ -172,7 +233,7 @@ function(DF,
     ## radius of minimum enclosing circle
     minCircs    <- lapply(xyL, getMinCircle)
     minCircRad  <- lapply(minCircs, function(x) { x$rad } )     # radius
-    minCircRadL <- Map(makeMOA, minCircRad, dst=dstTarget, conversion=conversion)
+    minCircRadL <- Map(makeMOA, minCircRad, dst=dstTargetGrp, conversion=conversionGrp)
     res$minCircleRad <- do.call("cbind", minCircRadL)
 
     ## for axis limits
@@ -194,15 +255,16 @@ function(DF,
         setNames(sigMRci, c("sigma (", "sigma )", "MR (", "MR )"))
     })
 
-    sigmaL <- Map(makeMOA, sigma, dst=dstTarget, conversion=conversion)
-    MRL    <- Map(makeMOA, MR,    dst=dstTarget, conversion=conversion)
+    sigmaL <- Map(makeMOA, sigma, dst=dstTargetGrp, conversion=conversionGrp)
+    MRL    <- Map(makeMOA, MR,    dst=dstTargetGrp, conversion=conversionGrp)
     res$sigma <- do.call("cbind", sigmaL)
     res$MR    <- do.call("cbind", MRL)
-    res$sigmaMRci <- Map(makeMOA, sigMRci, dst=dstTarget, conversion=conversion)
+    res$sigmaMRci <- Map(makeMOA, sigMRci, dst=dstTargetGrp, conversion=conversionGrp)
 
     ## 50% circular error probable
-    CEPlist <- Map(getCEP, xyL, CEPlevel=CEPlevel, dstTarget=dstTarget,
-                   conversion=conversion, type=CEPtype, doRob=FALSE)
+    CEPlist <- Map(getCEP, xyL, CEPlevel=CEPlevel,
+                   dstTarget=dstTargetGrp, conversion=conversionGrp,
+                   type=CEPtype, doRob=FALSE)
     CEPl    <- lapply(CEPlist, function(x) { x$CEP[[1]][ , CEPtype, drop=FALSE] })
     CEPmat  <- do.call("cbind", CEPl)    # as matrix
     colnames(CEPmat) <- names(xyL)
@@ -246,9 +308,12 @@ function(DF,
 
     if(plots) {
         ## infer (x,y)-coord units from conversion
-        unitXY  <- getUnits(conversion, first=FALSE)
-        unitDst <- getUnits(conversion, first=TRUE)
+        unitXY  <- paste(unique(na.omit(getUnits(conversion, first=FALSE))), collapse=", ")
+        unitDst <- paste(unique(na.omit(getUnits(conversion, first=TRUE))),  collapse=", ")
         devNew  <- getDevice()           # platform-dependent window open
+
+        ## distance to target may be heterogeneous
+        dstTargetPlot <- paste(unique(round(na.omit(dstTargetGrp))), collapse=", ")
 
         #####-------------------------------------------------------------------
         ## diagram: 2D-scatter plot for the (x,y)-distribution
@@ -260,7 +325,7 @@ function(DF,
         }
 
         ## confidence ellipse
-        confElls <- Map(getConfEll, xyL, level=CEPlevel, dst=dstTarget, conversion=conversion)
+        confElls <- Map(getConfEll, xyL, level=CEPlevel, dst=dstTargetGrp, conversion=conversionGrp)
 
         ## adjust axis limits
         getConfEllLims <- function(x) {
@@ -282,7 +347,7 @@ function(DF,
         plot(y ~ x, data=DF, xlim=xLims, ylim=yLims, asp=1, lwd=2,
              pch=syms[unclass(DF$series)], col=cols[unclass(DF$series)],
              main=paste0("Groups with ", 100*CEPlevel, "% confidence ellipse", sep=""),
-             sub=paste("distance:", dstTarget, unitDst),
+             sub=paste("distance:", dstTargetPlot, unitDst),
              xlab=paste0("X [", unitXY, "]"), ylab=paste0("Y [", unitXY, "]"))
         abline(v=0, h=0, col="lightgray")  # add point of aim
 
@@ -304,7 +369,7 @@ function(DF,
         plot(y ~ x, data=DF, asp=1, xlim=xLims, ylim=yLims, lwd=2,
              pch=syms[unclass(DF$series)], col=cols[unclass(DF$series)],
              main="Groups w/ minimum bounding box & maximum spread",
-             sub=paste("distance:", dstTarget, unitDst),
+             sub=paste("distance:", dstTargetPlot, unitDst),
              xlab=paste0("X [", unitXY, "]"), ylab=paste0("Y [", unitXY, "]"))
         abline(v=0, h=0, col="lightgray")  # add point of aim
         points(res$ctr[1, ], res$ctr[2, ], col=cols[seq_len(nS)],
@@ -330,7 +395,7 @@ function(DF,
         plot(y ~ x, data=DF, asp=1, xlim=xLims, ylim=yLims, lwd=2,
              pch=syms[unclass(DF$series)], col=cols[unclass(DF$series)],
              main="Groups w/ minimum enclosing circle and mean dist to center",
-             sub=paste("distance:", dstTarget, unitDst),
+             sub=paste("distance:", dstTargetPlot, unitDst),
              xlab=paste0("X [", unitXY, "]"), ylab=paste0("Y [", unitXY, "]"))
         abline(v=0, h=0, col="lightgray")  # add point of aim
         points(res$ctr[1, ], res$ctr[2, ], col=cols[seq_len(nS)], pch=syms[seq_len(nS)],
@@ -355,7 +420,7 @@ function(DF,
         yLims <- c(0, max(dstCtrDF$dstCtr, MRDF$MRciUp))
         boxplot(dstCtr ~ series, data=dstCtrDF,
                 main="Distance to center",
-                sub=paste("distance:", dstTarget, unitDst),
+                sub=paste("distance:", dstTargetPlot, unitDst),
                 xaxt="n", col=cols, ylim=yLims,
                 xlab="group", ylab=paste0("distance to center [", unitXY, "]"))
         axis(side=1, at=seq_along(levels(dstCtrDF$series)),
@@ -366,7 +431,7 @@ function(DF,
         stripchart(dstCtr ~ series, data=dstCtrDF, pch=20, vert=TRUE,
                    method="jitter",
                    main=paste0("Dist2ctr w/ Rayleigh MR + ", 100*CIlevel, "% CI"),
-                   sub=paste("distance:", dstTarget, unitDst),
+                   sub=paste("distance:", dstTargetPlot, unitDst),
                    xaxt="n", col=adjustcolor(cols, alpha.f=0.5),
                    xlim=range(seq_along(levels(dstCtrDF$series))) + c(-0.5, 0.5),
                    ylim=yLims,
@@ -393,7 +458,7 @@ function(DF,
 
 compareGroupsPlot <-
 function(DF, which=1L, xyTopLeft=TRUE, center=FALSE,
-         CEPlevel=0.5, CIlevel=0.95, conversion="m2cm") {
+         CEPlevel=0.5, CIlevel=0.95, dstTarget, conversion) {
     if(!is.data.frame(DF)) { stop("DF must be a data frame") }
 
     which <- match.arg(as.character(which), choices=1:4)
@@ -404,12 +469,10 @@ function(DF, which=1L, xyTopLeft=TRUE, center=FALSE,
     needsSer <- "series"                 # required
     needsXY1 <- c("point.x", "point.y")  # coordinates must have this name
     needsXY2 <- c("x", "y")              # or this
-    wantsDst <- "distance"               # useful
     wantsAIM <- c("aim.x", "aim.y")      # useful
     hasSer   <- needsSer %in% varNames   # required ones we have
     hasXY1   <- needsXY1 %in% varNames   # coordinates we have
     hasXY2   <- needsXY2 %in% varNames
-    hasDst   <- wantsDst %in% varNames   # useful ones we have
     hasAIM   <- wantsAIM %in% varNames   # useful ones we have
 
     if(!all(hasSer)) {
@@ -421,19 +484,26 @@ function(DF, which=1L, xyTopLeft=TRUE, center=FALSE,
         stop("Coordinates must be named either X, Y or Point.X, Point.Y")
     }
 
-    if(!all(hasDst)) {
-        warning(c("The data frame is missing variable\n",
-                  paste(wantsDst[!hasDst], collapse=" "), "\n",
-                  "Distance is assumed to be 100"))
-        DF$distance <- 100
-    }
-
     if(!all(hasAIM)) {
         warning(c("The data frame is missing variable(s)\n",
                   paste(wantsAIM[!hasAIM], collapse=" "), "\n",
                   "Point of Aim is assumed to be in (0,0)"))
         DF$aim.x <- 0
         DF$aim.y <- 0
+    }
+
+    ## distance to target from override or from data
+    if(missing(dstTarget)) {
+        dstTarget <- if(hasName(DF, "distance")) {
+            DF[["distance"]]
+        } else {
+            NA_real_
+        }
+    }
+    
+    ## determine conversion factor from data if override is not given
+    if(missing(conversion)) {
+        conversion <- determineConversion(DF)
     }
 
     #####-----------------------------------------------------------------------
@@ -445,10 +515,26 @@ function(DF, which=1L, xyTopLeft=TRUE, center=FALSE,
         DF$series <- droplevels(DF$series) # remove all non-used factor levels
     }
 
-    ## check if we have enough groups and points per group
-    if(nlevels(DF$series) < 2L)            { stop("We need >= 2 groups for a comparison") }
-    if(any(xtabs(~ series, data=DF) < 2L)) { stop("We need >= 2 points in each group") }
-
+    ## check if we have enough groups
+    if(nlevels(DF$series) < 2L) {
+        stop("We need >= 2 groups for a comparison")
+    }
+    
+    ## check if we have enough points per group
+    cTab <- xtabs(~ series, data=DF)
+    if(any(cTab < 2L)) {
+        ## remove series with too few points
+        rem <- names(cTab[cTab < 2L])
+        idx <- DF[["series"]] %in% rem
+        DF  <- droplevels(DF[!idx, , drop=FALSE])
+        if(length(dstTarget == nrow(DF))) {
+            dstTarget <- dstTarget[!idx]
+        }
+        warning(paste0("Removed series ",
+                       paste(rem, collapse=", "),
+                       " with < 2 points per group"))
+    }
+    
     ## prepare data: get (x,y)-coords relative to point of aim as matrix
     ## for each group extract the (x,y)-coords as a matrix
     extractXY <- function(x) {
@@ -462,7 +548,38 @@ function(DF, which=1L, xyTopLeft=TRUE, center=FALSE,
     
     ## append (x,y)-coords to data frame
     DF <- cbind(DF, do.call("rbind", xyL))
-    dstTarget <- tapply(DF$distance, DF$series, mean)  # distances to target
+
+    ## distances to target per group
+    dstTargetGrp <- if(length(dstTarget) == nrow(DF)) {
+        ## check that distance is homogeneous per group
+        groupVar <- tapply(dstTarget, DF[["series"]], var)
+        if(sum(groupVar) < sqrt(.Machine$double.eps)) {
+            tapply(dstTarget, DF[["series"]], mean)
+        } else {
+            setNames(rep(NA_real_, nlevels(DF[["series"]])), levels(DF[["series"]]))
+        }
+    } else {
+        if(length(dstTarget) == 1L) {
+            setNames(rep(dstTarget, nlevels(DF[["series"]])), levels(DF[["series"]]))
+        } else {
+            setNames(rep(NA_real_, nlevels(DF[["series"]])), levels(DF[["series"]]))
+        }
+    }
+    
+    conversionGrp <- if(length(conversion) == nrow(DF)) {
+        groupConv <- tapply(conversion, DF[["series"]], function(conv) { length(unique(conv)) })
+        if(all(groupConv) == 1L) {
+            tapply(conversion, DF[["series"]], unique)
+        } else {
+            setNames(rep(NA_character_, nlevels(DF[["series"]])), levels(DF[["series"]]))
+        }
+    } else {
+        if(length(conversion) == 1L) {
+            setNames(rep(conversion, nlevels(DF[["series"]])), levels(DF[["series"]]))
+        } else {
+            setNames(rep(NA_character_, nlevels(DF[["series"]])), levels(DF[["series"]]))
+        }
+    }
     
     ## to determine axis limits later, collect all results in a vector
     axisLimsX <- numeric(0)
@@ -514,11 +631,11 @@ function(DF, which=1L, xyTopLeft=TRUE, center=FALSE,
         setNames(sigMRci, c("sigma (", "sigma )", "MR (", "MR )"))
     })
 
-    sigmaL <- Map(makeMOA, sigma, dst=dstTarget, conversion=conversion)
-    MRL    <- Map(makeMOA, MR,    dst=dstTarget, conversion=conversion)
+    sigmaL <- Map(makeMOA, sigma, dst=dstTargetGrp, conversion=conversionGrp)
+    MRL    <- Map(makeMOA, MR,    dst=dstTargetGrp, conversion=conversionGrp)
     res$sigma <- do.call("cbind", sigmaL)
     res$MR    <- do.call("cbind", MRL)
-    res$sigmaMRci <- Map(makeMOA, sigMRci, dst=dstTarget, conversion=conversion)
+    res$sigmaMRci <- Map(makeMOA, sigMRci, dst=dstTargetGrp, conversion=conversionGrp)
 
     ## distance to center, Rayleigh sigma + MR
     dstCtrGrp <- unlist(dstCtrL)           # distances to group center grouped by series
@@ -536,7 +653,7 @@ function(DF, which=1L, xyTopLeft=TRUE, center=FALSE,
                                          labels=levels(DF$series)))
 
     ## confidence ellipse
-    confElls <- Map(getConfEll, xyL, level=CEPlevel, dst=dstTarget, conversion=conversion)
+    confElls <- Map(getConfEll, xyL, level=CEPlevel, dst=dstTargetGrp, conversion=conversionGrp)
 
     ## for axis limits
     getConfEllLims <- function(x) {
@@ -550,10 +667,6 @@ function(DF, which=1L, xyTopLeft=TRUE, center=FALSE,
     axisLimsX   <- c(axisLimsX, confEllLims[ , 1])
     axisLimsY   <- c(axisLimsY, confEllLims[ , 2])
 
-    ## infer (x,y)-coord units from conversion
-    unitXY  <- getUnits(conversion, first=FALSE)
-    unitDst <- getUnits(conversion, first=TRUE)
-
     ## determine axis limits
     xLims <- range(c(DF$x, axisLimsX))
     yLims <- range(c(DF$y, axisLimsY))
@@ -565,13 +678,20 @@ function(DF, which=1L, xyTopLeft=TRUE, center=FALSE,
         stop(paste("At most", length(syms), "series possible"))
     }
 
+    ## infer (x,y)-coord units from conversion
+    unitXY  <- paste(unique(na.omit(getUnits(conversion, first=FALSE))), collapse=", ")
+    unitDst <- paste(unique(na.omit(getUnits(conversion, first=TRUE))),  collapse=", ")
+
+    ## distance to target may be heterogeneous
+    dstTargetPlot <- paste(unique(round(na.omit(dstTargetGrp))), collapse=", ")
+
     if(which == 1L) {
         #####-----------------------------------------------------------------------
         ## diagram: 2D-scatter plot for the (x,y)-distribution
         plot(y ~ x, data=DF, xlim=xLims, ylim=yLims, asp=1, lwd=2,
              pch=syms[unclass(DF$series)], col=cols[unclass(DF$series)],
              main=paste0("Groups with ", 100*CEPlevel, "% confidence ellipse", sep=""),
-             sub=paste("distance:", dstTarget, unitDst),
+             sub=paste("distance:", dstTargetPlot, unitDst),
              xlab=paste0("X [", unitXY, "]"), ylab=paste0("Y [", unitXY, "]"))
         abline(v=0, h=0, col="lightgray")  # add point of aim
 
@@ -594,7 +714,7 @@ function(DF, which=1L, xyTopLeft=TRUE, center=FALSE,
         plot(y ~ x, data=DF, asp=1, xlim=xLims, ylim=yLims, lwd=2,
              pch=syms[unclass(DF$series)], col=cols[unclass(DF$series)],
              main="Groups w/ minimum bounding box & maximum spread",
-             sub=paste("distance:", dstTarget, unitDst),
+             sub=paste("distance:", dstTargetPlot, unitDst),
              xlab=paste0("X [", unitXY, "]"), ylab=paste0("Y [", unitXY, "]"))
         abline(v=0, h=0, col="lightgray")  # add point of aim
         points(res$ctr[1, ], res$ctr[2, ], col=cols[seq_len(nS)],
@@ -621,7 +741,7 @@ function(DF, which=1L, xyTopLeft=TRUE, center=FALSE,
         plot(y ~ x, data=DF, asp=1, xlim=xLims, ylim=yLims, lwd=2,
              pch=syms[unclass(DF$series)], col=cols[unclass(DF$series)],
              main="Groups w/ minimum enclosing circle and mean dist to center",
-             sub=paste("distance:", dstTarget, unitDst),
+             sub=paste("distance:", dstTargetPlot, unitDst),
              xlab=paste0("X [", unitXY, "]"), ylab=paste0("Y [", unitXY, "]"))
         abline(v=0, h=0, col="lightgray")  # add point of aim
         points(res$ctr[1, ], res$ctr[2, ], col=cols[seq_len(nS)], pch=syms[seq_len(nS)],
@@ -646,7 +766,7 @@ function(DF, which=1L, xyTopLeft=TRUE, center=FALSE,
         yLims <- c(0, max(dstCtrDF$dstCtr, MRDF$MRciUp))
         boxplot(dstCtr ~ series, data=dstCtrDF,
                 main="Distance to center",
-                sub=paste("distance:", dstTarget, unitDst),
+                sub=paste("distance:", dstTargetPlot, unitDst),
                 xaxt="n", col=cols, ylim=yLims,
                 xlab="group", ylab=paste0("distance to center [", unitXY, "]"))
         axis(side=1, at=seq_along(levels(dstCtrDF$series)),
@@ -656,7 +776,7 @@ function(DF, which=1L, xyTopLeft=TRUE, center=FALSE,
         stripchart(dstCtr ~ series, data=dstCtrDF, pch=20, vert=TRUE,
                    method="jitter",
                    main=paste0("Dist2ctr w/ Rayleigh MR + ", 100*CIlevel, "% CI"),
-                   sub=paste("distance:", dstTarget, unitDst),
+                   sub=paste("distance:", dstTargetPlot, unitDst),
                    xaxt="n", col=adjustcolor(cols, alpha.f=0.5),
                    xlim=range(seq_along(levels(dstCtrDF$series))) + c(-0.5, 0.5),
                    ylim=yLims,

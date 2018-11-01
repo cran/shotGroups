@@ -1,94 +1,41 @@
-## return target definition including ring radii
-getTarget <-
-function(x, unit="cm", dstTarget=100, conversion="m2cm") {
-    UseMethod("getTarget")
-}
-
-getTarget.character <-
-function(x, unit="cm", dstTarget=100, conversion="m2cm") {
-    if(!(x %in% names(shotGroups::targets))) {
-        stop("Target unknown, see help(targets) for a list")
-    }
-
-    x <- shotGroups::targets[[x]]
-    NextMethod("getTarget")
-}
-
-getTarget.default <-
-function(x, unit="cm", dstTarget=100, conversion="m2cm") {
-    unit <- match.arg(unit, choices=c("cm", "mm", "m", "in", "ft", "yd",
-                                      "deg", "MOA", "SMOA", "rad", "mrad", "mil"))
-
-    ## add ring radii
-    if(!is.null(x$convert$ringW)) {
-        x$convert$ringR <- with(x$convert,
-                                c(ringD10i/2, ringD10/2,  # ring 10 with inner sub-division
-                                  (ringD10/2) + seq(ringW, ringW*(x$nRings-1), by=ringW)))
-    }
-
-    ## add ring center vertical offset if present
-    if(!is.null(x$convert$ringWV)) {
-        x$convert$ringRV <- with(x$convert,
-                                 c(ringD10Vi/2, ringD10V/2,  # ring 10 with inner sub-division
-                                   (ringD10V/2) + seq(ringWV, ringWV*(x$nRings-1), by=ringWV)))
-    }
-
-    ## infer distance unit from conversion
-    unitDst <- getUnits(conversion, first=TRUE)  # unit for distance
-
-    ## convert all available measurements (ring width and radii, etc.)
-    x$unitConv <- unit                           # add unit converted to
-    x$inUnit <- if(unit %in% c("deg", "MOA", "SMOA", "rad", "mrad", "mil"))  {  # angular size
-        ringConv <- with(x, paste0(unitDst, "2", unitTarget))
-        with(x, Map(getMOA, convert, conversion=ringConv,
-                    dst=dstTarget, type=unit))
-    } else {                                     # absolute size
-        ringConv <- with(x, getConvFac(paste0(unitTarget, "2", unit)))
-        with(x, Map(function(y, rc) { rc*y }, y=convert, rc=ringConv))
-    }
-
-    x                                    # return selected target
-}
-
+#####-----------------------------------------------------------------------
 ## draw a target
 drawTarget <-
-function(x, unit="cm", dstTarget=100, conversion="m2cm", add=FALSE, cex=par("cex")) {
-    unit <- match.arg(unit, choices=c("cm", "mm", "m", "in", "ft", "yd",
-                                      "deg", "MOA", "SMOA", "rad", "mrad", "mil"))
+function(x, unit, dstTarget, conversion, add=FALSE, cex=par("cex")) {
+    if(missing(unit)) {
+        unit <- NA_real_
+    }
 
-    ## get chosen target including measures converted to unit
-    target <- getTarget(x, unit=unit, dstTarget=dstTarget, conversion=conversion)
+    if(missing(dstTarget)) {
+        dstTarget <- NA_real_
+    }
+    
+    if(missing(conversion)) {
+        conversion <- NA_character_
+    }
+
+    ## get chosen target definition in desired unit
+    trgt <- getTarget(x, unit=unit, dstTarget=dstTarget, conversion=conversion)
+    if(hasName(trgt, "failed")) {
+        warning("Could not calculate ring radii in desired unit")
+        return(invisible(NULL))
+    }
 
     ## open plot or add to existing plot?
     if(!add) {
-        if(!is.null(target$inUnit$ringR)) {
-            xLims <- with(target$inUnit, range(c(-ringR, ringR)))
-            yLims <- if(!is.null(target$inUnit$ringRV)) {
-                with(target$inUnit, range(c(-ringRV, ringRV)))
-            } else {
-                with(target$inUnit, range(c(-ringR, ringR)))
-            }
-        } else if(!is.null(target$inUnit$ringD8)) {
-            xLims <- with(target$inUnit, range(c(-ringD8/2,  ringD8/2)))
-            yLims <- with(target$inUnit, range(c(-ringD8V/2, ringD8V/2)))
-        } else {
-            warning("Cannot determine plot limits")
-            xLims <- c(-1, 1)
-            yLims <- c(-1, 1)
-        }
-
-        plot(0, 0, type="n", xlim=xLims, ylim=yLims, xlab=NA, ylab=NA, asp=1)
+        plot(0, 0, type="n", xlim=trgt[["xLims"]], ylim=trgt[["yLims"]],
+             xlab=NA, ylab=NA, asp=1)
     }                                    # if(add)
 
     ## do we need a special drawing function?
-    if(!is.null(target$draw)) {
-        fun <- eval(target$draw)
-        fun(target, cex=cex)
+    fun <- if(hasName(trgt, "draw_fun")) {
+        eval(trgt[["draw_fun"]])
     } else {
-        drawTarget_default(target, cex=cex)
+        drawTarget_default
     }
 
-    return(invisible(target))
+    fun(trgt, cex=cex)
+    return(invisible(trgt))
 }
 
 ## draw a target
@@ -98,7 +45,7 @@ function(x, cex=par("cex")) {
     with(x$inUnit, symbols(rep(0, length(ringR)), rep(0, length(ringR)), add=TRUE,
                            circles=rev(ringR), bg=rev(x$cols), fg=rev(x$colsTxt),
                            inches=FALSE))
-     # abline(v=0, h=0, col="lightgray")    # add point of aim
+    # abline(v=0, h=0, col="lightgray")    # add point of aim
 
     ## add ring numbers except for bullseye (ring number maxVal)
     ## bullseye has inner sub-division -> start numbers on ring 3
@@ -112,6 +59,140 @@ function(x, cex=par("cex")) {
     text(pos2, 0, cex=cex, label=rings2, col=cols2)
     text(0, pos2, cex=cex, label=rings2, col=cols2)
 }
+
+#####-----------------------------------------------------------------------
+## draw extra targets
+drawTarget_x <- function(x, cex=par("cex")) {
+    ## color definitions
+    ## background (fill)
+    colors_poly_BG     <- c(b ="#999999", g ="#cccccc", w ="#ffffff",
+                            bl="#ffffff", gl="#cccccc", wl="#ffffff")
+    colors_poly_top_BG <- c(b ="#999999", g ="#cccccc", w ="#ffffff",
+                            bl="#ffffff", gl="#cccccc", wl="#ffffff00")
+    colors_rings_BG    <- c(b ="#999999",               w ="#ffffff",
+                            bl="#ffffff00", gl="#ffffff00")
+    colors_txt         <- c(bl="#999999", gl="#cccccc", wl="#ffffff")
+    ## foreground (border)
+    colors_poly_FG     <- c(b ="#999999", g ="#999999", w ="#999999",
+                            bl="#999999", gl="#cccccc", wl="#ffffff")
+    colors_poly_top_FG <- c(b ="#999999", g ="#999999", w ="#999999",
+                            bl="#999999", gl="#cccccc", wl="#ffffff")
+    colors_rings_FG    <- c(b ="#cccccc",               w ="#999999",
+                            bl="#999999", gl="#cccccc")
+    ## all R colors
+    colorsAll <- colors()
+
+    ## do the actual drawing
+    ## start with empty plot, add board
+    # plot(0, 0, type="n", xlim=x[["xLims"]], ylim=x[["yLims"]], xlab=NA, ylab=NA, asp=1)
+    rect(x[["xLims"]][1], x[["yLims"]][1],
+         x[["xLims"]][2], x[["yLims"]][2], col=colorsAll[396], border=NA)
+
+    # ## rings without fill
+    # if(hasName(face, "rings")) {
+    #     symbols(rev(rings[["x"]]), rev(rings[["y"]]), add=TRUE,
+    #             circles=rev(rings[["diam"]]/2),
+    #             bg=NULL,
+    #             fg=colors_rings_FG[rev(rings[["color"]])],
+    #             inches=FALSE)
+    # }
+
+    ## polygon
+    if(hasName(x, "polyL")) {
+        drawPoly <- function(p) {
+            polygon(p[["points"]][["x"]], p[["points"]][["y"]],
+                    col   =colors_poly_BG[p[["color"]]],
+                    border=colors_poly_FG[p[["color"]]])
+        }
+        lapply(rev(x[["polyL"]]), drawPoly)
+    }
+
+    ## rings
+    if(hasName(x, "rings")) {
+        rings <- x[["rings"]]
+        symbols(rev(rings[["x"]]), rev(rings[["y"]]), add=TRUE,
+                circles=rev(rings[["diam"]]/2),
+                bg=colors_rings_BG[rev(rings[["color"]])],
+                fg=colors_rings_FG[rev(rings[["color"]])],
+                inches=FALSE)
+    }
+    
+    ## polygon without fill
+    if(hasName(x, "polyL")) {
+        drawPoly <- function(p) {
+            polygon(p[["points"]][["x"]], p[["points"]][["y"]],
+                    col   =NULL,
+                    border=colors_poly_FG[p[["color"]]])
+        }
+        lapply(rev(x[["polyL"]]), drawPoly)
+    }
+    
+    ## polygon_top
+    if(hasName(x, "poly_topL")) {
+        drawPoly <- function(p) {
+            polygon(p[["points"]][["x"]], p[["points"]][["y"]],
+                    col   =colors_poly_top_BG[p[["color"]]],
+                    border=colors_poly_top_FG[p[["color"]]])
+        }
+        lapply(rev(x[["poly_topL"]]), drawPoly)
+    }
+
+    ## rings_top
+    if(hasName(x, "rings_top")) {
+        rings_top <- x[["rings_top"]]
+        symbols(rev(rings_top[["x"]]), rev(rings_top[["y"]]), add=TRUE,
+                circles=rev(rings_top[["diam"]]/2),
+                bg=colors_rings_BG[rev(rings_top[["color"]])],
+                fg=colors_rings_FG[rev(rings_top[["color"]])],
+                inches=FALSE)
+    }
+
+    # ## finally rings_top without fill
+    # if(hasName(x, "rings_top")) {
+    #     symbols(rev(rings_top[["x"]]), rev(rings_top[["y"]]), add=TRUE,
+    #             circles=rev(rings_top[["diam"]]/2),
+    #             bg=NULL,
+    #             fg=colors_rings_FG[rev(rings_top[["color"]])],
+    #             inches=FALSE)
+    # }
+
+    ## text last
+    if(hasName(x, "txt")) {
+        txt <- x[["txt"]]
+        if(hasName(txt, "angle")) {
+            txtSpl <- split(txt, txt[["angle"]])
+            lapply(txtSpl, function(y) {
+                text(y[["x"]], y[["y"]],
+                     labels=y[["text"]],
+                     srt=-y[["angle"]][1],
+                     adj=c(0.5, 0.5),
+                     cex=cex,
+                     col=colors_txt[y[["color"]]])
+            })
+        } else {
+            text(txt[["x"]], txt[["y"]],
+                 labels=txt[["text"]],
+                 adj=c(0.5, 0.5),
+                 cex=cex,
+                 col=colors_txt[txt[["color"]]])
+        }
+    }
+    
+    return(invisible(NULL))
+}
+
+## f <- readRDS("../target_defs/targets_add.rda")
+## idx_poly      <- which(vapply(f, function(x) { hasName(x, "polyL")     }, logical(1)))
+## idx_poly_top  <- which(vapply(f, function(x) { hasName(x, "poly_topL") }, logical(1)))
+## idx_rings_top <- which(vapply(f, function(x) { hasName(x, "rings_top") }, logical(1)))
+
+## incorrect
+## LoadDev
+## NOR500UNL
+
+## shotGroups:::drawTarget("x_LoadDev", unit="cm")
+## shotGroups:::drawTarget("x_NOR500UNL", unit="cm")
+## shotGroups:::drawTarget("x_IBS100BR", unit="cm")
 
 #####-----------------------------------------------------------------------
 ## ISSF special targets
@@ -214,9 +295,145 @@ function(x, cex=par("cex")) {
     cols1  <- with(x$inUnit, x$colsTxt[2:length(ringR)])     # right side of center
     cols2  <- c(rev(cols1[outPos]), cols1[outPos])           # both sides
 
-    text(pos2, 0,      cex=cex, label=rings2,      col=cols2)
+    text(pos2, 0,      cex=cex, label=rings2,           col=cols2)
     text(0, pos1[1:2], cex=cex, label=rev(rings1)[1:2], col=cols1[1:2])
     text(0, 0, cex=cex, label="X", col=cols1[1])
+}
+
+drawTarget_NRA_MR63 <-
+function(x, cex=par("cex")) {
+    ## outer frame
+    with(x$inUnit, rect(-frame, -frame, frame, frame, col=x$colsTxt[1], border=NA))
+    ## draw circles first, start from the outside
+    with(x$inUnit, symbols(rep(0, length(ringR)), rep(0, length(ringR)), add=TRUE,
+                           circles=rev(ringR), bg=rev(x$cols), fg=rev(x$colsTxt),
+                           inches=FALSE))
+    # abline(v=0, h=0, col="lightgray")    # add point of aim
+        
+    ## add ring numbers except for bullseye (ring number maxVal)
+    ## bullseye has inner sub-division -> start numbers on ring 2
+    rings1 <- with(x, seq(from=maxVal, to=maxVal-nRings+1, length.out=nRings)) # top of center
+    pos1   <- with(x$inUnit,
+                   c(ringR[2           :(2+x$nSmall-1)] - (ringW/2),
+                     ringR[(2+x$nSmall):length(ringR)]  - (ringWL/2))) # top of center
+    cols1  <- with(x$inUnit, x$colsTxt[2:length(ringR)])         # top of center
+    
+    text(pos1, 0, cex=cex, label=rings1, col=cols1)
+    text(0,    0, cex=cex, label="X",    col=cols1[1])
+}
+
+drawTarget_NRA_MR1 <-
+function(x, cex=par("cex")) {
+    ## outer frame
+    with(x$inUnit, rect(-frame, -frame, frame, frame, col=x$colsTxt[1], border=NA))
+    ## draw circles first, start from the outside
+    with(x$inUnit, symbols(rep(0, length(ringR)), rep(0, length(ringR)), add=TRUE,
+                           circles=rev(ringR), bg=rev(x$cols), fg=rev(x$colsTxt),
+                           inches=FALSE))
+    # abline(v=0, h=0, col="lightgray")    # add point of aim
+    
+    ## add ring numbers except for bullseye (ring number maxVal)
+    ## bullseye has inner sub-division -> start numbers on ring 2
+    rings1 <- with(x, seq(from=maxVal, to=maxVal-nRings+1, length.out=nRings)) # top of center
+    pos1   <- with(x$inUnit,
+                   c(ringR[2           :(2+x$nSmall-1)] - (ringW/2),
+                     ringR[(2+x$nSmall):length(ringR)]  - (ringWL/2))) # top of center
+    cols1  <- with(x$inUnit, x$colsTxt[2:length(ringR)])         # top of center
+
+    text(0, pos1, cex=cex, label=rings1, col=cols1)
+    text(0, 0,    cex=cex, label="X",    col=cols1[1])
+}
+
+drawTarget_NRA_MR1FC <-
+function(x, cex=par("cex")) {
+    ## outer frame
+    with(x$inUnit, rect(-frame, -frame, frame, frame, col=x$colsTxt[1], border=NA))
+    ## draw circles first, start from the outside
+    with(x$inUnit, symbols(rep(0, length(ringR)), rep(0, length(ringR)), add=TRUE,
+                           circles=rev(ringR), bg=rev(x$cols), fg=rev(x$colsTxt),
+                           inches=FALSE))
+    # abline(v=0, h=0, col="lightgray")    # add point of aim
+        
+    ## add ring numbers except for bullseye (ring number maxVal)
+    ## bullseye has inner sub-division -> start numbers on ring 2
+    rings1 <- with(x, seq(from=maxVal-nRings+1, to=maxVal, length.out=nRings)) # left side of center
+    rings2 <- c(rings1, rev(rings1))                                           # both sides
+    pos1   <- with(x$inUnit,
+                   c(ringR[2]                           - (ringW/4),
+                     ringR[3           :(2+x$nSmall-1)] - (ringW/2),
+                     ringR[(2+x$nSmall):length(ringR)]  - (ringWL/2))) # top of center
+    pos2   <- c(-rev(pos1), pos1)                                              # both sides
+    cols1  <- with(x$inUnit, x$colsTxt[2:length(ringR)])                       # left side of center
+    cols2  <- c(rev(cols1), cols1)                                             # both sides
+    
+    angX  <- 45*pi/180
+    posLU <- cbind(pos1[5], 0) %*% with(x, cbind(c(cos(5*angX), sin(5*angX)), c(-sin(5*angX), cos(5*angX))))
+    posRU <- cbind(pos1[5], 0) %*% with(x, cbind(c(cos(7*angX), sin(7*angX)), c(-sin(7*angX), cos(7*angX))))
+    text(posLU[ , 1], posLU[ , 2], cex=cex, label="F", col=cols1[1])
+    text(posRU[ , 1], posRU[ , 2], cex=cex, label="F", col=cols1[1])
+
+    text(pos2, 0, cex=x$cexMagFac*cex, label=rings2, col=cols2)
+    text(0,    0, cex=x$cexMagFac*cex, label="X",    col=cols1[1])
+}
+
+drawTarget_NRA_LRFC <-
+function(x, cex=par("cex")) {
+    ## outer frame
+    with(x$inUnit, rect(-frame, -frame, frame, frame, col=x$colsTxt[1], border=NA))
+    ## draw circles first, start from the outside
+    with(x$inUnit, symbols(rep(0, length(ringR)), rep(0, length(ringR)), add=TRUE,
+                           circles=rev(ringR), bg=rev(x$cols), fg=rev(x$colsTxt),
+                           inches=FALSE))
+    # abline(v=0, h=0, col="lightgray")    # add point of aim
+        
+    ## add ring numbers except for bullseye (ring number maxVal)
+    ## bullseye has inner sub-division -> start numbers on ring 3
+    rings1 <- with(x, seq(from=maxVal-nRings+1, to=maxVal, length.out=nRings)) # left side of center
+    rings2 <- c(rings1, rev(rings1))                                           # both sides
+    pos1   <- with(x$inUnit,
+                   c(ringR[2]                                    - (ringW/4),
+                     ringR[3           :(2+x$nSmall-1)]          - (ringW/2),
+                     ringR[(2+x$nSmall):(2+x$nSmall+x$nLarge-1)] - (ringWL/2), # top of center
+                     ringR[(2+x$nSmall+x$nLarge):length(ringR)]  - (ringWLL/2))) # top of center
+    pos2   <- c(-rev(pos1), pos1)                                              # both sides
+    cols1  <- with(x$inUnit, x$colsTxt[2:length(ringR)])                       # left side of center
+    cols2  <- c(rev(cols1), cols1)                                             # both sides
+    
+    angX  <- 45*pi/180
+    posLU <- cbind(pos1[4], 0) %*% with(x, cbind(c(cos(5*angX), sin(5*angX)), c(-sin(5*angX), cos(5*angX))))
+    posRU <- cbind(pos1[4], 0) %*% with(x, cbind(c(cos(7*angX), sin(7*angX)), c(-sin(7*angX), cos(7*angX))))
+    text(posLU[ , 1], posLU[ , 2], cex=cex, label="F", col=cols1[1])
+    text(posRU[ , 1], posRU[ , 2], cex=cex, label="F", col=cols1[1])
+    
+    text(pos2, 0, cex=cex, label=rings2, col=cols2)
+    text(0,    0, cex=cex, label="X",    col=cols1[1])
+}
+
+drawTarget_NRA_MR65FC <-
+function(x, cex=par("cex")) {
+    ## outer frame
+    with(x$inUnit, rect(-frame, -frame, frame, frame, col=x$colsTxt[1], border=NA))
+    ## draw circles first, start from the outside
+    with(x$inUnit, symbols(rep(0, length(ringR)), rep(0, length(ringR)), add=TRUE,
+                           circles=rev(ringR), bg=rev(x$cols), fg=rev(x$colsTxt),
+                           inches=FALSE))
+    # abline(v=0, h=0, col="lightgray")    # add point of aim
+    
+    ## add ring numbers except for bullseye (ring number maxVal)
+    ## bullseye has inner sub-division -> start numbers on ring 3
+    rings1 <- with(x, seq(from=maxVal-nRings+1, to=maxVal, length.out=nRings)) # left side of center
+    pos1   <- with(x$inUnit, c(ringR[2]               - (ringW/4),
+                               ringR[3:length(ringR)] - (ringW/2))) # right side of center
+    cols1  <- with(x$inUnit, x$colsTxt[2:length(ringR)])                       # left side of center
+
+    angX  <- 45*pi/180
+    posLU <- cbind(pos1[4], 0) %*% with(x, cbind(c(cos(5*angX), sin(5*angX)), c(-sin(5*angX), cos(5*angX))))
+    posRU <- cbind(pos1[4], 0) %*% with(x, cbind(c(cos(7*angX), sin(7*angX)), c(-sin(7*angX), cos(7*angX))))
+    text(posLU[ , 1], posLU[ , 2], cex=cex, label="F", col=cols1[1])
+    text(posRU[ , 1], posRU[ , 2], cex=cex, label="F", col=cols1[1])
+    
+    text(0, pos1, cex=cex, label=rev(rings1), col=cols1)
+    text(0,    0, cex=cex, label="X",         col=cols1[1])
 }
 
 #####-----------------------------------------------------------------------

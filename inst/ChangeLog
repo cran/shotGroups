@@ -1,6 +1,50 @@
-$Date: 2017-01-18 15:57:29 +0000 (Wed, 18 Jan 2017) $
+$Date: 2018-11-01 14:58:29 +0000 (Thu, 01 Nov 2018) $
 
 SHOTGROUPS RELEASE VERSIONS at http://cran.r-project.org/
+
+Version 0.7.4 (November 01, 2018)
+    * targets, drawTarget()
+      - new NRA targets MR-1, MR-1FC, MR-63, MR-63FC, MR-65, MR-65FC, LRFC
+    * runGUI()
+      - The shiny apps automatically pick up information on distance to
+        target, on measurement units, and on the target face from the
+        data, if this information is available and uniquely defined for
+        the currently selected groups
+    * readDataShotMarker()
+      - new function to read CSV files as well as backup files exported
+        from the ShotMarker e-target system
+        thanks: Adam MacDonald
+    * readDataSMT()
+      - new function to read CSV files exported from the
+        Silver Mountain e-target system
+        thanks: Monte Milanuk
+    * readDataOT1(), readDataOT2(), readDataMisc()
+      - add options dist.unit and point.unit to define measurement
+        units for distance to target as well as for point coordinates
+    * getRangeStat()
+      - new function to return range statistics for a given group
+        (extreme spread, figure of merit, bounding box diagonal)
+    * range2CEP()
+      - new function to estimate Rayleigh CEP from range statistics
+    * pRangeStat(), qRangeStat(), rRangeStat()
+      - new functions for the approximate cumulative distribution
+        function, quantile function and random deviates of range
+        statistics (extreme spread, figure of merit, bounding box
+        diagonal), given a circular bivariate normal shot distribution
+    * groupLocation(), groupSpread(), analyzeGroup()
+      - change default to bootCI="none"
+    * compareGroups()
+      - remove groups with only 1 shot instead of failing
+    * analyzeGroup(), groupShape(), groupLocation(), groupSpread(),
+      compareGroups(), drawGroup(), drawTarget(), getCEP(),
+      getConvEll(), range2sigma(), getHitProb()
+      - remove defaults for options dstTarget and conversion to make
+        these act as overrides only. The intention is to use information
+        stored in the shot data, if available. If angular size cannot
+        be determined, it is dropped from the output
+    * getMOA(), fromMOA(), getDistance()
+      - remove defaults for options dst and conversion. Return NA if
+        options are missing and angular size cannot be determined
 
 Version 0.7.3 (January 18, 2017)
     * DFlandy01, DFlandy02, DFlandy03, DFlandy04

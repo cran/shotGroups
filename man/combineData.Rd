@@ -10,7 +10,7 @@
 \value{
 A data frame with the shared set of variables. In addition, it also contains factors identifying the original file (\code{file}), and a factor identifying all groups from different data frames (\code{series}).
 \item{\ldots}{the shared set of variables from the the data frames in the list.}
-\item{group}{a factor that is the original \code{Group} variable as defined by OnTarget PC/TDS.}
+\item{group}{a factor that is the original \code{group} variable as defined by OnTarget PC/TDS.}
 \item{groupVerb}{a factor that codes group with more descriptive levels taken from the original project title, file name and ammunition (if available).}
 \item{file}{a factor that codes from which original file the data is.}
 \item{series}{a factor that codes each separate group across original files.}

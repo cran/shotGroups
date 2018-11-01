@@ -1,6 +1,8 @@
 source("helper.R")
 
-shinyServer(function(input, output) {
+shinyServer(function(input, output, session) {
+    session$onSessionEnded(stopApp)
+    
     #####---------------------------------------------------------------------------
     ## distance to target, unit distance, unit xy-coords - UI element
     #####---------------------------------------------------------------------------

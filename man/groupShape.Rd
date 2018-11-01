@@ -5,21 +5,21 @@
 \title{Shape analysis for a single group of bullet holes}
 \description{Assesses shape of a single group of bullet holes: Outlier analysis as well as numerical and graphical normality checks for a set of (x,y)-coordinates.}
 \usage{groupShape(xy, center = FALSE, plots = TRUE, bandW = 0.5,
-           outlier = c('mcd', 'pca'), dstTarget = 100, conversion = 'm2cm', ...)
+           outlier = c('mcd', 'pca'), dstTarget, conversion, ...)
 
 \method{groupShape}{data.frame}(xy, center = FALSE, plots = TRUE, bandW = 0.5,
-           outlier=c('mcd', 'pca'), dstTarget = 100, conversion = 'm2cm', ...)
+           outlier=c('mcd', 'pca'), dstTarget, conversion, ...)
 
 \method{groupShape}{default}(xy, center = FALSE, plots = TRUE, bandW = 0.5,
-           outlier=c('mcd', 'pca'), dstTarget = 100, conversion = 'm2cm', ...)}
+           outlier=c('mcd', 'pca'), dstTarget, conversion, ...)}
 \arguments{
   \item{xy}{either a numerical (n x 2)-matrix with the (x,y)-coordinates of n points (1 row of coordinates per point), or a data frame with either the variables \code{x}, \code{y} or \code{point.x}, \code{point.y} as well as \code{aim.x}, \code{aim.y} giving the point of aim. If missing, point of aim is assumed to be in (0,0).}
   \item{center}{logical: center groups to mean (0,0) first? If variable \code{series} does not exist, all shots are treated as belonging to the same group. Only available in method \code{groupShape.data.frame()}.}
   \item{plots}{logical: show diagrams?}
   \item{bandW}{for argument \code{bandwith} of \code{\link[graphics]{smoothScatter}}.}
   \item{outlier}{method for outlier identification: \code{mcd} uses robust Mahalanobis distances (see \code{\link[mvoutlier]{aq.plot}}), \code{pca} uses robust principal components analysis (see \code{\link[mvoutlier]{pcout}}). Requires installing package \code{mvoutlier}.}
-  \item{dstTarget}{a numerical value giving the distance to the target - used in MOA calculation. See \code{\link[shotGroups]{getMOA}}.}
-  \item{conversion}{how to convert the measurement unit for distance to target to that of the (x,y)-coordinates - used in MOA calculation. See \code{\link[shotGroups]{getMOA}}.}
+  \item{dstTarget}{a numerical value giving the distance to the target - used in MOA calculation. Acts as override if variable \code{distance} is already included in \code{xy}. See \code{\link[shotGroups]{getMOA}}.}
+  \item{conversion}{how to convert the measurement unit for distance to target to that of the (x,y)-coordinates in MOA calculation. Acts as override if variables \code{dist.unit} and \code{point.unit} are already included in \code{xy}. Example \code{'m2cm'}. See \code{\link[shotGroups]{getMOA}}.}
   \item{...}{additional arguments passed to \code{\link[mvoutlier]{pcout}} with \code{outlier='pca'} - final sensitivity can be adjusted with option \code{outbound}, a sensible candidate value seems to be around 0.45.}
 }
 \details{

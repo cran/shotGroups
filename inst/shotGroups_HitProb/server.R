@@ -1,6 +1,8 @@
 source("helper.R")
 
-shinyServer(function(input, output) {
+shinyServer(function(input, output, session) {
+    session$onSessionEnded(stopApp)
+    
     #####-----------------------------------------------------------------------
     ## provide the data - reactive conductor
     #####-----------------------------------------------------------------------
@@ -23,7 +25,11 @@ shinyServer(function(input, output) {
                         readDataOT1(fPath=dirname(fPath),  fNames=basename(fPath))
                     } else if(input$fileType == '2') {   ## OnTarget 2.*, 3.*
                         readDataOT2(fPath=dirname(fPath),  fNames=basename(fPath))
-                    } else if(input$fileType == '3') {   ## other
+                    } else if(input$fileType == '3') {   ## Silver Mountain e-target
+                        readDataSMT(fPath=dirname(fPath),  fNames=basename(fPath))
+                    } else if(input$fileType == '4') {   ## ShotMarker e-target
+                        readDataShotMarker(fPath=dirname(fPath),  fNames=basename(fPath))
+                    } else if(input$fileType == '5') {   ## other
                         readDataMisc(fPath=dirname(fPath), fNames=basename(fPath))
                     }
                 } else {
@@ -37,13 +43,36 @@ shinyServer(function(input, output) {
                     readDataOT1(dirname(fPath),  fNames=basename(fPath))
                 } else if(input$fileType == '2') {   ## OnTarget 2.*, 3.*
                     readDataOT2(dirname(fPath),  fNames=basename(fPath))
-                } else if(input$fileType == '3') {   ## other
+                } else if(input$fileType == '3') {   ## Silver Mountain e-target
+                    readDataSMT(dirname(fPath),  fNames=basename(fPath))
+                } else if(input$fileType == '4') {   ## ShotMarker e-target
+                    readDataShotMarker(dirname(fPath),  fNames=basename(fPath))
+                } else if(input$fileType == '5') {   ## other
                     readDataMisc(dirname(fPath), fNames=basename(fPath))
                 }
             } else {
                 NULL
             }
         })
+    })
+
+    getXYsub <- reactive({
+        xy <- coords()
+        if(!is.null(coords)) {
+            ## limit xy to currently selected groups such that distance
+            ## adapts automatically
+            groupSel <- if(input$task == '<div>\n  Hit probability\n  <i class=\"glyphicon glyphicon-arrow-right\"></i>\n  region\n</div>') {
+                getGroups(xy)[input$hitpGroupSel1]
+            } else if(input$task == '<div>\n  Region\n  <i class=\"glyphicon glyphicon-arrow-right\"></i>\n  hit probability\n</div>') {
+                getGroups(xy)[input$hitpGroupSel2]
+            } else {
+                getGroups(xy)
+            }
+            
+            xySub <- xy[xy$series %in% groupSel , , drop=FALSE]
+        } else {
+            NULL
+        }
     })
 
     #####---------------------------------------------------------------------------
@@ -53,11 +82,23 @@ shinyServer(function(input, output) {
     output$fileInfo <- renderUI({
         xy <- coords()
         dstTrgt <- if(!is.null(xy$distance) && !all(is.na(xy$distance))) {
-            xy$distance[1]
+            paste(round(sort(unique(xy$distance))), collapse=", ")
         } else {
             "not available"
         }
-
+        
+        unit_distance <- if(!is.null(xy$distance.unit)) {
+            paste(unique(xy$distance.unit), collapse=", ")
+        } else {
+            NULL
+        }
+        
+        unit_xy <- if(!is.null(xy$point.unit)) {
+            paste(unique(xy$point.unit), collapse=", ")
+        } else {
+            NULL
+        }
+        
         nGroups <- if(!is.null(xy$series) && !all(is.na(xy$series))) {
             nlevels(xy$series)
         } else {
@@ -90,6 +131,8 @@ shinyServer(function(input, output) {
 
             y <- paste0(x, "Number of shots: ", nrow(xy),
                    "<br />Distance to target ", dstTrgt,
+                   ifelse(!is.null(unit_distance), paste0(" [", unit_distance, "]"), ""),
+                   ifelse(!is.null(unit_xy), "<br />Measurement unit coordinates: ", ""), unit_xy,
                    "<br />Number of groups: ", nGroups,
                    ifelse(!is.null(comment), "<br />Additional information: ", ""), comment,
                    ifelse(!is.null(ammo),    "<br />Ammunition: ", ""), ammo, "</p>")
@@ -132,7 +175,9 @@ shinyServer(function(input, output) {
 
     fileName <- reactive({
         xy <- coords()
-        ammo <- if(!is.null(xy$ammunition) && !all(is.na(xy$ammunition)) && !all(xy$ammunition == "")) {
+        ammo <- if(!is.null(xy$ammunition)    &&
+                   !all(is.na(xy$ammunition)) &&
+                   !all(xy$ammunition == "")) {
             paste(unique(xy$ammunition), collapse=", ")
         } else {
             NULL
@@ -159,26 +204,107 @@ shinyServer(function(input, output) {
     ## distance to target, unit distance, unit xy-coords - UI element
     #####---------------------------------------------------------------------------
 
-    output$unitDstXY <- renderUI({
-        xy <- coords()
-        dstTarget <- if(!is.null(xy$distance) && !all(is.na(xy$distance)) &&
-                        !all(xy$distance == "")) {
-            ## distance to target is given in input data
-            xy$distance[1]
-        } else {
-            ## default distance to target
-            100
+    dst_current <- reactiveValues(d=-1)
+    setCurrentDst <- reactive({
+        xySub <- getXYsub()
+        if(!is.null(xySub) && hasName(xySub, "distance")) {
+            if(length(unique(xySub$distance)) == 1L) {
+                ## distance to target is given in input data and unique
+                dst_old <- dst_current$d
+                dst_new <- round(unique(xySub$distance))
+                if(is.na(dst_old) || (dst_old != dst_new)) {
+                    dst_current$d <- dst_new
+                }
+            } else {
+                # browser()
+                dst_current$d <- -1
+            }
         }
-
-        ## dst to target, unit dst, unit xy
-        inputPanel(numericInput("dstTrgt", h5("Distance to target"),
-                                min=0, step=1, value=dstTarget),
-                   selectInput("unitDst", h5("Measurement unit distance"),
-                               choices=unitsDst, selected=2),
-                   selectInput("unitXY", h5("Measurement unit coordinates"),
-                               choices=unitsXY, selected=3))
     })
-
+    
+    observeEvent(input$task, { setCurrentDst() })
+    observeEvent(input$hitpGroupSel1, {
+        if(input$task == '<div>\n  Hit probability\n  <i class=\"glyphicon glyphicon-arrow-right\"></i>\n  region\n</div>') {
+            setCurrentDst() } })
+    
+    observeEvent(input$hitpGroupSel2, {
+        if(input$task == '<div>\n  Region\n  <i class=\"glyphicon glyphicon-arrow-right\"></i>\n  hit probability\n</div>') {
+            setCurrentDst() } })
+    
+    getUnitDstXY <- reactive({
+        dst_current$d
+        input$applyData
+        
+        ## isolate against changes in input$task
+        ## only needs to change when new data is applied
+        ## or when distance to target changes
+        isolate({
+            xySub <- getXYsub()
+            if(!is.null(xySub)) {
+                dstTarget <- if(hasName(xySub, "distance") &&
+                                (length(unique(xySub$distance)) == 1L)) {
+                    ## distance to target is given in input data and unique
+                    round(unique(xySub$distance))
+                } else {
+                    ## default distance to target
+                    NA_real_
+                }
+                
+                unitDst <- if(hasName(xySub, "distance.unit") &&
+                              (length(unique(xySub$distance.unit)) == 1L)) {
+                    unit <- unique(xySub$distance.unit)
+                    if(unit == "(unknown)") {
+                        NA_character_
+                    } else if(unit == "m") {
+                        2
+                    } else if(unit %in% c("y", "yd", "yard")) {
+                        3
+                    } else if(unit %in% c("f", "ft", "feet", "foot")) {
+                        4
+                    } else {
+                        NA_character_
+                    }
+                } else {
+                    NA_character_
+                }
+                
+                unitXY <- if(hasName(xySub, "point.unit") &&
+                             (length(unique(xySub$point.unit)) == 1L)) {
+                    unit <- unique(xySub$point.unit)
+                    if(unit == "(unknown)") {
+                        NA_character_
+                    } else if(unit == "cm") {
+                        2
+                    } else if(unit == "mm") {
+                        3
+                    } else if(unit %in% c("in", "inch")) {
+                        4
+                    }
+                } else {
+                    NA_character_
+                }
+                
+                list(dstTarget=dstTarget, unitDst=unitDst, unitXY=unitXY)
+            } else {
+                NULL
+            }
+        })
+    })
+    
+    output$unitDstXY <- renderUI({
+        unitDstXY <- getUnitDstXY()
+        if(!is.null(unitDstXY)) {
+            dst_current$d <- unitDstXY$dstTarget
+            ## dst to target, unit dst, unit xy
+            inputPanel(numericInput("dstTrgt", h5("Distance to target"),
+                                    min=0, step=1, value=unitDstXY$dstTarget),
+                       selectInput("unitDst", h5("Measurement unit distance"),
+                                   choices=unitsDst, selected=unitDstXY$unitDst),
+                       selectInput("unitXY", h5("Measurement unit coordinates"),
+                                   choices=unitsXY, selected=unitDstXY$unitXY))
+        }
+    })
+    
     #####---------------------------------------------------------------------------
     ## string for conversion argument - unit distance to unit xy-coords
     ## reactive conductor
@@ -201,7 +327,7 @@ shinyServer(function(input, output) {
             checkboxGroupInput("hitpGroupSel1",
                                label=h5("Select groups"),
                                choices=choices,
-                               selected=seq_along(choices))
+                               selected=seq_len(min(length(choices), 2L)))
         } else {
             NULL
         }
@@ -209,11 +335,8 @@ shinyServer(function(input, output) {
 
     ## CEP output list - reactive conductor
     CEPListRadius <- reactive({
-        xy <- coords()
-        if(!is.null(xy)) {
-            groupSel <- getGroups(xy)[input$hitpGroupSel1]
-            xySub    <- xy[xy$series %in% groupSel , , drop=FALSE]
-
+        xySub <- getXYsub()
+        if(!is.null(xySub)) {
             ## if no CEP type is selected -> fall back to default CorrNormal
             CEPtype <- if(!is.null(input$hitpCEPtype1)) {
                 CEPtypesInv[input$hitpCEPtype1]
@@ -238,10 +361,8 @@ shinyServer(function(input, output) {
 
     ## confidence ellipse output list - reactive conductor
     confEllList <- reactive({
-        xy <- coords()
-        if(!is.null(xy)) {
-            groupSel <- getGroups(xy)[input$hitpGroupSel1]
-            xySub    <- xy[xy$series %in% groupSel , , drop=FALSE]
+        xySub <- getXYsub()
+        if(!is.null(xySub)) {
             x <- getConfEll(xySub,
                             center=input$hitpCenter1,
                             level=input$hitpLevel,
@@ -264,11 +385,8 @@ shinyServer(function(input, output) {
 
     ## extrapolation to different distance output list
     extraListRadius <- reactive({
-        xy <- coords()
-        if(!is.null(xy)) {
-            groupSel <- getGroups(xy)[input$hitpGroupSel1]
-            xySub    <- xy[xy$series %in% groupSel , , drop=FALSE]
-
+        xySub <- getXYsub()
+        if(!is.null(xySub)) {
             ## if no CEP type is selected -> fall back to default CorrNormal
             CEPtype <- if(!is.null(input$hitpCEPtype1)) {
                 CEPtypesInv[input$hitpCEPtype1]
@@ -276,42 +394,58 @@ shinyServer(function(input, output) {
                 "CorrNormal"
             }
 
+            # browser()
             ## hit probability -> radius
-            res1 <- getCEP(xySub,
-                           center=input$hitpCenter1,
-                           CEPlevel=input$hitpLevel,
-                           dstTarget=input$dstTrgt,
-                           conversion=conversionStr(),
-                           accuracy=input$hitpAcc,
-                           type=CEPtype,
-                           doRob=input$hitpDoRob1)$CEP[[1]]["MOA", , drop=FALSE]
+            res1a <- getCEP(xySub,
+                            center=input$hitpCenter1,
+                            CEPlevel=input$hitpLevel,
+                            dstTarget=as.numeric(input$dstTrgt),
+                            conversion=conversionStr(),
+                            accuracy=input$hitpAcc,
+                            type=CEPtype,
+                            doRob=input$hitpDoRob1)
 
-            res2 <- getConfEll(xySub,
-                               center=input$hitpCenter1,
-                               level=input$hitpLevel,
-                               dstTarget=input$dstTrgt,
-                               conversion=conversionStr(),
-                               doRob=input$hitpDoRob1)
-
-            res3 <- if(input$hitpDoRob1) {
-                res2$sizeRob["MOA", , drop=FALSE]
+            res1b <- if("MOA" %in% rownames(res1a$CEP[[1]])) {
+                res1a$CEP[[1]]["MOA", , drop=FALSE]
             } else {
-                res2$size["MOA", , drop=FALSE]
+                NA_real_
             }
 
-            CEP <- fromMOA(res1,
+            res2a <- getConfEll(xySub,
+                                center=input$hitpCenter1,
+                                level=input$hitpLevel,
+                                dstTarget=input$dstTrgt,
+                                conversion=conversionStr(),
+                                doRob=input$hitpDoRob1)
+
+            res2b <- if(input$hitpDoRob1) {
+                if("MOA" %in% rownames(res2a$sizeRob)) {
+                    res2a$sizeRob["MOA", , drop=FALSE]
+                }
+                NA_real_
+            } else if("MOA" %in% rownames(res2a$size)) {
+                res2a$size["MOA", , drop=FALSE]
+            } else {
+                NA_real_
+            }
+
+            CEP <- fromMOA(res1b,
                            dst=input$hitpExtraDst1,
                            conversion=paste0(unitsDstInv[input$hitpUnitExtraDst1], "2",
                                              unitsXYInv[input$unitXY], collapse=""))
-            ConfEll <- fromMOA(res3,
+            ConfEll <- fromMOA(res2b,
                                dst=input$hitpExtraDst1,
                                conversion=paste0(unitsDstInv[input$hitpUnitExtraDst1], "2",
                                                  unitsXYInv[input$unitXY], collapse=""))
-            rownames(CEP)     <- "unit"
-            rownames(ConfEll) <- "unit"
+
+            if(is.matrix(CEP) && is.matrix(ConfEll)) {
+                rownames(CEP)     <- "unit"
+                rownames(ConfEll) <- "unit"
+            }
+
             x <- list(CEP=CEP, ConfEll=ConfEll)
             setNames(x, paste0(names(x), "_", 100*input$hitpLevel, "%", "_@",
-                               input$hitpExtraDst1, unitsDstInv[input$hitpUnitExtraDst1]))
+                               input$hitpExtraDst1, na.omit(unitsDstInv[input$hitpUnitExtraDst1])))
         } else {
             NULL
         }
@@ -358,18 +492,15 @@ shinyServer(function(input, output) {
             checkboxGroupInput("hitpGroupSel2",
                                label=h5("Select groups"),
                                choices=choices,
-                               selected=seq_along(choices))
+                               selected=seq_len(min(length(choices), 2L)))
         } else {
             NULL
         }
     })
 
     CEPListHitProb <- reactive({
-        xy <- coords()
-        if(!is.null(xy)) {
-            groupSel <- getGroups(xy)[input$hitpGroupSel2]
-            xySub    <- xy[xy$series %in% groupSel , , drop=FALSE]
-
+        xySub <- getXYsub()
+        if(!is.null(xySub)) {
             ## if no CEP type is selected -> fall back to default CorrNormal
             CEPtype <- if(!is.null(input$hitpCEPtype2)) {
                 CEPtypesInv[input$hitpCEPtype2]
@@ -394,11 +525,8 @@ shinyServer(function(input, output) {
 
     ## extrapolation to different distance output list
     extraListHitProb <- reactive({
-        xy <- coords()
-        if(!is.null(xy)) {
-            groupSel <- getGroups(xy)[input$hitpGroupSel2]
-            xySub    <- xy[xy$series %in% groupSel , , drop=FALSE]
-
+        xySub <- getXYsub()
+        if(!is.null(xySub)) {
             ## if no CEP type is selected -> fall back to default CorrNormal
             CEPtype <- if(!is.null(input$hitpCEPtype2)) {
                 CEPtypesInv[input$hitpCEPtype2]
@@ -415,7 +543,7 @@ shinyServer(function(input, output) {
                             r=MOA,
                             center=input$hitpCenter2,
                             unit="MOA",
-                            dstTarget=input$dstTrgt,
+                            dstTarget=as.numeric(input$dstTrgt),
                             conversion=conversionStr(),
                             accuracy=input$hitpAcc,
                             type=CEPtype,

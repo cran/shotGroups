@@ -23,7 +23,7 @@ function(DFs) {
 
     ## if variable group does not exist, is NA or empty - set
     setGroup <- function(x) {
-        if(!("group" %in% names(x))) {
+        if(!hasName(x, "group")) {
             x$group <- 1
         } else if(all(x$group == "") || all(is.na(x$group))) {
             x$group <- 1
@@ -76,7 +76,7 @@ function(DFs) {
         ## if project title is available -> use it
         ## if not -> use file name
         ## if ammunition is available -> use it
-        groupVA <- if(!is.null(x$project.title)) {
+        groupVA <- if(hasName(x, "project.title")) {
             if(!all(is.na(x$project.title)) && !all(x$project.title == "")) {
                 x$project.title
             } else {
@@ -86,7 +86,7 @@ function(DFs) {
             x$file
         }
 
-        groupVB <- if(!is.null(x$ammunition)) {
+        groupVB <- if(hasName(x, "ammunition")) {
             if(!all(is.na(x$ammunition)) && !all(x$ammunition == "")) {
                 x$ammunition
             } else {
@@ -110,7 +110,7 @@ function(DFs) {
 
     DFs <- lapply(DFs, setGroupVerbose)
 
-    ## restrict data frames to shared variables variables
+    ## restrict data frames to shared variables
     varsNow <- Reduce(intersect, lapply(DFs, names))  # shared set of variables
     DFrestr <- lapply(DFs, function(x) x[, varsNow, drop=FALSE])  # select only these
     nObs    <- vapply(DFrestr, nrow, integer(1))      # number of observations in each data frame
@@ -128,8 +128,8 @@ function(DFs) {
     runs         <- rle(as.character(orgSer))
     runs$values  <- seq_along(runs$values)
     seriesNum    <- inverse.rle(runs)
-    DFall$series <- factor(paste(seriesNum, DFall$groupVerb, sep="_"),
-                           labels=unique(paste(seriesNum, DFall$groupVerb, sep="_")))
+    DFall$series <- factor(paste(seriesNum, DFall$group, sep="_"),
+                           labels=unique(paste(seriesNum, DFall$group, sep="_")))
 
     ## convert orgSer to a factor with consecutively numbered levels
     DFall$seriesNum <- seriesNum

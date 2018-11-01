@@ -49,14 +49,14 @@ function(DF,
     centerOne <- function(x) {
         x$aim.x <- mean(x$point.x)
         x$aim.y <- mean(x$point.y)
-        if("point.z" %in% names(x)) {
+        if(hasName(x, "point.z")) {
             x$aim.z <- mean(x$point.z)
         }
         x
     }
     
     DF <- if(center) {
-        if(!is.null(DF$series)) {        # center per group
+        if(hasName(DF, "series")) {        # center per group
             DFspl <- split(DF, DF$series, drop=TRUE)
             DFL   <- lapply(DFspl, centerOne)
             do.call("rbind", DFL)
@@ -78,7 +78,7 @@ function(DF,
     }
     
     ## POA may still be missing (relPOA=TRUE, center=FALSE) -> set to (0,0)
-    if(is.null(DF$aim.x) || is.null(DF$aim.y)) {
+    if(!hasName(DF, "aim.x")  || !hasName(DF, "aim.y")) {
         DF$aim.x <- 0
         DF$aim.y <- 0
     }

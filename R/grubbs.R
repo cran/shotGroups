@@ -191,16 +191,16 @@ function(x, m, v, n, nPrime, muX, varX, l, delta,
     type <- match.arg(type)
 
     dens <- if(type == "Patnaik") {
-        uInv  <- x^2*2*m/v
-        uInvD <- x*4*m/v                # derivative of u^-1
+        uInv  <- x^2*2*m/v                     # u^-1
+        uInvD <- x*4*m/v                       # derivative of u^-1
         dchisq(uInv, df=n) * uInvD
     } else if(type == "Pearson") {
         uInv  <- (x^2-m)*sqrt(2*nPrime/v) + nPrime
-        uInvD <- x*2*sqrt(2*nPrime/v)
-        dchisq(uInv, df=nPrime) * uInvD
+        uInvD <- x*2*sqrt(2*nPrime/v)          # u^-1
+        dchisq(uInv, df=nPrime) * uInvD        # derivative of u^-1
     } else if(type == "Liu") {
-        uInv  <- (x^2-m)*sqrt(varX/v) + muX
-        uInvD <- x*2*sqrt(varX/v)
+        uInv  <- (x^2-m)*sqrt(varX/v) + muX    # u^-1
+        uInvD <- x*2*sqrt(varX/v)              # derivative of u^-1
         dchisq(uInv, df=l, ncp=delta) * uInvD
     }
 

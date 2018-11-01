@@ -3,8 +3,7 @@ function(xy, center=FALSE,
          xyTopLeft=TRUE, bb=FALSE, bbMin=FALSE, bbDiag=FALSE, minCirc=FALSE,
          maxSpread=FALSE, meanDist=FALSE, confEll=FALSE, CEP=FALSE, ringID=FALSE,
          doRob=FALSE, level=0.95, scaled=TRUE, caliber=9,
-         dstTarget=100, conversion="m2cm",
-         unit="unit", alpha=0.5, target='ISSF_100m') {
+         dstTarget, conversion, unit="unit", alpha=0.5, target) {
     UseMethod("drawGroup")
 }
 
@@ -13,13 +12,38 @@ function(xy, center=FALSE,
          xyTopLeft=TRUE, bb=FALSE, bbMin=FALSE, bbDiag=FALSE, minCirc=FALSE,
          maxSpread=FALSE, meanDist=FALSE, confEll=FALSE, CEP=FALSE, ringID=FALSE,
          doRob=FALSE, level=0.95, scaled=TRUE, caliber=9,
-         dstTarget=100, conversion="m2cm",
-         unit="unit", alpha=0.5, target='ISSF_100m') {
+         dstTarget, conversion, unit="unit", alpha=0.5, target) {
+    ## distance to target from override or from data
+    if(missing(dstTarget)) {
+        dstTarget <- if(hasName(xy, "distance")) {
+            xy[["distance"]]
+        } else {
+            NA_real_
+        }
+    }
+    
+    ## determine conversion factor from data if override is not given
+    if(missing(conversion)) {
+        conversion <- determineConversion(xy)
+    }
+
+    ## if target unspecified but data has unique target, use that
+    if(missing(target)       &&
+       hasName(xy, "target") &&
+       length(unique(xy[["target"]])) == 1L) {
+        target <- unique(xy[["target"]])
+    }
+       
     xy        <- getXYmat(xy, xyTopLeft=xyTopLeft, center=center)
     xyTopLeft <- FALSE                   # swapping Y was done in getXYmat()
     center    <- FALSE                   # centering was done in getXYmat()
 
-    NextMethod("drawGroup")
+    drawGroup(xy=xy, center=center, xyTopLeft=xyTopLeft, bb=bb, bbMin=bbMin,
+              bbDiag=bbDiag, minCirc=minCirc, maxSpread=maxSpread,
+              meanDist=meanDist, confEll=confEll, CEP=CEP, ringID=ringID,
+              doRob=doRob, level=level, scaled=scaled, caliber=caliber,
+              dstTarget=dstTarget, conversion=conversion, unit=unit,
+              alpha=alpha, target=target)
 }
 
 drawGroup.default <-
@@ -27,8 +51,7 @@ function(xy, center=FALSE,
          xyTopLeft=TRUE, bb=FALSE, bbMin=FALSE, bbDiag=FALSE, minCirc=FALSE,
          maxSpread=FALSE, meanDist=FALSE, confEll=FALSE, CEP=FALSE, ringID=FALSE,
          doRob=FALSE, level=0.95, scaled=TRUE, caliber=9,
-         dstTarget=100, conversion="m2cm",
-         unit="unit", alpha=0.5, target='ISSF_100m') {
+         dstTarget, conversion, unit="unit", alpha=0.5, target) {
     if(!is.matrix(xy))       { stop("xy must be a matrix") }
     if(!is.numeric(xy))      { stop("xy must be numeric") }
     if(ncol(xy) != 2L)       { stop("xy must have two columns") }
@@ -42,8 +65,9 @@ function(xy, center=FALSE,
         warning("Centering only works for data frames, ignored here")
     }
     
-    unit <- match.arg(unit, choices=c("unit", "m", "cm", "mm", "yd", "ft", "in",
-                                      "deg", "MOA", "SMOA", "rad", "mrad", "mil"))
+    unit <- match.arg(tolower(unit),
+                      choices=c("unit", "m", "cm", "mm", "yd", "ft", "in",
+                                "deg", "moa", "smoa", "rad", "mrad", "mil"))
     CEP  <- as.character(CEP)
     if(CEP != "FALSE") {
         ## set CEP type to given estimator or to default
@@ -59,6 +83,26 @@ function(xy, center=FALSE,
         level
     }
     level <- vapply(level, levelTo01, numeric(1))
+
+    if(missing(dstTarget)) {
+        dstTarget <- NA_real_
+    }
+    
+    if(missing(conversion)) {
+        conversion <- NA_character_
+    }
+    
+    haveTarget <- if(missing(target) || is.null(target) ||
+                     is.na(target)   || (tolower(target) == "none")) {
+        FALSE
+    } else {
+        if(length(unique(target)) > 1L) {
+            warning("will use only 1st target")
+        }
+
+        target <- target[1]
+        TRUE
+    }
 
     ## check if we can do robust estimation if so required
     N <- nrow(xy)
@@ -91,7 +135,7 @@ function(xy, center=FALSE,
         convFac <- getConvFac(paste0("mm2", unitXYnew))
         calSize <- convFac * caliber/2
         xy                               # new xy-coords = old xy-coords
-    } else if(unit %in% c("deg", "MOA", "SMOA", "rad", "mrad", "mil")) {
+    } else if(tolower(unit) %in% c("deg", "moa", "smoa", "rad", "mrad", "mil")) {
         unitXYnew <- unit
         ## convert caliber given in mm to angular size
         calSize <- getMOA(caliber/2, dst=dstTarget, conversion=paste0(unitDst, "2mm"), type=unit)
@@ -109,11 +153,21 @@ function(xy, center=FALSE,
         xy2xyNew * xy
     }
 
-    res$xy <- xyNew                      # save converted xy-coords
+    calSize <- unique(calSize)
+    res$xy  <- xyNew                      # save converted xy-coords
 
     ## extract x, y coords
     X <- xyNew[ , 1]                     # x-coords
     Y <- xyNew[ , 2]                     # y-coords
+
+    if(all(is.na(X)) || all(is.na(Y))) {
+        if(nrow(na.omit(xy)) > 0L) {
+            stop("No non-missing coordinates after unit conversion\n Please supply units via 'conversion'")    
+        } else {
+            stop("No non-missing coordinates")
+        }
+        
+    }
 
     ## to determine axis limits later, collect all results in a vector
     axisLimsX <- numeric(0)
@@ -256,13 +310,18 @@ function(xy, center=FALSE,
                CEP=rgb(202, 178, 214, maxColorValue=255))
 
     ## color for bullet holes -> white with target, black otherwise
-    pointCol <- if(!any(is.na(target))) {
+    pointCol <- if(haveTarget) {
         cols <- cols1
-        trgt <- getTarget(target)
-        if(!is.null(trgt$colPt)) {
+        trgt <- getTarget(target, unit="cm", dstTarget=dstTarget, conversion=conversion)
+        if(hasName(trgt, "colPt")) {
             adjustcolor(trgt$colPt, alpha.f=alpha)
         } else {
-            rgb(1, 1, 1, alpha)
+            if(all(is.na(unlist(trgt$inUnit)))) {
+                cols <- cols2
+                rgb(0, 0, 0, alpha)
+            } else {
+                rgb(1, 1, 1, alpha)
+            }
         }
     } else {
         cols <- cols2
@@ -276,15 +335,20 @@ function(xy, center=FALSE,
     legLwd  <- numeric(0)
     legPch  <- numeric(0)
 
+    ## distance to target may be heterogeneous
+    dstTargetPlot <- paste(unique(round(na.omit(dstTarget))), collapse=", ")
+    unitXYnew     <- unique(unitXYnew)
+    unitXYnewPlot <- paste(na.omit(unitXYnew), collapse=", ")
+
     ## start with empty plot to set up region and axis labels
     plot(Y ~ X, asp=1, type="n", main="Group (x,y)-coordinates",
          xlim=xLims, ylim=yLims,
-         sub=paste("distance:", dstTarget, unitDst),
-         xlab=paste0("X [", unitXYnew, "]"),
-         ylab=paste0("Y [", unitXYnew, "]"))
+         sub=paste("distance:", dstTargetPlot, unitDst),
+         xlab=paste0("X [", na.omit(unitXYnew), "]"),
+         ylab=paste0("Y [", na.omit(unitXYnew), "]"))
 
     ## draw target background
-    if(!any(is.na(target))) {
+    if(haveTarget) {
         res$target <- drawTarget(target, unit=unitXYnew, dstTarget=dstTarget,
                                  conversion=conversion, add=TRUE, cex=1.5)
     } else {
@@ -292,7 +356,7 @@ function(xy, center=FALSE,
     }
 
     ## draw bullet holes to scale
-    if(scaled) {
+    if(scaled && !is.na(calSize)) {
         symbols(Y ~ X, asp=1, main="(x,y)-coordinates", add=TRUE,
                 circles=rep(calSize, N), inches=FALSE,
                 fg=rgb(0.3, 0.3, 0.3, alpha), bg=pointCol)
@@ -350,7 +414,6 @@ function(xy, center=FALSE,
             legLwd  <- c(legLwd, 2)
             legPch  <- c(legPch, NA)
         }
-
     }
 
     if(minCirc) {                        # minimum enclosing circle
@@ -401,8 +464,8 @@ function(xy, center=FALSE,
         legPch  <- c(legPch, NA)
     }
 
-    if(ringID && !any(is.na(target))) {
-        rc <- simRingCount(xy, target=target, caliber=caliber, unit=unitXY)
+    if(ringID && haveTarget) {
+        rc <- simRingCount(xy, target=target, caliber=caliber, unit=unique(unitXY))
         res$ringCount <- with(rc, c(count=count, max=max))
         with(rc, text(xyNew[,1], xyNew[,2], label=levels(rings)[rings],
                       adj=c(0.5, 0.5), col="darkgreen"))

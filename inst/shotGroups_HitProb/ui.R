@@ -22,7 +22,9 @@ shinyUI(fluidPage(
                                  radioButtons("fileType", "File format:",
                                               list("OnTarget 1.*"=1,
                                                    "OnTarget 2.*, 3.*"=2,
-                                                   "Other"=3), selected="2")),
+                                                   "Silver Mountain"=3,
+                                                   "ShotMarker"=4,
+                                                   "Other"=5), selected="2")),
                 conditionalPanel(condition="input.datIn == '2'",
                                  h5("Upload file: "),
                                  fileInput("fileUpload", "Select file:", multiple=TRUE)),
@@ -80,7 +82,7 @@ shinyUI(fluidPage(
             #tags$head(tags$style(type="text/css", ".container-fluid { max-width: 12600px; }")),
             #####---------------------------------------------------------------
             ## distance to target, unit distance, unit xy-coords
-            conditionalPanel(condition="(input.task != 'About')", uiOutput("unitDstXY")),
+            conditionalPanel(condition="(input.task != 'Data') && (input.task != 'About')", uiOutput("unitDstXY")),
             tabsetPanel(
                 #####-----------------------------------------------------------
                 ## data input
@@ -127,7 +129,7 @@ shinyUI(fluidPage(
                     numericInput("hitpExtraDst1", h5("Extrapolate to different distance"),
                                  min=0, step=1, value=100),
                     selectInput("hitpUnitExtraDst1", h5("Measurement unit extrapolation distance"),
-                                choices=unitsDst, selected=1),
+                                choices=unitsDst, selected=2),
                     h6("Extrapolated CEP / Confidence Ellipse"),
                     p("For details, see the",
                       a("shotGroups vignette",
@@ -152,7 +154,7 @@ shinyUI(fluidPage(
                     numericInput("hitpExtraDst2", h5("Extrapolate to different distance"),
                                  min=0, step=1, value=100),
                     selectInput("hitpUnitExtraDst2", h5("Measurement unit extrapolation distance"),
-                                choices=unitsDst, selected=1),
+                                choices=unitsDst, selected="2"),
                     p("For details, see the",
                       a("shotGroups vignette",
                         href="http://cran.rstudio.com/web/packages/shotGroups/vignettes/shotGroups.pdf"),
@@ -173,9 +175,11 @@ shinyUI(fluidPage(
                       to group shape, precision, and accuracy. This includes graphical methods,
                       descriptive statistics, and inference tests using standard, but also
                       non-parametric and robust statistical methods. The data can be imported
-                      from files produced by", a("OnTarget PC and OnTarget TDS",
-                                                 href="http://ontargetshooting.com/tds/"), ", ",
-                      a("TARAN", href="http://taran.ptosis.ch/"),
+                      from files produced by",
+                      a("OnTarget PC and OnTarget TDS", href="http://ontargetshooting.com/tds/"), ", ",
+                      a("TARAN", href="http://taran.ptosis.ch/"), ", ",
+                      a("ShotMarker e-target", href="https://www.autotrickler.com/shotmarker.html"), ", ",
+                      a("Silver Mountain e-target", href="https://www.silvermountaintargets.com/"), ", ",
                       "or from custom data files in text format with a similar structure.
                       For further explanations and an example walkthrough, see the",
                       a("package vignette",
@@ -193,15 +197,15 @@ shinyUI(fluidPage(
 
                     h6("More shotGroups web applications"),
                     p("Comprehensive shot group analysis:",
-                      a("http://dwoll.shinyapps.io/shotGroupsApp/",
-                        href="http://dwoll.shinyapps.io/shotGroupsApp/"), br(),
+                      a("http://shiny.imbei.uni-mainz.de:3838/shotGroups_AnalyzeGroups",
+                        href="http://shiny.imbei.uni-mainz.de:3838/shotGroups_AnalyzeGroups/"), br(),
                       "Absolute", icon("resize-horizontal", lib="glyphicon"),
                       "angular size conversion:",
-                      a("http://dwoll.shinyapps.io/shotGroupsAngular/",
-                        href="http://dwoll.shinyapps.io/shotGroupsAngular/"), br(),
+                      a("http://shiny.imbei.uni-mainz.de:3838/shotGroups_AngularSize/",
+                        href="http://shiny.imbei.uni-mainz.de:3838/shotGroups_AngularSize/"), br(),
                       "Estimate Rayleigh sigma from range statistics:",
-                      a("http://dwoll.shinyapps.io/shotGroupsRangeStat/",
-                        href="http://dwoll.shinyapps.io/shotGroupsRangeStat/")),
+                      a("http://shiny.imbei.uni-mainz.de:3838/shotGroups_RangeStat/",
+                        href="http://shiny.imbei.uni-mainz.de:3838/shotGroups_RangeStat/")),
 
                     h6("Acknowledgements"),
                     p("Thanks to David Bookstaber for testing, feedback and data.")

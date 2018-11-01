@@ -5,7 +5,8 @@
 \usage{compareGroups(DF, plots = TRUE, xyTopLeft = TRUE, center = FALSE,
               ABalt = c('two.sided', 'less', 'greater'),
               Walt = c('two.sided', 'less', 'greater'),
-              CEPtype = 'CorrNormal', CEPlevel = 0.5, CIlevel = 0.95, conversion = 'm2cm')}
+              CEPtype = 'CorrNormal', CEPlevel = 0.5, CIlevel = 0.95,
+              dstTarget, conversion)}
 \arguments{
   \item{DF}{a data frame containing (at least) these variables: \code{series} (a \code{\link{factor}}), and either \code{point.x}, \code{point.y} or \code{x}, \code{y} defining the bullet holes. Variables \code{distance} (distance to target), \code{aim.x}, \code{aim.y} (point of aim) are useful - if they are missing, a warning is given and a default assumed.}
   \item{plots}{logical: show diagrams?}
@@ -16,7 +17,8 @@
   \item{CEPtype}{string indicating which CEP estimate to report from \code{\link[shotGroups]{getCEP}}.}
   \item{CEPlevel}{a numerical value giving the coverage of the confidence ellipse and CEP.}
   \item{CIlevel}{a numerical value giving the level for the confidence intervals (for standard deviations and Rayleigh sigma, MR).}
-  \item{conversion}{how to convert the measurement unit for distance to target to that of the (x,y)-coordinates in MOA calculation. See \code{\link[shotGroups]{getMOA}}.}
+  \item{dstTarget}{a numerical value giving the distance to the target - used in MOA calculation. Acts as override if variable \code{distance} is already included in \code{DF}. See \code{\link[shotGroups]{getMOA}}.}
+  \item{conversion}{how to convert the measurement unit for distance to target to that of the (x,y)-coordinates in MOA calculation. Acts as override if variables \code{dist.unit} and \code{point.unit} are already included in \code{DF}. Example \code{'m2cm'}. See \code{\link[shotGroups]{getMOA}}.}
 }
 \details{
 By default, OnTarget PC/TDS' 'Export Point Data' places the origin of the absolute coordinate system in the top-left corner. In OnTarget TDS, this setting can be changed by checking the box 'Tools -> Options -> Options tab -> Data Export -> Invert Y-Axis on Export'. In that case, use \code{xyTopLeft=FALSE}. If groups appear to be upside-down, \code{xyTopLeft} is the setting to change.
@@ -76,7 +78,7 @@ A list with the results from numerical comparisons and statistical tests.
 \code{\link[coin]{kruskal_test}}
 }
 \examples{
-cmp <- compareGroups(DF300BLKhl, conversion='yd2in')
+cmp <- compareGroups(DF300BLKhl, dstTarget=100, conversion='yd2in')
 names(cmp)
 cmp$ctr
 cmp$meanDistToCtr

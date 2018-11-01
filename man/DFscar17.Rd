@@ -16,7 +16,9 @@ Example of a data frame from one file with one group of bullet holes.}
     \item{\code{point.y}}{a numerical vector of absolute y-coordinates of bullet holes.}
     \item{\code{origin}}{a factor with level \code{1}. This factor codes from which original output file the data is.}
     \item{\code{orgser}}{a factor with level \code{1.1}. This factor results from \code{\link{droplevels}(\link{interaction}(origin, group))}, and codes each separate group across original files. The order of the factor levels is alphabetical.}
-    \item{\code{series}}{a factor with levels \code{1}. This factor codes each separate group as defined by \code{orgSer}, but more conveniently as a number that runs consecutively across original files.}
+    \item{\code{series}}{a factor with levels \code{1}. This factor codes each separate group as defined by \code{orgser}, but more conveniently as a number that runs consecutively across original files.}
+    \item{\code{distance.unit}}{Measurement unit distance to target}
+    \item{\code{point.unit}}{Measurement unit (x,y)-coordinates}
   }
 }
 \details{

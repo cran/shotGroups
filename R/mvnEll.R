@@ -6,11 +6,13 @@
 ## cdf
 pmvnEll <-
 function(r=1, sigma=diag(2), mu, e, x0, lower.tail=TRUE) {
+    sigma <- as.matrix(sigma)
+    e     <- as.matrix(e)
     if(missing(mu)) { mu <- numeric(ncol(sigma)) }
     if(missing(x0)) { x0 <- numeric(ncol(sigma)) }
     if(missing(e))  { e  <- diag(ncol(sigma)) }
-    if(!isTRUE(all.equal(as.matrix(sigma), t(sigma)))) { stop("sigma must be symmetric") }
-    if(!isTRUE(all.equal(as.matrix(e), t(e))))         { stop("e must be symmetric") }
+    if(!isTRUE(all.equal(sigma, t(sigma)))) { stop("sigma must be symmetric") }
+    if(!isTRUE(all.equal(e, t(e))))         { stop("e must be symmetric") }
 
     ## check e, sigma positive definite
     eEV <- eigen(e)$values
@@ -44,8 +46,8 @@ function(r=1, sigma=diag(2), mu, e, x0, lower.tail=TRUE) {
     ## non-centrality parameters
     ncp <- xmu2^2 / S1eig$values
     cqf <- vapply(r[keep], function(x) {
-                      CompQuadForm::farebrother(x^2, lambda=S1eig$values, delta=ncp)$Qq },
-                  numeric(1))
+        CompQuadForm::farebrother(x^2, lambda=S1eig$values, delta=ncp)$Qq
+    }, numeric(1))
 
     ## NA, NaN, -Inf, Inf (-Inf, Inf will be changed hereafter)
     pp[!is.finite(r)] <- NA_real_
@@ -69,11 +71,13 @@ function(r=1, sigma=diag(2), mu, e, x0, lower.tail=TRUE) {
 ## quantile function
 qmvnEll <-
 function(p, sigma=diag(2), mu, e, x0, lower.tail=TRUE, loUp=NULL) {
+    sigma <- as.matrix(sigma)
+    e     <- as.matrix(e)
     if(missing(mu)) { mu <- numeric(ncol(sigma)) }
     if(missing(x0)) { x0 <- numeric(ncol(sigma)) }
     if(missing(e))  { e  <- diag(ncol(sigma)) }
-    if(!isTRUE(all.equal(as.matrix(sigma), t(sigma)))) { stop("sigma must be symmetric") }
-    if(!isTRUE(all.equal(as.matrix(e), t(e))))         { stop("e must be symmetric") }
+    if(!isTRUE(all.equal(sigma, t(sigma)))) { stop("sigma must be symmetric") }
+    if(!isTRUE(all.equal(e, t(e))))         { stop("e must be symmetric") }
 
     ## checks on mu, sigma, e are done in getGrubbsParam(), pmvnEll()
     ## initialize quantiles to NA
@@ -125,11 +129,13 @@ function(p, sigma=diag(2), mu, e, x0, lower.tail=TRUE, loUp=NULL) {
 ## random variates
 rmvnEll <-
 function(n, sigma=diag(2), mu, e, x0, method=c("eigen", "chol", "cdf"), loUp=NULL) {
+    sigma <- as.matrix(sigma)
+    e     <- as.matrix(e)
     if(missing(mu)) { mu <- numeric(ncol(sigma)) }
     if(missing(x0)) { x0 <- numeric(ncol(sigma)) }
     if(missing(e))  { e  <- diag(ncol(sigma)) }
-    if(!isTRUE(all.equal(as.matrix(sigma), t(sigma)))) { stop("sigma must be symmetric") }
-    if(!isTRUE(all.equal(as.matrix(e), t(e))))         { stop("e must be symmetric") }
+    if(!isTRUE(all.equal(sigma, t(sigma)))) { stop("sigma must be symmetric") }
+    if(!isTRUE(all.equal(e, t(e))))         { stop("e must be symmetric") }
 
     method <- match.arg(method)
 

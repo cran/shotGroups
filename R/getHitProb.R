@@ -1,20 +1,36 @@
 getHitProb <-
-function(xy, r=1, unit="unit", dstTarget=100, conversion="m2cm",
+function(xy, r=1, unit="unit", dstTarget, conversion,
          center=FALSE, accuracy=FALSE, type="CorrNormal", doRob=FALSE) {
     UseMethod("getHitProb")
 }
 
 getHitProb.data.frame <-
-function(xy, r=1, unit="unit", dstTarget=100, conversion="m2cm",
+function(xy, r=1, unit="unit", dstTarget, conversion,
          center=FALSE, accuracy=FALSE, type="CorrNormal", doRob=FALSE) {
+    ## distance to target from override or from data
+    if(missing(dstTarget)) {
+        dstTarget <- if(hasName(xy, "distance")) {
+            xy[["distance"]]
+        } else {
+            NA_real_
+        }
+    }
+    
+    ## determine conversion factor from data if override is not given
+    if(missing(conversion)) {
+        conversion <- determineConversion(xy)
+    }
+
     xy     <- getXYmat(xy, xyTopLeft=FALSE, center=center, relPOA=FALSE)
     center <- FALSE                   # centering was done in getXYmat()
-    
-    NextMethod("getHitProb")
+
+    getHitProb(xy, r=r, unit=unit, dstTarget=dstTarget, conversion=conversion,
+               center=center, accuracy=accuracy, type=type, doRob=doRob)
+    # NextMethod("getHitProb")
 }
 
 getHitProb.default <-
-function(xy, r=1, unit="unit", dstTarget=100, conversion="m2cm",
+function(xy, r=1, unit="unit", dstTarget, conversion,
          center=FALSE, accuracy=FALSE, type="CorrNormal", doRob=FALSE) {
     xy <- as.matrix(xy)
     if(!is.numeric(xy)) { stop("xy must be numeric") }
@@ -25,9 +41,17 @@ function(xy, r=1, unit="unit", dstTarget=100, conversion="m2cm",
         warning("Centering only works for data frames, ignored here")
     }
     
-    unit <- match.arg(unit,
+    if(missing(dstTarget)) {
+        dstTarget <- NA_real_
+    }
+    
+    if(missing(conversion)) {
+        conversion <- NA_character_
+    }
+    
+    unit <- match.arg(tolower(unit),
                       choices=c("unit", "m", "cm", "mm", "yd", "ft", "in",
-                                "deg", "MOA", "SMOA", "rad", "mrad", "mil"))
+                                "deg", "moa", "smoa", "rad", "mrad", "mil"))
 
     type <- match.arg(type,
                       choices=c("CorrNormal", "GrubbsPearson", "GrubbsPatnaik",
@@ -65,7 +89,7 @@ function(xy, r=1, unit="unit", dstTarget=100, conversion="m2cm",
     ## convert r to unit of (x,y)-coordinates
     rNew <- if(unit == "unit") {         # keep unit
         r                                # new r = r
-    } else if(unit %in% c("deg", "MOA", "SMOA", "rad", "mrad", "mil")) {
+    } else if(tolower(unit) %in% c("deg", "moa", "smoa", "rad", "mrad", "mil")) {
         fromMOA(r, dst=dstTarget, conversion=conversion, type=unit)
     } else {                             # absolute size unit
         r2rNew <- getConvFac(paste0(unit, "2", unitXY))

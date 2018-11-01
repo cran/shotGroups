@@ -3,7 +3,7 @@ getDevice <-
 function() {
     ## if under RStudio -> don't open new device
     dev <- getOption("device")
-    if(class(dev) == "character") {
+    if(is.character(dev)) {
         if(dev == "RStudioGD") {
             dev <- function(...) {}
             ## alternative: open new device explicitly depending on platform

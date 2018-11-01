@@ -1,21 +1,37 @@
 groupShape <-
 function(xy, center=FALSE, plots=TRUE, bandW=0.5, outlier=c("mcd", "pca"),
-         dstTarget=100, conversion="m2cm", ...) {
+         dstTarget, conversion, ...) {
     UseMethod("groupShape")
 }
 
 groupShape.data.frame <-
 function(xy, center=FALSE, plots=TRUE, bandW=0.5, outlier=c("mcd", "pca"),
-         dstTarget=100, conversion="m2cm", ...) {
+         dstTarget, conversion, ...) {
+    ## distance to target from override or from data
+    if(missing(dstTarget)) {
+        dstTarget <- if(hasName(xy, "distance")) {
+            xy[["distance"]]
+        } else {
+            NA_real_
+        }
+    }
+    
+    ## determine conversion factor from data if override is not given
+    if(missing(conversion)) {
+        conversion <- determineConversion(xy)
+    }
+    
     xy     <- getXYmat(xy, center=center)
     center <- FALSE                   # centering was done in getXYmat()
-    
-    NextMethod("groupShape")
+
+    groupShape(xy, center=center, plots=plots, bandW=bandW, outlier=outlier,
+               dstTarget=dstTarget, conversion=conversion, ...)
+    # NextMethod("groupShape")
 }
 
 groupShape.default <-
 function(xy, center=FALSE, plots=TRUE, bandW=0.5, outlier=c("mcd", "pca"),
-         dstTarget=100, conversion="m2cm", ...) {
+         dstTarget, conversion, ...) {
     if(!is.matrix(xy))  { stop("xy must be a matrix") }
     if(!is.numeric(xy)) { stop("xy must be numeric") }
     if(ncol(xy) != 2L)  { stop("xy must have two columns") }
@@ -25,6 +41,22 @@ function(xy, center=FALSE, plots=TRUE, bandW=0.5, outlier=c("mcd", "pca"),
 
     outlier <- match.arg(outlier)
 
+    dstTarget <- if(missing(dstTarget)    ||
+                    all(is.na(dstTarget)) ||
+                    (length(unique(dstTarget)) > 1L)) {
+        NA_real_
+    } else {
+        mean(dstTarget)
+    }
+    
+    conversion <- if(missing(conversion)    ||
+                     all(is.na(conversion)) ||
+                     (length(unique(conversion)) > 1L)) {
+        NA_character_
+    } else {
+        unique(conversion)
+    }
+    
     #####-----------------------------------------------------------------------
     ## prepare data
     X      <- xy[ , 1]                   # x-coords
@@ -126,25 +158,28 @@ function(xy, center=FALSE, plots=TRUE, bandW=0.5, outlier=c("mcd", "pca"),
 
     if(plots) {
         ## infer (x,y)-coord units from conversion
-        unitXY  <- getUnits(conversion, first=FALSE)
-        unitDst <- getUnits(conversion, first=TRUE)
+        unitXY  <- na.omit(getUnits(conversion, first=FALSE))
+        unitDst <- na.omit(getUnits(conversion, first=TRUE))
 
         ## to determine axis limits later, collect all results in a vector
         axisLimsX <- numeric(0)
         axisLimsY <- numeric(0)
 
+        ## distance to target may be heterogeneous
+        dstTargetPlot <- paste(unique(round(na.omit(dstTarget))), collapse=", ")
+        
         #####-------------------------------------------------------------------
         ## diagram: separate Q-Q-plots for eyeballing normality in x- and y-coords
         devNew()                         # open new diagram
         qqnorm(X, pch=20, main="Q-Q-plot x-coordinates for eyeballing normality",
-               sub=paste("distance:", dstTarget, unitDst),
+               sub=paste("distance:", dstTargetPlot, unitDst),
                xlab="Quantiles from standard normal distribution",
                ylab=paste0("Observed quantiles [", unitXY, "]"))
         qqline(X, col="red", lwd=2)      # reference line
 
         devNew()                         # open new diagram
         qqnorm(Y, pch=20, main="Q-Q-plot y-coordinates for eyeballing normality",
-               sub=paste("distance:", dstTarget, unitDst),
+               sub=paste("distance:", dstTargetPlot, unitDst),
                xlab="Quantiles from standard normal distribution",
                ylab=paste0("Observed quantiles [", unitXY, "]"))
         qqline(Y, col="red", lwd=2)      # reference line
@@ -160,7 +195,7 @@ function(xy, center=FALSE, plots=TRUE, bandW=0.5, outlier=c("mcd", "pca"),
         devNew()                         # open new diagram
         plot(hX, ylim=yLims, freq=FALSE,
              main="Histogram x-coordinates w/ kernel density estimate",
-             sub=paste("distance:", dstTarget, unitDst),
+             sub=paste("distance:", dstTargetPlot, unitDst),
              xlab=paste0("X [", unitXY, "]"))
         rug(jitter(X))                   # show single values
 
@@ -182,7 +217,7 @@ function(xy, center=FALSE, plots=TRUE, bandW=0.5, outlier=c("mcd", "pca"),
         devNew()                         # open new diagram
         plot(hY, ylim=yLims, freq=FALSE,
              main="Histogram y-coordinates w/ kernel density estimate",
-             sub=paste("distance:", dstTarget, unitDst),
+             sub=paste("distance:", dstTargetPlot, unitDst),
              xlab=paste0("Y [", unitXY, "]"))
         rug(jitter(Y))                   # show single values
 
@@ -229,7 +264,7 @@ function(xy, center=FALSE, plots=TRUE, bandW=0.5, outlier=c("mcd", "pca"),
         devNew()                         # open new diagram
         smoothScatter(X, Y, asp=1, bandwidth=bandW, xlim=xLims, ylim=yLims,
                       main="2D-kernel density estimate and error ellipses",
-                      sub=paste("distance:", dstTarget, unitDst),
+                      sub=paste("distance:", dstTargetPlot, unitDst),
                       xlab=paste0("X [", unitXY, "]"), ylab=paste0("Y [", unitXY, "]"))
         abline(h=0, v=0, lwd=2)          # add point of aim
 
@@ -258,7 +293,7 @@ function(xy, center=FALSE, plots=TRUE, bandW=0.5, outlier=c("mcd", "pca"),
 
 groupShapePlot <-
 function(xy, which=1L, center=FALSE, bandW=0.5, outlier=c("mcd", "pca"),
-         dstTarget=100, conversion="m2cm", ...) {
+         dstTarget, conversion, ...) {
 
     if(!is.data.frame(xy)) { stop("xy must be a data.frame") }
     xy <- getXYmat(xy, center=center)
@@ -268,6 +303,22 @@ function(xy, which=1L, center=FALSE, bandW=0.5, outlier=c("mcd", "pca"),
     which   <- match.arg(as.character(which), choices=1:7)
     outlier <- match.arg(outlier)
 
+    dstTarget <- if(missing(dstTarget)    ||
+                    all(is.na(dstTarget)) ||
+                    (length(unique(dstTarget)) > 1L)) {
+        NA_real_
+    } else {
+        mean(dstTarget)
+    }
+    
+    conversion <- if(missing(conversion)    ||
+                     all(is.na(conversion)) ||
+                     (length(unique(conversion)) > 1L)) {
+        NA_character_
+    } else {
+        unique(conversion)
+    }
+    
     #####-----------------------------------------------------------------------
     ## prepare data
     X    <- xy[ , 1]                     # x-coords
@@ -288,6 +339,9 @@ function(xy, which=1L, center=FALSE, bandW=0.5, outlier=c("mcd", "pca"),
         covXYrob <- rob$cov          # group covariance matrix
     }                                # if(Npts < 4L)
 
+    ## distance to target may be heterogeneous
+    dstTargetPlot <- paste(unique(round(na.omit(dstTarget))), collapse=", ")
+    
     if((which == 1L) && haveRob && haveMVoutlier) {
         #####-------------------------------------------------------------------
         ## outlier-analysis for joint distribution of (x,y)-coords
@@ -300,8 +354,8 @@ function(xy, which=1L, center=FALSE, bandW=0.5, outlier=c("mcd", "pca"),
     }                                    # if((which == 1) && haveRob)
 
     ## infer (x,y)-coord units from conversion
-    unitXY  <- getUnits(conversion, first=FALSE)
-    unitDst <- getUnits(conversion, first=TRUE)
+    unitXY  <- na.omit(getUnits(conversion, first=FALSE))
+    unitDst <- na.omit(getUnits(conversion, first=TRUE))
 
     ## to determine axis limits later, collect all results in a vector
     axisLimsX <- numeric(0)
@@ -311,7 +365,7 @@ function(xy, which=1L, center=FALSE, bandW=0.5, outlier=c("mcd", "pca"),
         #####-------------------------------------------------------------------
         ## diagram: separate Q-Q-plots for eyeballing normality in x- and y-coords
         qqnorm(X, pch=20, main="Q-Q-plot x-coordinates for eyeballing normality",
-               sub=paste("distance:", dstTarget, unitDst),
+               sub=paste("distance:", dstTargetPlot, unitDst),
                xlab="Quantiles from standard normal distribution",
                ylab=paste0("Observed quantiles [", unitXY, "]"))
         qqline(X, col="red", lwd=2)      # reference line
@@ -319,7 +373,7 @@ function(xy, which=1L, center=FALSE, bandW=0.5, outlier=c("mcd", "pca"),
 
     if(which == 3L) {
         qqnorm(Y, pch=20, main="Q-Q-plot y-coordinates for eyeballing normality",
-               sub=paste("distance:", dstTarget, unitDst),
+               sub=paste("distance:", dstTargetPlot, unitDst),
                xlab="Quantiles from standard normal distribution",
                ylab=paste0("Observed quantiles [", unitXY, "]"))
         qqline(Y, col="red", lwd=2)      # reference line
@@ -336,7 +390,7 @@ function(xy, which=1L, center=FALSE, bandW=0.5, outlier=c("mcd", "pca"),
 
         plot(hX, ylim=yLims, freq=FALSE,
              main="Histogram x-coordinates w/ kernel density estimate",
-             sub=paste("distance:", dstTarget, unitDst),
+             sub=paste("distance:", dstTargetPlot, unitDst),
              xlab=paste0("X [", unitXY, "]"))
         rug(jitter(X))                   # show single values
 
@@ -359,7 +413,7 @@ function(xy, which=1L, center=FALSE, bandW=0.5, outlier=c("mcd", "pca"),
 
         plot(hY, ylim=yLims, freq=FALSE,
              main="Histogram y-coordinates w/ kernel density estimate",
-             sub=paste("distance:", dstTarget, unitDst),
+             sub=paste("distance:", dstTargetPlot, unitDst),
              xlab=paste0("Y [", unitXY, "]"))
         rug(jitter(Y))                   # show single values
 
@@ -405,7 +459,7 @@ function(xy, which=1L, center=FALSE, bandW=0.5, outlier=c("mcd", "pca"),
 
         smoothScatter(X, Y, asp=1, bandwidth=bandW, xlim=xLims, ylim=yLims,
                       main="2D-kernel density estimate and error ellipses",
-                      sub=paste("distance:", dstTarget, unitDst),
+                      sub=paste("distance:", dstTargetPlot, unitDst),
                       xlab=paste0("X [", unitXY, "]"), ylab=paste0("Y [", unitXY, "]"))
         abline(h=0, v=0, lwd=2)          # add point of aim
 

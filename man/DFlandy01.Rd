@@ -23,6 +23,8 @@ Example of a data frame from one file with one group of bullet holes.}
     \item{\code{groupVerb}}{a character vector designating the group by combining the original file name and ammunition.}
     \item{\code{series}}{a character vector that codes each separate group in an alternative way.}
     \item{\code{seriesNum}}{like \code{series} but numeric.}
+    \item{\code{distance.unit}}{Measurement unit distance to target}
+    \item{\code{point.unit}}{Measurement unit (x,y)-coordinates}
   }
 }
 \details{
