@@ -1,6 +1,24 @@
-$Date: 2018-11-01 14:58:29 +0000 (Thu, 01 Nov 2018) $
+$Date: 2019-07-15 00:18:29 +0000 (Mon, 15 Jul 2019) $
 
 SHOTGROUPS RELEASE VERSIONS at http://cran.r-project.org/
+
+Version 0.7.5.1 (July 15, 2019)
+    * targets
+      - new NRA target LR
+      - corrections to help file
+        thanks: Monte Milanuk
+    * drawGroup()
+      - add option valueID which adds the calculated values for the
+        bounding box, group size, CEP, etc. to the diagram
+        thanks: Monte Milanuk
+    * qRangeStat()
+      - use package interp instead of akima for bilinear approximation
+        if both p and nPerGroup are missing from DFdistr
+      - add option for bivariate spline approximation of support grid
+        if both p and nPerGroup are missing from DFdistr
+    * getKuchnost()
+      - new function to estimate the Kuchnost measure of group
+        precision
 
 Version 0.7.4 (November 01, 2018)
     * targets, drawTarget()
