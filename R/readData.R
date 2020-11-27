@@ -144,11 +144,13 @@ function(fPath=".", fNames, fPat, combine=TRUE, dstTarget, conversion) {
     }
 
     ## read in files into a list of data frames
-    DFs <- lapply(files, function(f) {
-        DF <- read.delim(f, colClasses=c("character", "factor", "character",
-            "numeric", "numeric", "numeric", "numeric", "numeric",
-            "numeric", "numeric", "NULL"), strip.white=TRUE,
-            stringsAsFactors=FALSE)
+    readMe <- function(f) {
+        DF <- read.delim(f,
+                         colClasses=c("character", "factor", "character",
+                                      "numeric", "numeric", "numeric", "numeric",
+                                      "numeric", "numeric", "numeric", "NULL"),
+                         strip.white=TRUE,
+                         stringsAsFactors=FALSE)
         DF <- setNames(DF, tolower(names(DF)))  # convert var names to lower case
         DF[["file"]] <- basename(tools::file_path_sans_ext(f))  # add filename
         
@@ -164,7 +166,9 @@ function(fPath=".", fNames, fPat, combine=TRUE, dstTarget, conversion) {
         }
         
         DF
-    })
+    }
+
+    DFs <- lapply(files, readMe)
 
     names(DFs) <- paste("file", seq_along(DFs), sep="")  # name them
 
@@ -213,13 +217,13 @@ function(fPath=".", fNames, fPat, combine=TRUE, dstTarget, conversion) {
     }
 
     ## read in files into a list of data frames
-    DFs <- lapply(files, function(f) {
-        DF      <- read.csv(f, colClasses=colClasses, strip.white=TRUE,
-                            stringsAsFactors=FALSE)
+    readMe <- function(f) {
+        DF <- read.csv(f, colClasses=colClasses, strip.white=TRUE,
+                       stringsAsFactors=FALSE)
         DF <- setNames(DF, tolower(names(DF))) # convert var names to lower case
         
         DF[["file"]] <- basename(tools::file_path_sans_ext(f))  # add filename
-
+        
         ## add distance if provided
         if(!missing_dstTarget) {
             DF[["distance"]] <- dstTarget
@@ -230,9 +234,11 @@ function(fPath=".", fNames, fPat, combine=TRUE, dstTarget, conversion) {
             DF[["distance.unit"]] <- getUnits(conversion, first=TRUE)  # unit for distance
             DF[["point.unit"]]    <- getUnits(conversion, first=FALSE) # unit for xy-coords
         }
-
+        
         DF
-    })
+    }
+    
+    DFs <- lapply(files, readMe)
 
     names(DFs) <- paste("file", seq_along(DFs), sep="")  # name them
 
@@ -269,19 +275,35 @@ function(fPath=".", fNames, fPat, combine=TRUE) {
     ## assumed variables: string, shooter, frame, distance, date, score,
     ## moa_x, moa_y, scope_x, scope_y, adj_x, adj_y, v, adj_y_avg, 
     ## adj_y_sd, v_avg, v_sd
-    colClasses <- c("character", "character", "numeric", "numeric", "character",
-          "character", "numeric", "numeric", "numeric", "numeric", "numeric",
-          "numeric", "numeric", "numeric", "numeric", "numeric", "numeric")
+    colClasses <- c("character", "character", "character", "numeric", "character",
+                    "character", "numeric", "numeric", "numeric", "numeric", "numeric",
+                    "numeric", "numeric", "numeric", "numeric", "numeric", "numeric")
+    
+    varNames <- c("project.title", "shooter", "frame", "distance",
+                  "date", "score", "point.x", "point.y", "aim.x", "aim.y",
+                  "adj.x", "adj.y", "velocity", "adj.y.avg", "adj.y.sd",
+                  "velocity.avg", "velocity.sd")
 
     ## read in files into a list of data frames
-    DFs <- lapply(files, function(f) {
+    readMe <- function(f) {
+        ## there are different versions of SMT files
+        n_fields <- unique(count.fields(f, sep=","))
+
+        if(n_fields != length(colClasses)) {
+            if(n_fields == (length(colClasses) + 2L)) {
+                ## probably two additional variables
+                colClasses <- c("numeric", colClasses, "character")
+                varNames   <- c("number", varNames, "blank")
+            } else {
+                ## don't know how to deal with this
+                return(NULL)
+            }
+        }
+
         DF        <- read.csv(f, colClasses=colClasses, strip.white=TRUE)
+        names(DF) <- varNames
         DF$file   <- basename(tools::file_path_sans_ext(f))  # add filename
         DF$group  <- 1
-        names(DF) <- c("project.title", "shooter", "frame", "distance",
-                       "date", "score", "point.x", "point.y", "aim.x", "aim.y",
-                       "adj.x", "adj.y", "velocity", "adj.y.avg", "adj.y.sd",
-                       "velocity.avg", "velocity.sd", "file", "group")
         
         ## fill missing rows - distance is in m
         DF[["project.title"]] <- DF[["project.title"]][1]
@@ -296,6 +318,8 @@ function(fPath=".", fNames, fPat, combine=TRUE) {
         DF[["adj.y.sd"]]      <- NULL
         DF[["velocity.avg"]]  <- NULL
         DF[["velocity.sd"]]   <- NULL
+        if(hasName(DF, "blank"))  { DF[["blank"]]  <- NULL }
+        if(hasName(DF, "number")) { DF[["number"]] <- NULL }
         
         ## remove last line with sd/averages
         DF <- DF[-nrow(DF), , drop=FALSE]
@@ -307,19 +331,21 @@ function(fPath=".", fNames, fPat, combine=TRUE) {
         ## convert coords from MOA to inches - may be negative
         DF[["point.x"]] <- fromMOA(abs(DF[["point.x"]]), dst=DF[["distance"]],
                                    conversion="yd2in", type="MOA") *
-                           sign(DF[["point.x"]])
+            sign(DF[["point.x"]])
         DF[["point.y"]] <- fromMOA(abs(DF[["point.y"]]), dst=DF[["distance"]],
                                    conversion="yd2in", type="MOA") *
-                           sign(DF[["point.y"]])
+            sign(DF[["point.y"]])
         DF[["aim.x"]]   <- fromMOA(abs(DF[["aim.x"]]),   dst=DF[["distance"]],
                                    conversion="yd2in", type="MOA") *
-                           sign(DF[["aim.x"]])
+            sign(DF[["aim.x"]])
         DF[["aim.y"]]   <- fromMOA(abs(DF[["aim.y"]]),   dst=DF[["distance"]],
                                    conversion="yd2in", type="MOA") *
-                           sign(DF[["aim.y"]])
+            sign(DF[["aim.y"]])
         DF
-    })
+    }
     
+    DFs <- lapply(files, readMe)
+
     names(DFs) <- paste("file", seq_along(DFs), sep="")  # name them
     
     ##  build shared set of variable names
@@ -353,7 +379,7 @@ function(fPath=".", fNames, fPat, combine=TRUE) {
     on.exit(Sys.setlocale(category="LC_TIME", locale=lc_current))
 
     ## read in files into a list of data frames
-    DFs <- lapply(files, function(f) {
+    readMe <- function(f) {
         ext <- tools::file_ext(f)  # file extension
         DF <- if(tolower(ext) == "csv") {
             parse_ShotMarkerCSV(readLines(f))
@@ -361,30 +387,32 @@ function(fPath=".", fNames, fPat, combine=TRUE) {
             if(requireNamespace("jsonlite", quietly=TRUE)) {
                 parse_ShotMarkerBackup(f)
             } else {
-                stop("Could not find package jsonlite - please install first")
+                stop("Could not find package 'jsonlite' - please install first")
             }
         } else {
             stop("Unknown file type")
         }
-
+        
         DF$file <- basename(tools::file_path_sans_ext(f))  # add filename
-
+        
         ## convert distance to yard
         DF[["distance"]] <- DF[["distance"]]*getConvFac(paste0(DF[["distance.unit"]], "2yd"))
         DF[["distance.unit"]] <- "yd"
-
+        
         ## convert velocity to fps
         DF[["velocity"]] <- DF[["velocity"]]*getConvFac(paste0(DF[["velocity.unit"]], "2ft"))
         DF[["velocity.unit"]] <- "ft"
-    
+        
         ## convert coords to inch
         DF[["point.x"]] <- DF[["point.x"]]*getConvFac(paste0(DF[["point.unit"]], "2in"))
         DF[["point.y"]] <- DF[["point.y"]]*getConvFac(paste0(DF[["point.unit"]], "2in"))
         DF[["point.unit"]] <- "in"
-
+        
         ## coords may be missing
         DF[!is.na(DF[["point.x"]]) & !is.na(DF[["point.y"]]), , drop=FALSE]
-    })
+    }
+
+    DFs <- lapply(files, readMe)
         
     names(DFs) <- paste("file", seq_along(DFs), sep="")  # name them
         
