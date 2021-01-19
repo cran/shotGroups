@@ -1,8 +1,19 @@
-$Date: 2019-07-15 00:18:29 +0000 (Mon, 15 Jul 2019) $
+$Date: 2021-01-19 19:18:29 +0000 (Tue, 19 Jan 2021) $
 
-SHOTGROUPS RELEASE VERSIONS at http://cran.r-project.org/
+SHOTGROUPS RELEASE VERSIONS at https://cran.r-project.org/
 
-Version 0.7.5.2 (April 29, 2020)
+Version 0.8 (January 19, 2021)
+    * runGUI()
+      - all shiny apps are now dashboards based on package bs4Dash
+    * getMinCirc()
+      - fix for data where chull() returns collinear points
+        thanks: Esme_ from Stack Overflow
+    * readDataSMT()
+      - fix handling newer files
+    * readDataShotMarker()
+      - fix handling newer files
+
+Version 0.7.5.2 (November 27, 2020)
     * compareGroups()
       - use coin::approximate(nresample=9999) as B=... has been
         deprecated
@@ -32,8 +43,7 @@ Version 0.7.4 (November 01, 2018)
     * runGUI()
       - The shiny apps automatically pick up information on distance to
         target, on measurement units, and on the target face from the
-        data, if this information is available and uniquely defined for
-        the currently selected groups
+        data, if this information is available and uniquely defined
     * readDataShotMarker()
       - new function to read CSV files as well as backup files exported
         from the ShotMarker e-target system
@@ -93,7 +103,6 @@ Version 0.7.2 (September 21, 2016)
 Version 0.7.1 (April 15, 2016)
     * combineData()
       - fix bug: revert erroneous merging of all groups
-        thanks: David Bookstaber http://ballistipedia.com/
     * getMOA(), fromMOA(), getDistance(), getHitProb(),
       drawGroup(), drawTarget(),
       - add deg (degree) and rad (radian) as valid angular size units
@@ -301,7 +310,6 @@ Version 0.4 (March 03, 2014)
         from shooting federations ISSF, DSB, BDS, BDMP
     * DF300BLKhl
       - new dataset with groups from shooting a rifle at 100 yd
-        thanks: David Bookstaber http://ballistipedia.com/
     * dHoyt(), pHoyt(), qHoyt(), rHoyt()
       - density function, cumulative distribution function, quantile function,
         and random deviates for the Hoyt (Nakagami Q) distribution
@@ -411,7 +419,6 @@ Version 0.3 (January 08, 2013)
     * Add package vignette: see vignette("shotGroups")
     * DF300BLK, DFcciHV, DFscar17
       - new datasets with groups from shooting different rifles at 100 yd
-        thanks: David Bookstaber http://ballistipedia.com/
     * analyzeGroup()
       - if no point of aim is given: warn and assume (0,0)
       - if no distance to target is given: warn and assume 100
@@ -487,7 +494,7 @@ Version 0.3 (January 08, 2013)
       - add option CEPtype to select which CEP estimate to report
       - add Rayleigh fit to histogram of distances to group center
     * groupLocation(), groupShape(), groupSpread(), getBoundingBox(),
-      getCEP, getConfEll()(), getDistToCtr(), getMaxPairDist(),
+      getCEP(), getConfEll(), getDistToCtr(), getMaxPairDist(),
       getMinBBox(), getMinCircle()
       - make generic with methods to also accept a data frame either with
         variables Point.X, Point.Y or X, Y
@@ -556,9 +563,9 @@ Version 0.2 (March 13, 2012)
       - new function to return estimates for the circular error probable (CEP)
     * DFsavage, DFtalon
       - new datasets with groups a rifle at 100 to 300m
-        thanks: Charles & Paul McMillan http://www.statshooting.com/
+        thanks: Charles & Paul McMillan
     * getMinBBox()
-      - more efficient implementation (rotating calipers)
+      - more efficient implementation
     * getMinCircle()
       - fix bug for cases where minimum enclosing circle is defined by two
         points

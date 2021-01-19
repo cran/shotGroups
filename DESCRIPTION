@@ -1,14 +1,15 @@
 Package: shotGroups
 Type: Package
 Title: Analyze Shot Group Data
-Version: 0.7.5.2
-Date: 2020-11-22
+Version: 0.8
+Date: 2021-01-19
 Author: Daniel Wollschlaeger
 Maintainer: Daniel Wollschlaeger <dwoll@kuci.org>
 Depends: R (>= 3.4.0)
 Imports: boot, coin, CompQuadForm (>= 1.4.2), graphics, grDevices,
         KernSmooth, robustbase, stats, tools, utils
-Suggests: knitr, energy, mvoutlier, shiny, jsonlite, interp, MBA
+Suggests: knitr, energy, mvoutlier, shiny, jsonlite, interp, MBA,
+        bs4Dash
 LazyData: yes
 VignetteBuilder: knitr
 Description: Analyzes shooting data with respect to group shape,
@@ -23,6 +24,6 @@ Description: Analyzes shooting data with respect to group shape,
         Includes a set of web-based graphical user interfaces.
 License: GPL (>= 2)
 NeedsCompilation: no
-Packaged: 2020-11-27 12:04:01 UTC; Daniel
+Packaged: 2021-01-19 22:19:17 UTC; Daniel
 Repository: CRAN
-Date/Publication: 2020-11-27 12:40:02 UTC
+Date/Publication: 2021-01-19 23:10:02 UTC
