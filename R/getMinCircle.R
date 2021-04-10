@@ -161,6 +161,7 @@ function(xy) {
     H    <- chull(xy)      # convex hull indices (vertices ordered clockwise)
     hPts <- xy[H, ]        # points that make up the convex hull
 
+    ## remove collinear points on convex hull, if any
     del <- idCollinear(hPts)
     if(length(del) >= 1L) {
         H    <- H[-del]

@@ -133,6 +133,8 @@ pmvnEll(1.5, sigma=diag(rep(4, 2)), mu=rep(0, 2), e=diag(2), x0=rep(0, 2))
 ## 3D - Maxwell-Boltzmann distribution
 pMaxwell(1.5, sigma=2)
 pmvnEll(1.5, sigma=diag(rep(4, 3)), mu=rep(0, 3), e=diag(3), x0=rep(0, 3))
+pmvnEll(1.5, sigma=diag(rep(4, 3)), mu=rep(0, 3), e=diag(3), x0=rep(0, 3),
+        method_cdf="saddlepoint")
 
 ## ----cDistributions3, out.width='3in'------------------------------------
 ## 1D - normal distribution with mean 1 for interval [-1.5, 1.5]
@@ -142,6 +144,8 @@ pmvnEll(1.5, sigma=4, mu=1, e=1, x0=0)
 ## 2D - Rice distribution
 pRice(1.5, nu=1, sigma=2)
 pmvnEll(1.5, sigma=diag(c(4, 4)), mu=c(1, 0), e=diag(2), x0=c(0, 0))
+pmvnEll(1.5, sigma=diag(c(4, 4)), mu=c(1, 0), e=diag(2), x0=c(0, 0),
+        method_cdf="saddlepoint")
 
 ## ----cDistributions4, out.width='3in'------------------------------------
 ## 2D - Hoyt distribution
@@ -150,6 +154,8 @@ sdY <- 2                              # standard deviation along y
 hp  <- getHoytParam(c(sdX^2, sdY^2))  # convert to Hoyt parameters
 pHoyt(1.5, qpar=hp$q, omega=hp$omega)
 pmvnEll(1.5, sigma=diag(c(sdX^2, sdY^2)), mu=c(0, 0), e=diag(2), x0=c(0, 0))
+pmvnEll(1.5, sigma=diag(c(sdX^2, sdY^2)), mu=c(0, 0), e=diag(2), x0=c(0, 0),
+        method_cdf="saddlepoint")
 
 ## ----cRangeDistrib1------------------------------------------------------
 # cumulative probability of extreme spread (ES) 4 and 5 with true

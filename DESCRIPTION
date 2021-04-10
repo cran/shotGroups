@@ -1,8 +1,8 @@
 Package: shotGroups
 Type: Package
 Title: Analyze Shot Group Data
-Version: 0.8
-Date: 2021-01-19
+Version: 0.8.1
+Date: 2021-04-10
 Author: Daniel Wollschlaeger
 Maintainer: Daniel Wollschlaeger <dwoll@kuci.org>
 Depends: R (>= 3.4.0)
@@ -24,6 +24,6 @@ Description: Analyzes shooting data with respect to group shape,
         Includes a set of web-based graphical user interfaces.
 License: GPL (>= 2)
 NeedsCompilation: no
-Packaged: 2021-01-19 22:19:17 UTC; Daniel
+Packaged: 2021-04-10 17:38:49 UTC; Daniel
 Repository: CRAN
-Date/Publication: 2021-01-19 23:10:02 UTC
+Date/Publication: 2021-04-10 18:20:02 UTC
