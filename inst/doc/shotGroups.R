@@ -50,6 +50,7 @@ library(shotGroups, verbose=FALSE)       # load shotGroups package
 getBoundingBox(DFtalon)                  # axis-aligned bounding box
 getMinBBox(DFtalon)                      # minimum-area bounding box
 getMinCircle(DFtalon)                    # minimum enclosing circle
+getMinEllipse(DFtalon)                   # minimum enclosing ellipse
 getMaxPairDist(DFtalon)                  # extreme spread / group size
 
 ## ----cCEP, out.width='3in'-----------------------------------------------
@@ -129,6 +130,8 @@ pmvnEll(1.5, sigma=4, mu=0, e=1, x0=0)
 ## 2D - Rayleigh distribution
 pRayleigh(1.5, scale=2)
 pmvnEll(1.5, sigma=diag(rep(4, 2)), mu=rep(0, 2), e=diag(2), x0=rep(0, 2))
+pmvnEll(1.5, sigma=diag(rep(4, 2)), mu=rep(0, 2), e=diag(2), x0=rep(0, 2),
+        method_cdf="saddlepoint")
 
 ## 3D - Maxwell-Boltzmann distribution
 pMaxwell(1.5, sigma=2)

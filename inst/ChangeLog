@@ -1,6 +1,18 @@
-$Date: 2021-04-10 19:37:29 +0000 (Sat, 10 Apr 2021) $
+$Date: 2022-09-17 19:17:29 +0000 (Sat, 17 Sep 2022) $
 
 SHOTGROUPS RELEASE VERSIONS at https://cran.r-project.org/
+
+Version 0.8.2 (Sep 17, 2022)
+    * DFdistr
+      - increase simulation to 10 million runs per condition
+    * readDataShotMarker()
+      - fix handling newer files
+    * getMinCircle(), getMinBBox(), Vignette
+      - documentation update on algorithms for bounding volumes
+    * getMinEllipse()
+      - new function to calculate minimum bounding ellipse
+    * groupSpread(), drawGroup(), runGUI()
+      - report / show minimum bounding ellipse
 
 Version 0.8.1 (April 10, 2021)
     * pmvnEll()

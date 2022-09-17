@@ -1,15 +1,15 @@
 Package: shotGroups
 Type: Package
 Title: Analyze Shot Group Data
-Version: 0.8.1
-Date: 2021-04-10
+Version: 0.8.2
+Date: 2022-09-17
 Author: Daniel Wollschlaeger
 Maintainer: Daniel Wollschlaeger <dwoll@kuci.org>
-Depends: R (>= 3.4.0)
+Depends: R (>= 3.5.0)
 Imports: boot, coin, CompQuadForm (>= 1.4.2), graphics, grDevices,
         KernSmooth, robustbase, stats, tools, utils
-Suggests: knitr, energy, mvoutlier, shiny, jsonlite, interp, MBA,
-        bs4Dash
+Suggests: knitr, markdown, energy, mvoutlier, shiny, jsonlite, interp,
+        MBA, bs4Dash
 LazyData: yes
 VignetteBuilder: knitr
 Description: Analyzes shooting data with respect to group shape,
@@ -20,10 +20,10 @@ Description: Analyzes shooting data with respect to group shape,
         variables. Works with files exported by 'OnTarget PC/TDS',
         'Silver Mountain' e-target, 'ShotMarker' e-target, or 'Taran',
         as well as with custom data files in text format.
-        Supports inference from range statistics like extreme spread.
-        Includes a set of web-based graphical user interfaces.
+        Supports inference from range statistics such as extreme
+        spread. Includes a set of web-based graphical user interfaces.
 License: GPL (>= 2)
 NeedsCompilation: no
-Packaged: 2021-04-10 17:38:49 UTC; Daniel
+Packaged: 2022-09-17 17:49:59 UTC; Daniel
 Repository: CRAN
-Date/Publication: 2021-04-10 18:20:02 UTC
+Date/Publication: 2022-09-17 19:06:04 UTC
