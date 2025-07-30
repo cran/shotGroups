@@ -6,18 +6,18 @@ knitr::opts_chunk$set(tidy=FALSE, message=FALSE, warning=FALSE, comment=NA)
 options(replace.assign=TRUE, width=75, digits=4, useFancyQuotes=FALSE, show.signif.stars=FALSE)
 
 ## ----cReadData, eval=FALSE-----------------------------------------------
-#  library(shotGroups, verbose=FALSE)       # load shotGroups package
-#  
-#  ## read text files and save to data frame
-#  ## not run, we later use data frame provided in package instead
-#  DFgroups <- readDataMisc(fPath="c:/path/to/files",
-#                           fNames=c("series1.dat", "series2.dat"))
+# library(shotGroups, verbose=FALSE)       # load shotGroups package
+# 
+# ## read text files and save to data frame
+# ## not run, we later use data frame provided in package instead
+# DFgroups <- readDataMisc(fPath="c:/path/to/files",
+#                          fNames=c("series1.dat", "series2.dat"))
 
 ## ----cAnalyzeGroup, eval=FALSE-------------------------------------------
-#  library(shotGroups, verbose=FALSE)       # load shotGroups package
-#  analyzeGroup(DFtalon, dstTarget=10, conversion="m2mm")
-#  
-#  ## output not shown, see following sections for results
+# library(shotGroups, verbose=FALSE)       # load shotGroups package
+# analyzeGroup(DFtalon, dstTarget=10, conversion="m2mm")
+# 
+# ## output not shown, see following sections for results
 
 ## ----cGroupShape, out.width='3in'----------------------------------------
 library(shotGroups, verbose=FALSE)       # load shotGroups package
@@ -36,7 +36,7 @@ groupLocation(DFtalon, dstTarget=10, conversion="m2mm",
               level=0.95, plots=FALSE, bootCI="basic")
 
 ## ----cCmpGr, eval=FALSE--------------------------------------------------
-#  shots$series <- shots$group
+# shots$series <- shots$group
 
 ## ----cCompareGroups, out.width='3in'-------------------------------------
 library(shotGroups, verbose=FALSE)       # load shotGroups package

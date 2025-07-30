@@ -182,8 +182,8 @@ function(conversion) {
         # }
 
         unname(v[conversion])
-    } else if(is.numeric(conversion)) {  # factor is given directly
-        if(any(na.omit(conversion) <= 0)) {
+    } else if(is.numeric(conversion)) {     # factor is given directly
+        if(any(na.omit(conversion) <= 0)) { # already present NAs are kept
             is.na(conversion) <- conversion <= 0
             warning("Conversion factor must be > 0")
         }
@@ -208,7 +208,7 @@ function(x="m2cm", first=TRUE) {
     if(!all(lengths(units) == 2L)) {    # check that there are two parts
         idx <- lengths(units) != 2L
         units[idx] <- NA_character_
-        warning(paste0("Unit(s) ", paste(x[idx], collapse=", "),
+        warning(paste0("Unit(s) ", toString(x[idx]),
                        " not recognized - input must have form like m2cm"))
     }
 

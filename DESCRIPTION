@@ -1,15 +1,15 @@
 Package: shotGroups
 Type: Package
 Title: Analyze Shot Group Data
-Version: 0.8.2
-Date: 2022-09-17
-Author: Daniel Wollschlaeger
+Version: 0.8.4
+Date: 2025-07-30
+Authors@R: person("Daniel", "Wollschlaeger", role=c("aut", "cre"), email="dwoll@kuci.org")
 Maintainer: Daniel Wollschlaeger <dwoll@kuci.org>
 Depends: R (>= 3.5.0)
-Imports: boot, coin, CompQuadForm (>= 1.4.2), graphics, grDevices,
-        KernSmooth, robustbase, stats, tools, utils
-Suggests: knitr, markdown, energy, mvoutlier, shiny, jsonlite, interp,
-        MBA, bs4Dash
+Imports: boot, CompQuadForm (>= 1.4.2), graphics, grDevices,
+        KernSmooth, stats, tools, utils
+Suggests: knitr, coin, robustbase, energy, mvoutlier, shiny, jsonlite,
+        interp, MBA, bs4Dash
 LazyData: yes
 VignetteBuilder: knitr
 Description: Analyzes shooting data with respect to group shape,
@@ -18,12 +18,14 @@ Description: Analyzes shooting data with respect to group shape,
         but also non-parametric and robust statistical methods.
         Implements distributions for radial error in bivariate normal
         variables. Works with files exported by 'OnTarget PC/TDS',
-        'Silver Mountain' e-target, 'ShotMarker' e-target, or 'Taran',
-        as well as with custom data files in text format.
-        Supports inference from range statistics such as extreme
-        spread. Includes a set of web-based graphical user interfaces.
+        'Silver Mountain' e-target, 'ShotMarker' e-target, 'SIUS'
+        e-target, or 'Taran', as well as with custom data files in
+        text format. Supports inference from range statistics such as
+        extreme spread. Includes a set of web-based graphical user
+        interfaces.
 License: GPL (>= 2)
 NeedsCompilation: no
-Packaged: 2022-09-17 17:49:59 UTC; Daniel
+Packaged: 2025-07-30 21:28:39 UTC; dwollsch
+Author: Daniel Wollschlaeger [aut, cre]
 Repository: CRAN
-Date/Publication: 2022-09-17 19:06:04 UTC
+Date/Publication: 2025-07-30 22:00:02 UTC

@@ -5,9 +5,7 @@ import(utils)
 importFrom(tools, file_path_sans_ext, file_ext)
 
 importFrom(boot, boot, boot.ci)
-importFrom(coin, ansari_test, fligner_test, kruskal_test, wilcox_test)
 importFrom(CompQuadForm, farebrother)
-importFrom(robustbase, covMcd)
 importFrom(KernSmooth, bkde2D)
 
 export(analyzeGroup,
@@ -22,14 +20,15 @@ export(analyzeGroup,
        getHoytParam, getRayParam, getRiceParam,
        getDistance, getMOA, fromMOA,
        getCEP, getHitProb,
-       getRangeStat,
+       getRangeStat, getRangeStatCI, getRangeStatEff,
        getKuchnost,
        getBoundingBox, getConfEll, getDistToCtr,
        getMaxPairDist, getMinBBox, getMinCircle, getMinEllipse, getXYmat,
        groupLocation, groupShape, groupSpread,
-       readDataMisc, readDataOT1, readDataOT2, readDataSMT, readDataShotMarker,
+       readDataMisc, readDataOT1, readDataOT2, readDataSMT,
+       readDataShotMarker, readDataSIUS, readDataArcheryWC,
        runGUI,
-       simRingCount,
+       scaleGroup, simRingCount,
        range2sigma, range2CEP, efficiency)
 
 S3method(getBoundingBox, data.frame)
@@ -80,3 +79,5 @@ S3method(groupSpread, data.frame)
 S3method(groupSpread, default)
 S3method(simRingCount, data.frame)
 S3method(simRingCount, default)
+S3method(scaleGroup, data.frame)
+S3method(scaleGroup, default)

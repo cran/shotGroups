@@ -18,7 +18,8 @@ function(DF,
     CEPtype <- match.arg(CEPtype,
                          choices=c("CorrNormal", "GrubbsPearson", "GrubbsLiu",
                                    "GrubbsPatnaik", "Rayleigh", "Krempasky",
-                                   "Ignani", "RMSE", "Ethridge", "RAND", "Valstar"), several.ok=FALSE)
+                                   "Ignani", "RMSE", "Ethridge", "RAND", "Valstar"),
+                         several.ok=FALSE)
 
     ## check if CEP / CI level is given in percent
     if(CEPlevel >= 1) {
@@ -106,12 +107,16 @@ function(DF,
         ## remove series with too few points
         rem <- names(cTab[cTab < 2L])
         idx <- DF[["series"]] %in% rem
-        DF  <- droplevels(DF[!idx, , drop=FALSE])
-        if(length(dstTarget == nrow(DF))) {
+        
+        ## drop series entries with too few points
+        ## from dstTarget and data frame
+        if(length(dstTarget) == nrow(DF)) {
             dstTarget <- dstTarget[!idx]
         }
+        
+        DF <- droplevels(DF[!idx, , drop=FALSE])
         warning(paste0("Removed series ",
-                       paste(rem, collapse=", "),
+                       toString(rem),
                        " with < 2 points per group"))
     }
 
@@ -291,19 +296,32 @@ function(DF,
                                          labels=levels(DF$series)))
 
     if(nS == 2L) {                       # compare two groups
-        res$AnsariX  <- coin::ansari_test(x ~ series, alternative=ABalt,
-                                          data=DF, distribution="exact")
-        res$AnsariY  <- coin::ansari_test(y ~ series, alternative=ABalt,
-                                          data=DF, distribution="exact")
-        res$Wilcoxon <- coin::wilcox_test(dstCtr ~ series, alternative=Walt,
-                                          data=dstCtrDF, distribution="exact")
+        if(requireNamespace("coin", quietly=TRUE)) {
+            res$AnsariX  <- coin::ansari_test(x ~ series, alternative=ABalt,
+                                              data=DF, distribution="exact")
+            res$AnsariY  <- coin::ansari_test(y ~ series, alternative=ABalt,
+                                              data=DF, distribution="exact")
+            res$Wilcoxon <- coin::wilcox_test(dstCtr ~ series, alternative=Walt,
+                                              data=dstCtrDF, distribution="exact")
+        } else {
+            res$AnsariX  <- ansari.test(x ~ series,      alternative=ABalt, data=DF)
+            res$AnsariY  <- ansari.test(y ~ series,      alternative=ABalt, data=DF)
+            res$Wilcoxon <- wilcox.test(dstCtr ~ series, alternative=Walt,  data=dstCtrDF)
+        }
     } else {                             # compare more than two groups
-        res$FlignerX <- coin::fligner_test(x ~ series, data=DF,
-                                           distribution=coin::approximate(nresample=9999))  # x
-        res$FlignerY <- coin::fligner_test(y ~ series, data=DF,
-                                           distribution=coin::approximate(nresample=9999))  # y
-        res$Kruskal  <- coin::kruskal_test(dstCtr ~ series,    # dist to center
-                                           data=dstCtrDF, distribution=coin::approximate(nresample=9999))
+        if(requireNamespace("coin", quietly=TRUE)) {
+            res$FlignerX <- coin::fligner_test(x ~ series, data=DF,
+                                               distribution=coin::approximate(nresample=9999))  # x
+            res$FlignerY <- coin::fligner_test(y ~ series, data=DF,
+                                               distribution=coin::approximate(nresample=9999))  # y
+            res$Kruskal  <- coin::kruskal_test(dstCtr ~ series,    # dist to center
+                                               data=dstCtrDF,
+                                               distribution=coin::approximate(nresample=9999))
+        } else {
+            res$FlignerX <- fligner.test(x ~ series,      data=DF)  # x
+            res$FlignerY <- fligner.test(y ~ series,      data=DF)  # y
+            res$Kruskal  <- kruskal.test(dstCtr ~ series, data=dstCtrDF)
+        }
     }
 
     if(plots) {
@@ -346,7 +364,7 @@ function(DF,
         devNew()                         # open new diagram
         plot(y ~ x, data=DF, xlim=xLims, ylim=yLims, asp=1, lwd=2,
              pch=syms[unclass(DF$series)], col=cols[unclass(DF$series)],
-             main=paste0("Groups with ", 100*CEPlevel, "% confidence ellipse", sep=""),
+             main=paste0("Groups with ", 100*CEPlevel, "% confidence ellipse"),
              sub=paste("distance:", dstTargetPlot, unitDst),
              xlab=paste0("X [", unitXY, "]"), ylab=paste0("Y [", unitXY, "]"))
         abline(v=0, h=0, col="lightgray")  # add point of aim
@@ -526,12 +544,13 @@ function(DF, which=1L, xyTopLeft=TRUE, center=FALSE,
         ## remove series with too few points
         rem <- names(cTab[cTab < 2L])
         idx <- DF[["series"]] %in% rem
-        DF  <- droplevels(DF[!idx, , drop=FALSE])
-        if(length(dstTarget == nrow(DF))) {
+        if(length(dstTarget) == nrow(DF)) {
             dstTarget <- dstTarget[!idx]
         }
+        
+        DF <- droplevels(DF[!idx, , drop=FALSE])
         warning(paste0("Removed series ",
-                       paste(rem, collapse=", "),
+                       toString(rem),
                        " with < 2 points per group"))
     }
     
@@ -690,7 +709,7 @@ function(DF, which=1L, xyTopLeft=TRUE, center=FALSE,
         ## diagram: 2D-scatter plot for the (x,y)-distribution
         plot(y ~ x, data=DF, xlim=xLims, ylim=yLims, asp=1, lwd=2,
              pch=syms[unclass(DF$series)], col=cols[unclass(DF$series)],
-             main=paste0("Groups with ", 100*CEPlevel, "% confidence ellipse", sep=""),
+             main=paste0("Groups with ", 100*CEPlevel, "% confidence ellipse"),
              sub=paste("distance:", dstTargetPlot, unitDst),
              xlab=paste0("X [", unitXY, "]"), ylab=paste0("Y [", unitXY, "]"))
         abline(v=0, h=0, col="lightgray")  # add point of aim

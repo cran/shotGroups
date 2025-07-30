@@ -113,16 +113,22 @@ function(xy, center=FALSE,
     }
 
     ## check if we can do robust estimation if so required
-    N <- nrow(xy)
-    if(N < 4L) {
-        haveRob <- FALSE
-        if(doRob) {
+    Npts <- nrow(xy)
+    haveRobustbase <- requireNamespace("robustbase", quietly=TRUE)
+    haveRob <- if(haveRobustbase && (Npts >= 4L)) {
+        TRUE
+    } else {
+        if(doRob && (Npts < 4L)) {
             warning("We need >= 4 points for robust estimations")
         }
-    } else {
-        haveRob <- TRUE
-    }                                    # if(nrow(xy) < 4L)
-
+        
+        if(doRob && !haveRobustbase) {
+            warning("Please install package 'robustbase' for robust estimations")
+        }
+        
+        FALSE
+    }
+    
     res <- vector("list", 0)             # empty list to later collect the results
 
     #####-----------------------------------------------------------------------
@@ -381,7 +387,7 @@ function(xy, center=FALSE,
     ## draw bullet holes to scale
     if(scaled && !is.na(calSize)) {
         symbols(Y ~ X, asp=1, main="(x,y)-coordinates", add=TRUE,
-                circles=rep(calSize, N), inches=FALSE,
+                circles=rep(calSize, Npts), inches=FALSE,
                 fg=rgb(0.3, 0.3, 0.3, alpha), bg=pointCol)
     } else {
         points(Y ~ X, pch=20, col=pointCol)
@@ -638,9 +644,10 @@ function(xy, center=FALSE,
             idx      <- which.max(ellCtrL[[1]][ , 1])
             txtPos_X <- ellCtrL[[1]][idx, 1] + strheight("1234")
             txtPos_Y <- ellCtrL[[1]][idx, 2]
-            label    <- paste0(c(round(cEllCopy[[1]]$size["semi-major"], 2),
-                                 round(cEllCopy[[1]]$size["semi-minor"], 2)),
-                               collapse="; ")
+            label    <- paste(c(round(cEllCopy[[1]]$size["semi-major"], 2),
+                                round(cEllCopy[[1]]$size["semi-minor"], 2)),
+                              collapse="; ")
+            
             text(x=txtPos_X, y=txtPos_Y, labels=label,
                  srt=-90, col=cols["confEll"], adj=c(0.5, 0.5))
         }
@@ -649,6 +656,7 @@ function(xy, center=FALSE,
     if(CEP != "FALSE") {                 # circular error probable
         lapply(CEPres$CEP, function(x) {
             drawCircle(CEPres$ctr, x["unit", CEPtype], fg=cols["CEP"], lwd=2) })
+        
         legText <- c(legText, paste("CEP", CEPtype, paste(level, collapse=" ")))
         legCol  <- c(legCol, cols["CEP"])
         legLty  <- c(legLty, 1)

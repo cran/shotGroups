@@ -1,6 +1,38 @@
-$Date: 2022-09-17 19:17:29 +0000 (Sat, 17 Sep 2022) $
+$Date: 2025-07-30 23:38:29 +0000 (Wed, 30 Jul 2025) $
 
 SHOTGROUPS RELEASE VERSIONS at https://cran.r-project.org/
+
+Version 0.8.4 (Jul 30, 2025)
+    * Avoid CRAN NOTEs
+
+Version 0.8.3 (Jul 30, 2025)
+    * DESCRIPTION
+      - move packages coin, robustbase to Suggests to reduce the
+        number of hard dependencies
+    * readData___()
+      - fix bug leading to error when multiple paths are given
+    * readDataSIUS()
+      - new function to read files exported from SIUS e-target
+        thanks: Torben Hinge
+    * readDataArcheryWC()
+      - new function to read files created from archery World Cup
+        thanks: James Park
+    * getRayParam()
+      - also return median including CI
+    * getRangeStat()
+      - also return corresponding confidence interval together
+        with point estimate
+    * getRangeStatCI()
+      - new function to calculate corresponding confidence interval
+        for observed range statistics for given number of shots per
+        group and number of groups
+    * getRangeStatEff()
+      - new function to calculate efficiency of range statistics
+        for given number of shots per group and number of groups
+    * scaleGrpoup()
+      - new function to artificially scale a shot group in the
+        horizontal or vertical direction to remove variance
+        components that are considered extraneous
 
 Version 0.8.2 (Sep 17, 2022)
     * DFdistr
